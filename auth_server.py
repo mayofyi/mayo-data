@@ -58,6 +58,8 @@ def callback():
         },
         timeout=15,
     )
+    if not token_response.ok:
+        return f"Token exchange failed: {token_response.status_code} — {token_response.text}", 500
     token_response.raise_for_status()
     short_lived_token = token_response.json()["access_token"]
 
