@@ -1,0 +1,7 @@
+requests
+flask
+python-dotenv
+pandas
+tabulate
+beautifulsoup4
+anthropic
