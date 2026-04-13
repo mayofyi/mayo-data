@@ -99,6 +99,32 @@ const COVER_OPTIONS = [
   { id:8, gradient:'linear-gradient(135deg,#0a0a00 0%,#1a1a00 40%,#3d3d00 70%,#7a7a00 100%)', label:'Midnight Gold' },
 ];
 
+const CAPABILITIES = [
+  'IRL Events', 'Content Creation', 'Social Posts', 'Community Activations',
+  'Product Seeding', 'Brand Experiences', 'Workshops & Education', 'Pop-ups',
+  'Podcast / Newsletter', 'Long-term Partnerships', 'One-off Campaigns', 'Grassroots Marketing',
+];
+
+const IgIcon = ({size=16, color='currentColor'}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+  </svg>
+);
+
+const SubstackIcon = ({size=16, color='currentColor'}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/>
+  </svg>
+);
+
+const GlobeIcon = ({size=16, color='currentColor'}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="2" y1="12" x2="22" y2="12"/>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </svg>
+);
+
 function StepDots({ current }) {
   return (
     <div className="step-dots">
@@ -173,6 +199,7 @@ function Step2({ onNext, onBack, form, setForm }) {
           tags: form.tags,
           website: form.website,
           cover_option: form.coverOption,
+          capabilities: form.capabilities,
         }),
       });
       const data = await res.json();
@@ -242,6 +269,17 @@ function Step2({ onNext, onBack, form, setForm }) {
               ))}
             </div>
           </div>
+          <div className="form-group" style={{ marginTop:18 }}>
+            <label className="label">What can your community offer? <span style={{ color:'var(--muted)', fontWeight:400, textTransform:'none', fontSize:11 }}>Pick all that apply</span></label>
+            <div className="tag-grid">
+              {CAPABILITIES.map(cap => (
+                <button key={cap} className={`tag-item ${form.capabilities.includes(cap) ? 'selected' : ''}`}
+                  onClick={() => setForm(f => ({ ...f, capabilities: f.capabilities.includes(cap) ? f.capabilities.filter(c => c !== cap) : [...f.capabilities, cap] }))}>
+                  {cap}
+                </button>
+              ))}
+            </div>
+          </div>
           {error && <div style={{ color:'#ff6b6b', fontSize:12, marginTop:12 }}>{error}</div>}
         </div>
         <div className="onboarding-footer">
@@ -259,6 +297,26 @@ function Step2({ onNext, onBack, form, setForm }) {
 function Step3({ onNext, onBack, form, setForm }) {
   const [substackInput, setSubstackInput] = useState(form.substackUrl || '');
   const [savingSubstack, setSavingSubstack] = useState(false);
+  const [notableMembers, setNotableMembers] = React.useState(form.notableMembers || []);
+  const [addingMember, setAddingMember] = React.useState(false);
+  const [memberForm, setMemberForm] = React.useState({ name: '', ig_handle: '', role: '' });
+  const [savingMember, setSavingMember] = React.useState(false);
+
+  async function saveMember() {
+    if (!memberForm.name || !memberForm.ig_handle || !form.communityId) return;
+    setSavingMember(true);
+    await fetch(`/api/community/${form.communityId}/notable-member`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(memberForm),
+    });
+    const newMember = { ...memberForm, ig_handle: memberForm.ig_handle.replace(/^@/, '') };
+    setNotableMembers(m => [...m, newMember]);
+    setForm(f => ({ ...f, notableMembers: [...(f.notableMembers || []), newMember] }));
+    setMemberForm({ name: '', ig_handle: '', role: '' });
+    setAddingMember(false);
+    setSavingMember(false);
+  }
 
   const igConnected = form.instagramConnected;
   const substackConnected = !!form.substackUrl;
@@ -360,6 +418,48 @@ function Step3({ onNext, onBack, form, setForm }) {
               💡 <strong>Not ready to connect yet?</strong> You can connect channels any time from your profile settings.
             </div>
           </div>
+
+          {/* Notable Members */}
+          <div style={{ marginTop:20, paddingTop:20, borderTop:'1px solid var(--border)' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+              <div>
+                <div style={{ fontSize:13, fontWeight:600, marginBottom:2 }}>Notable Members</div>
+                <div style={{ fontSize:11, color:'var(--muted)' }}>People your community is known for</div>
+              </div>
+              {!addingMember && (
+                <button onClick={() => setAddingMember(true)} style={{ background:'none', border:'1px solid var(--border2)', borderRadius:6, padding:'5px 10px', cursor:'pointer', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--white)' }}>+ Add</button>
+              )}
+            </div>
+
+            {notableMembers.map((m, i) => (
+              <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, marginBottom:6 }}>
+                <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, color:'var(--muted)', flexShrink:0 }}>
+                  {(m.name||'?')[0].toUpperCase()}
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13, fontWeight:600 }}>{m.name}</div>
+                  {m.ig_handle && <div style={{ fontSize:11, color:'var(--muted)' }}>@{m.ig_handle}</div>}
+                </div>
+                {m.role && <div style={{ fontSize:11, color:'var(--muted)', fontFamily:'Barlow Condensed', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{m.role}</div>}
+              </div>
+            ))}
+
+            {addingMember && (
+              <div style={{ background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:8, padding:14 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
+                  <input className="input" placeholder="Name" value={memberForm.name} onChange={e => setMemberForm(f=>({...f,name:e.target.value}))} style={{ fontSize:13 }} />
+                  <input className="input" placeholder="@instagram" value={memberForm.ig_handle} onChange={e => setMemberForm(f=>({...f,ig_handle:e.target.value}))} style={{ fontSize:13 }} />
+                </div>
+                <input className="input" placeholder="Role or title (optional)" value={memberForm.role} onChange={e => setMemberForm(f=>({...f,role:e.target.value}))} style={{ fontSize:13, marginBottom:8 }} />
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={saveMember} disabled={!memberForm.name||!memberForm.ig_handle||savingMember} style={{ flex:1, background:'var(--lime)', color:'#000', border:'none', borderRadius:6, padding:'8px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
+                    {savingMember ? 'Saving…' : 'Add Member'}
+                  </button>
+                  <button onClick={() => { setAddingMember(false); setMemberForm({name:'',ig_handle:'',role:''}); }} style={{ background:'transparent', color:'var(--muted)', border:'1px solid var(--border)', borderRadius:6, padding:'8px 12px', fontFamily:'Barlow Condensed', fontSize:12, fontWeight:700, cursor:'pointer' }}>Cancel</button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
         <div className="onboarding-footer">
           <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back</button>
@@ -370,7 +470,7 @@ function Step3({ onNext, onBack, form, setForm }) {
   );
 }
 
-// ── Step 4: Cover ─────────────────────────────────────────────────────────────
+// ── Step 4: Cover + Partnership ────────────────────────────────────────────────
 function Step4({ onNext, onBack, form, setForm }) {
   const cover = COVER_OPTIONS.find(o => o.id === form.coverOption) || COVER_OPTIONS[0];
   const coverBg = form.coverImageUrl ? `url(${form.coverImageUrl}) center/cover no-repeat` : cover.gradient;
@@ -379,6 +479,7 @@ function Step4({ onNext, onBack, form, setForm }) {
   const connectedCount = [igConnected, substackConnected].filter(Boolean).length;
   const tier = connectedCount >= 2 ? 'fully-verified' : connectedCount >= 1 ? 'verified' : 'starter';
   const [uploading, setUploading] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
 
   async function saveCover(id) {
     setForm(f => ({ ...f, coverOption: id, coverImageUrl: null }));
@@ -404,48 +505,55 @@ function Step4({ onNext, onBack, form, setForm }) {
     }
   }
 
+  async function handleContinue() {
+    setSaving(true);
+    if (form.communityId) {
+      await fetch(`/api/community/${form.communityId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partnership_preferences: form.partnershipPrefs }),
+      });
+    }
+    setSaving(false);
+    onNext();
+  }
+
   return (
     <div className="onboarding-screen">
       <div className="onboarding-box" style={{ maxWidth:560 }}>
         <div className="onboarding-header">
           <StepDots current={4} />
           <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Make it yours</div>
-          <div style={{ fontSize:13, color:'var(--muted)' }}>Add a cover photo or choose a gradient. This is what brands see first.</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>Cover photo, and tell brands what a great partnership looks like for you.</div>
         </div>
-        <div className="onboarding-body">
+        <div className="onboarding-body" style={{ maxHeight:'65vh', overflowY:'auto' }}>
 
           {/* Face card preview */}
-          <div style={{ maxWidth:220, margin:'0 auto 24px', borderRadius:10, overflow:'hidden', border:'1px solid var(--border)' }}>
+          <div style={{ maxWidth:200, margin:'0 auto 20px', borderRadius:10, overflow:'hidden', border:'1px solid var(--border)' }}>
             <div style={{ aspectRatio:'3/4', position:'relative', background:coverBg }}>
               <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(0,0,0,0.05),rgba(0,0,0,0.78))' }} />
-              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'28px 10px 10px' }}>
-                <div className="bb" style={{ fontSize:18, color:'#fff', lineHeight:1, marginBottom:2 }}>{form.name || 'Your Community'}</div>
-                <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', marginBottom:5 }}>{form.tagline || 'Your tagline'}</div>
-                <div style={{ display:'flex', gap:3, flexWrap:'wrap' }}>
-                  {form.tags.slice(0,3).map(t => (
-                    <span key={t} style={{ border:'1px solid rgba(255,255,255,0.3)', color:'rgba(255,255,255,0.85)', borderRadius:3, padding:'1px 5px', fontFamily:'Barlow Condensed', fontSize:9, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>{t}</span>
-                  ))}
-                </div>
+              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'24px 10px 10px' }}>
+                <div className="bb" style={{ fontSize:16, color:'#fff', lineHeight:1, marginBottom:2 }}>{form.name || 'Your Community'}</div>
+                <div style={{ fontSize:9, color:'rgba(255,255,255,0.75)' }}>{form.tagline || 'Your tagline'}</div>
               </div>
             </div>
             <div style={{ padding:'8px 10px', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--surface)' }}>
               <TierBadge tier={tier} />
-              <span style={{ fontSize:10, color:'var(--muted)', fontFamily:'Barlow Condensed', fontWeight:600 }}>View Profile →</span>
             </div>
           </div>
 
           {/* Photo upload */}
-          <label style={{ display:'block', marginBottom:16, cursor:'pointer' }}>
+          <label style={{ display:'block', marginBottom:14, cursor:'pointer' }}>
             <input type="file" accept="image/*" style={{ display:'none' }} onChange={uploadCoverPhoto} disabled={uploading} />
-            <div style={{ border:'1px dashed var(--border2)', borderRadius:8, padding:'12px 16px', display:'flex', alignItems:'center', gap:10, background:uploading?'var(--surface2)':'transparent', transition:'background 0.15s' }}>
-              <div style={{ width:32, height:32, borderRadius:6, background:'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>
+            <div style={{ border:'1px dashed var(--border2)', borderRadius:8, padding:'11px 14px', display:'flex', alignItems:'center', gap:10 }}>
+              <div style={{ width:30, height:30, borderRadius:6, background:'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:14 }}>
                 {uploading ? '…' : form.coverImageUrl ? '✓' : '+'}
               </div>
               <div>
                 <div style={{ fontSize:13, fontWeight:600, color: form.coverImageUrl ? 'var(--lime)' : 'var(--white)' }}>
                   {uploading ? 'Uploading…' : form.coverImageUrl ? 'Cover photo uploaded' : 'Upload a cover photo'}
                 </div>
-                <div style={{ fontSize:11, color:'var(--muted)' }}>JPG or PNG recommended · replaces gradient</div>
+                <div style={{ fontSize:11, color:'var(--muted)' }}>JPG or PNG · replaces gradient</div>
               </div>
             </div>
           </label>
@@ -454,21 +562,30 @@ function Step4({ onNext, onBack, form, setForm }) {
           <div style={{ marginBottom:4, fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)' }}>
             {form.coverImageUrl ? 'Or choose a gradient instead' : 'Or choose a gradient'}
           </div>
-          <div className="cover-grid" style={{ marginBottom:20 }}>
+          <div className="cover-grid" style={{ marginBottom:22 }}>
             {COVER_OPTIONS.map(opt => (
-              <div
-                key={opt.id}
-                className={`cover-opt ${!form.coverImageUrl && form.coverOption === opt.id ? 'selected' : ''}`}
-                style={{ background: opt.gradient }}
-                onClick={() => saveCover(opt.id)}
-                title={opt.label}
-              />
+              <div key={opt.id} className={`cover-opt ${!form.coverImageUrl && form.coverOption === opt.id ? 'selected' : ''}`}
+                style={{ background: opt.gradient }} onClick={() => saveCover(opt.id)} title={opt.label} />
             ))}
           </div>
+
+          {/* Partnership preferences */}
+          <div className="form-group" style={{ marginBottom:0 }}>
+            <label className="label">What makes a great brand partner for you? <span style={{ color:'var(--muted)', fontWeight:400, textTransform:'none', fontSize:11 }}>— optional</span></label>
+            <textarea className="input" rows={3}
+              placeholder="e.g. Brands that align with our values, want a genuine presence in our community, and are open to long-term relationships. No one-off logo placements."
+              value={form.partnershipPrefs}
+              onChange={e => setForm(f => ({ ...f, partnershipPrefs: e.target.value.slice(0, 400) }))}
+            />
+            <div className="char-count">{(form.partnershipPrefs||'').length}/400</div>
+          </div>
+
         </div>
         <div className="onboarding-footer">
           <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back</button>
-          <button className="btn btn-lime" onClick={onNext}>See your profile →</button>
+          <button className="btn btn-lime" onClick={handleContinue} disabled={saving}>
+            {saving ? 'Saving…' : 'See your profile →'}
+          </button>
         </div>
       </div>
     </div>
@@ -484,20 +601,26 @@ function Step5({ form, setForm }) {
   const connectedCount = [igConnected, substackConnected].filter(Boolean).length;
   const tier = connectedCount >= 2 ? 'fully-verified' : connectedCount >= 1 ? 'verified' : 'starter';
 
+  const [communityData, setCommunityData] = React.useState(null);
   const [mediaItems, setMediaItems] = React.useState([]);
   const [caseStudies, setCaseStudies] = React.useState([]);
+  const [notableMembers, setNotableMembers] = React.useState([]);
   const [uploadingMedia, setUploadingMedia] = React.useState(false);
   const [csForm, setCsForm] = React.useState({ brand:'', year:'', description:'' });
+  const [csFile, setCsFile] = React.useState(null);
   const [addingCs, setAddingCs] = React.useState(false);
   const [savingCs, setSavingCs] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
 
   React.useEffect(() => {
     if (!form.communityId) return;
     fetch(`/api/community/${form.communityId}`)
       .then(r => r.json())
       .then(data => {
+        setCommunityData(data);
         setMediaItems(data.media_items || []);
         setCaseStudies(data.case_studies || []);
+        setNotableMembers(data.notable_members || []);
       });
   }, [form.communityId]);
 
@@ -519,33 +642,54 @@ function Step5({ form, setForm }) {
   async function saveCaseStudy() {
     if (!csForm.brand || !form.communityId) return;
     setSavingCs(true);
-    await fetch(`/api/community/${form.communityId}/case-study`, {
-      method:'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify(csForm),
-    });
-    setCaseStudies(cs => [...cs, { ...csForm }]);
+    const fd = new FormData();
+    fd.append('brand', csForm.brand);
+    fd.append('year', csForm.year);
+    fd.append('description', csForm.description);
+    if (csFile) fd.append('file', csFile);
+    const res = await fetch(`/api/community/${form.communityId}/case-study`, { method:'POST', body:fd });
+    const data = await res.json();
+    if (data.entry) setCaseStudies(cs => [...cs, data.entry]);
     setCsForm({ brand:'', year:'', description:'' });
+    setCsFile(null);
     setAddingCs(false);
     setSavingCs(false);
   }
+
+  function copyProfileLink() {
+    const url = `${window.location.origin}/profile/${form.communityId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  const igProfile = communityData?.instagram_data?.profile || {};
+  const igPosts = (communityData?.instagram_data?.media || []).filter(p => p.media_url || p.thumbnail_url);
+  const capabilities = communityData?.capabilities || form.capabilities || [];
+  const partnershipPrefs = communityData?.partnership_preferences || form.partnershipPrefs || '';
 
   return (
     <div className="onboarding-screen" style={{ overflowY:'auto', alignItems:'flex-start', paddingTop:0 }}>
       <div style={{ width:'100%', maxWidth:640, margin:'0 auto', paddingBottom:60 }}>
 
-        {/* Header bar */}
+        {/* Header */}
         <div style={{ padding:'20px 24px 0', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
           <div className="bb" style={{ fontSize:20, letterSpacing:'0.04em' }}>mayo<span style={{ color:'var(--lime)' }}>.</span></div>
-          <div style={{ fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--lime)' }}>Profile Live</div>
+          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+            <div style={{ fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--lime)' }}>Profile Live</div>
+            <button onClick={copyProfileLink} style={{ background:copied?'var(--lime)':'var(--surface2)', color:copied?'#000':'var(--white)', border:'1px solid var(--border2)', borderRadius:6, padding:'5px 12px', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer', transition:'all 0.2s' }}>
+              {copied ? '✓ Copied' : 'Share Profile'}
+            </button>
+          </div>
         </div>
 
         {/* Face card */}
-        <div style={{ margin:'20px 24px 0', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)' }}>
+        <div style={{ margin:'16px 24px 0', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)' }}>
           <div style={{ aspectRatio:'16/7', position:'relative', background:coverBg }}>
             <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(0,0,0,0.05),rgba(0,0,0,0.82))' }} />
             <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'40px 20px 16px' }}>
-              <div className="bb" style={{ fontSize:28, color:'#fff', lineHeight:1, marginBottom:4 }}>{form.name || 'Your Community'}</div>
+              <div className="bb" style={{ fontSize:28, color:'#fff', lineHeight:1, marginBottom:4 }}>{form.name}</div>
               <div style={{ fontSize:12, color:'rgba(255,255,255,0.75)', marginBottom:8 }}>{form.tagline}</div>
               <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginBottom:10 }}>
                 {form.tags.slice(0,4).map(t => (
@@ -558,8 +702,8 @@ function Step5({ form, setForm }) {
         </div>
 
         {/* Profile header */}
-        <div style={{ margin:'16px 24px 0', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'16px 20px' }}>
-          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px 24px' }}>
+        <div style={{ margin:'12px 24px 0', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'16px 20px' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px 24px' }}>
             {form.location && (
               <div>
                 <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:2 }}>Location</div>
@@ -568,22 +712,34 @@ function Step5({ form, setForm }) {
             )}
             {form.activeMembers && (
               <div>
-                <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:2 }}>Members</div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:2 }}>Active Members</div>
                 <div style={{ fontFamily:'Barlow Condensed', fontSize:16, fontWeight:700 }}>{parseInt(form.activeMembers).toLocaleString()}</div>
               </div>
             )}
             {form.website && (
               <div>
                 <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:2 }}>Website</div>
-                <div style={{ fontSize:13, color:'var(--cyan)' }}>{form.website}</div>
+                <a href={form.website} target="_blank" rel="noopener noreferrer" style={{ fontSize:13, color:'var(--cyan)', display:'flex', alignItems:'center', gap:5, textDecoration:'none' }}>
+                  <GlobeIcon size={12} color="var(--cyan)" />{form.website.replace(/^https?:\/\//, '')}
+                </a>
               </div>
             )}
-            {igConnected && (
+            {(igConnected || substackConnected) && (
               <div>
-                <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:2 }}>Channels</div>
-                <div style={{ display:'flex', gap:6 }}>
-                  {igConnected && <span style={{ background:'rgba(210,255,1,0.1)', border:'1px solid rgba(210,255,1,0.3)', borderRadius:4, padding:'2px 7px', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, color:'var(--lime)' }}>IG</span>}
-                  {substackConnected && <span style={{ background:'rgba(177,236,240,0.1)', border:'1px solid rgba(177,236,240,0.3)', borderRadius:4, padding:'2px 7px', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, color:'var(--cyan)' }}>Substack</span>}
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:6 }}>Channels</div>
+                <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                  {igConnected && (
+                    <a href={igProfile.username ? `https://instagram.com/${igProfile.username}` : '#'} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', gap:6, textDecoration:'none', color:'#e1306c', fontSize:12, fontWeight:600 }}>
+                      <IgIcon size={14} color="#e1306c" />
+                      {igProfile.username ? `@${igProfile.username}` : 'Instagram'}
+                    </a>
+                  )}
+                  {substackConnected && (
+                    <a href={form.substackUrl} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', gap:6, textDecoration:'none', color:'#ff6719', fontSize:12, fontWeight:600 }}>
+                      <SubstackIcon size={14} color="#ff6719" />
+                      {form.substackUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                    </a>
+                  )}
                 </div>
               </div>
             )}
@@ -593,7 +749,45 @@ function Step5({ form, setForm }) {
           )}
         </div>
 
-        {/* Content gallery */}
+        {/* Capabilities */}
+        {capabilities.length > 0 && (
+          <div style={{ margin:'12px 24px 0', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'16px 20px' }}>
+            <div className="bb" style={{ fontSize:16, letterSpacing:'0.03em', marginBottom:10 }}>What We Offer</div>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+              {capabilities.map(cap => (
+                <span key={cap} style={{ padding:'4px 10px', borderRadius:4, border:'1px solid var(--border2)', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--white)' }}>{cap}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Partnership preferences */}
+        {partnershipPrefs && (
+          <div style={{ margin:'12px 24px 0', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'16px 20px' }}>
+            <div className="bb" style={{ fontSize:16, letterSpacing:'0.03em', marginBottom:8 }}>What We Look For</div>
+            <div style={{ fontSize:13, color:'var(--muted)', lineHeight:1.7, fontStyle:'italic', borderLeft:'2px solid var(--lime)', paddingLeft:12 }}>"{partnershipPrefs}"</div>
+          </div>
+        )}
+
+        {/* Instagram post feed */}
+        {igPosts.length > 0 && (
+          <div style={{ margin:'16px 24px 0' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+              <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em' }}>Latest Posts</div>
+              <IgIcon size={14} color="var(--muted)" />
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:4 }}>
+              {igPosts.slice(0,9).map((post, i) => (
+                <div key={i} style={{ aspectRatio:'1', borderRadius:6, overflow:'hidden', background:'var(--surface)', border:'1px solid var(--border)', position:'relative' }}>
+                  <img src={post.media_url || post.thumbnail_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                  <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0)', transition:'background 0.15s' }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Photos & Events (uploaded media) */}
         <div style={{ margin:'16px 24px 0' }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
             <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em' }}>Photos &amp; Events</div>
@@ -607,17 +801,16 @@ function Step5({ form, setForm }) {
           {mediaItems.length === 0 ? (
             <label style={{ cursor:'pointer', display:'block' }}>
               <input type="file" accept="image/*" style={{ display:'none' }} onChange={uploadMedia} disabled={uploadingMedia} />
-              <div style={{ border:'1px dashed var(--border2)', borderRadius:10, padding:'32px 20px', textAlign:'center', color:'var(--muted)' }}>
-                <div style={{ fontSize:28, marginBottom:8 }}>+</div>
-                <div style={{ fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>Add your first photo</div>
-                <div style={{ fontSize:11, marginTop:4 }}>Events, people, community moments</div>
+              <div style={{ border:'1px dashed var(--border2)', borderRadius:10, padding:'28px 20px', textAlign:'center', color:'var(--muted)' }}>
+                <div style={{ fontSize:24, marginBottom:6 }}>+</div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>Add photos — events, people, moments</div>
               </div>
             </label>
           ) : (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6 }}>
               {mediaItems.map((item, i) => (
                 <div key={i} style={{ aspectRatio:'1', borderRadius:8, overflow:'hidden', background:'var(--surface)', border:'1px solid var(--border)' }}>
-                  <img src={item.url} alt={item.caption || ''} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                  <img src={item.url} alt={item.caption||''} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                 </div>
               ))}
               <label style={{ aspectRatio:'1', borderRadius:8, border:'1px dashed var(--border2)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'var(--muted)', fontSize:22 }}>
@@ -628,62 +821,83 @@ function Step5({ form, setForm }) {
           )}
         </div>
 
+        {/* Notable members */}
+        {notableMembers.length > 0 && (
+          <div style={{ margin:'16px 24px 0' }}>
+            <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em', marginBottom:10 }}>Notable Members</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:8 }}>
+              {notableMembers.map((m, i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10 }}>
+                  <div style={{ width:36, height:36, borderRadius:'50%', background:'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed', fontSize:15, fontWeight:700, color:'var(--muted)', flexShrink:0 }}>
+                    {(m.name||'?')[0].toUpperCase()}
+                  </div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.name}</div>
+                    {m.ig_handle && (
+                      <a href={`https://instagram.com/${m.ig_handle}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'var(--muted)', textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}>
+                        <IgIcon size={10} color="var(--muted)" />@{m.ig_handle}
+                      </a>
+                    )}
+                    {m.role && <div style={{ fontSize:10, color:'var(--muted)', fontFamily:'Barlow Condensed', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{m.role}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Case studies */}
         <div style={{ margin:'16px 24px 0' }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
             <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em' }}>Past Partnerships</div>
             {!addingCs && (
-              <button onClick={() => setAddingCs(true)} style={{ background:'none', border:'none', cursor:'pointer', fontFamily:'Barlow Condensed', fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--lime)', padding:0 }}>
-                + Add
-              </button>
+              <button onClick={() => setAddingCs(true)} style={{ background:'none', border:'none', cursor:'pointer', fontFamily:'Barlow Condensed', fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--lime)', padding:0 }}>+ Add</button>
             )}
           </div>
 
           {caseStudies.map((cs, i) => (
-            <div key={i} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, padding:'14px 16px', marginBottom:8 }}>
-              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                <div style={{ fontFamily:'Barlow Condensed', fontSize:15, fontWeight:800, textTransform:'uppercase' }}>{cs.brand}</div>
-                {cs.year && <div style={{ fontFamily:'Barlow Condensed', fontSize:12, color:'var(--muted)', fontWeight:600 }}>{cs.year}</div>}
+            <div key={i} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, overflow:'hidden', marginBottom:8 }}>
+              {cs.image_url && <img src={cs.image_url} alt="" style={{ width:'100%', maxHeight:180, objectFit:'cover' }} />}
+              <div style={{ padding:'12px 16px' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                  <div style={{ fontFamily:'Barlow Condensed', fontSize:15, fontWeight:800, textTransform:'uppercase' }}>{cs.brand}</div>
+                  {cs.year && <div style={{ fontFamily:'Barlow Condensed', fontSize:12, color:'var(--muted)', fontWeight:600 }}>{cs.year}</div>}
+                </div>
+                {cs.description && <div style={{ fontSize:12, color:'var(--muted)', lineHeight:1.5 }}>{cs.description}</div>}
               </div>
-              {cs.description && <div style={{ fontSize:12, color:'var(--muted)', lineHeight:1.5 }}>{cs.description}</div>}
             </div>
           ))}
 
           {caseStudies.length === 0 && !addingCs && (
-            <div style={{ border:'1px dashed var(--border2)', borderRadius:10, padding:'24px 20px', textAlign:'center', color:'var(--muted)' }}>
-              <div style={{ fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:4 }}>No partnerships yet</div>
+            <div style={{ border:'1px dashed var(--border2)', borderRadius:10, padding:'22px 20px', textAlign:'center', color:'var(--muted)' }}>
+              <div style={{ fontFamily:'Barlow Condensed', fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:3 }}>No partnerships yet</div>
               <div style={{ fontSize:11 }}>Add brands you've worked with to build credibility</div>
             </div>
           )}
 
           {addingCs && (
-            <div style={{ background:'var(--surface)', border:'1px solid var(--border2)', borderRadius:10, padding:'16px' }}>
+            <div style={{ background:'var(--surface)', border:'1px solid var(--border2)', borderRadius:10, padding:'14px' }}>
               <div style={{ display:'grid', gridTemplateColumns:'1fr 80px', gap:8, marginBottom:8 }}>
-                <input
-                  placeholder="Brand name"
-                  value={csForm.brand}
-                  onChange={e => setCsForm(f => ({ ...f, brand: e.target.value }))}
-                  style={{ background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:6, padding:'8px 10px', color:'var(--white)', fontFamily:'Barlow', fontSize:13, outline:'none' }}
-                />
-                <input
-                  placeholder="Year"
-                  value={csForm.year}
-                  onChange={e => setCsForm(f => ({ ...f, year: e.target.value }))}
-                  style={{ background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:6, padding:'8px 10px', color:'var(--white)', fontFamily:'Barlow', fontSize:13, outline:'none' }}
-                />
+                <input placeholder="Brand name" value={csForm.brand} onChange={e => setCsForm(f=>({...f,brand:e.target.value}))}
+                  style={{ background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:6, padding:'8px 10px', color:'var(--white)', fontFamily:'Barlow', fontSize:13, outline:'none' }} />
+                <input placeholder="Year" value={csForm.year} onChange={e => setCsForm(f=>({...f,year:e.target.value}))}
+                  style={{ background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:6, padding:'8px 10px', color:'var(--white)', fontFamily:'Barlow', fontSize:13, outline:'none' }} />
               </div>
-              <textarea
-                placeholder="What did you do together? (optional)"
-                value={csForm.description}
-                onChange={e => setCsForm(f => ({ ...f, description: e.target.value }))}
-                rows={2}
-                style={{ width:'100%', background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:6, padding:'8px 10px', color:'var(--white)', fontFamily:'Barlow', fontSize:13, outline:'none', resize:'vertical', marginBottom:8, boxSizing:'border-box' }}
-              />
+              <textarea placeholder="What did you do together? (optional)" value={csForm.description} onChange={e => setCsForm(f=>({...f,description:e.target.value}))} rows={2}
+                style={{ width:'100%', background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:6, padding:'8px 10px', color:'var(--white)', fontFamily:'Barlow', fontSize:13, outline:'none', resize:'vertical', marginBottom:8, boxSizing:'border-box' }} />
+              <label style={{ display:'block', marginBottom:8, cursor:'pointer' }}>
+                <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => setCsFile(e.target.files[0])} />
+                <div style={{ border:'1px dashed var(--border2)', borderRadius:6, padding:'8px 12px', fontSize:12, color: csFile ? 'var(--lime)' : 'var(--muted)', display:'flex', alignItems:'center', gap:6 }}>
+                  <span>{csFile ? `✓ ${csFile.name}` : '+ Attach a photo (optional)'}</span>
+                </div>
+              </label>
               <div style={{ display:'flex', gap:8 }}>
-                <button onClick={saveCaseStudy} disabled={!csForm.brand || savingCs} style={{ flex:1, background:'var(--lime)', color:'#000', border:'none', borderRadius:6, padding:'9px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
+                <button onClick={saveCaseStudy} disabled={!csForm.brand||savingCs}
+                  style={{ flex:1, background:'var(--lime)', color:'#000', border:'none', borderRadius:6, padding:'9px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
                   {savingCs ? 'Saving…' : 'Save'}
                 </button>
-                <button onClick={() => { setAddingCs(false); setCsForm({ brand:'', year:'', description:'' }); }} style={{ background:'var(--surface2)', color:'var(--muted)', border:'1px solid var(--border)', borderRadius:6, padding:'9px 14px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+                <button onClick={() => { setAddingCs(false); setCsForm({brand:'',year:'',description:''}); setCsFile(null); }}
+                  style={{ background:'var(--surface2)', color:'var(--muted)', border:'1px solid var(--border)', borderRadius:6, padding:'9px 14px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, cursor:'pointer' }}>
                   Cancel
                 </button>
               </div>
@@ -691,11 +905,15 @@ function Step5({ form, setForm }) {
           )}
         </div>
 
-        {/* Done message */}
-        <div style={{ margin:'24px 24px 0', padding:'16px 20px', background:'rgba(210,255,1,0.06)', border:'1px solid rgba(210,255,1,0.2)', borderRadius:10 }}>
-          <div style={{ fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--lime)', marginBottom:4 }}>You're live</div>
-          <div style={{ fontSize:12, color:'var(--muted)', lineHeight:1.6 }}>Your profile is in the mayo network. Brands can discover you and send partnership proposals. We'll reach out when something comes in.</div>
+        {/* Live notice */}
+        <div style={{ margin:'20px 24px 0', padding:'14px 18px', background:'rgba(210,255,1,0.06)', border:'1px solid rgba(210,255,1,0.2)', borderRadius:10 }}>
+          <div style={{ fontFamily:'Barlow Condensed', fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--lime)', marginBottom:3 }}>You're live</div>
+          <div style={{ fontSize:12, color:'var(--muted)', lineHeight:1.6 }}>
+            Your profile is in the mayo network. Share it with brands directly, or wait for proposals to come in.{' '}
+            <span onClick={copyProfileLink} style={{ color:'var(--cyan)', cursor:'pointer', textDecoration:'underline' }}>Copy your profile link</span>
+          </div>
         </div>
+
       </div>
     </div>
   );
@@ -719,6 +937,9 @@ function App() {
     coverOption: 1,
     coverImageUrl: null,
     instagramConnected: false,
+    capabilities: [],
+    partnershipPrefs: '',
+    notableMembers: [],
   });
 
   useEffect(() => {
@@ -748,6 +969,9 @@ function App() {
             coverOption: data.cover_option || 1,
             coverImageUrl: data.cover_image_url || null,
             instagramConnected: igConnected || !!data.instagram_token,
+            capabilities: data.capabilities || [],
+            partnershipPrefs: data.partnership_preferences || '',
+            notableMembers: data.notable_members || [],
           }));
           if (s) setStep(s);
         });

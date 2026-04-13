@@ -58,9 +58,10 @@ def get_profile() -> dict:
             "website": str,
         }
     """
-    data = _get("/me", {"fields": "id,name,biography,followers_count,website"})
+    data = _get("/me", {"fields": "id,username,name,biography,followers_count,website"})
     return {
         "id": data.get("id"),
+        "username": data.get("username", ""),
         "name": data.get("name"),
         "biography": data.get("biography", ""),
         "followers_count": data.get("followers_count", 0),
@@ -82,7 +83,7 @@ def get_media(user_id: str) -> list[dict]:
     data = _get(
         f"/{user_id}/media",
         {
-            "fields": "id,caption,like_count,comments_count,saved_count,timestamp,media_type",
+            "fields": "id,caption,like_count,comments_count,saved_count,timestamp,media_type,media_url,thumbnail_url",
             "limit": 20,
         },
     )

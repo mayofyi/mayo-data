@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mayo — community profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+:root {
+  --lime: #d2ff01;
+  --yellow: #ffea12;
+  --black: #080808;
+  --surface: #111111;
+  --surface2: #1a1a1a;
+  --surface3: #222222;
+  --white: #f0f0f0;
+  --muted: #888;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --cyan: #b1ecf0;
+  --pink: #ff6ef2;
+  --orange: #ffab40;
+  --green: #b3ff9e;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { min-height:100%; background: var(--black); color: var(--white); font-family: 'Barlow', sans-serif; font-size: 14px; line-height: 1.5; }
+.bb { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.03em; }
+.bc { font-family: 'Barlow Condensed', sans-serif; }
+::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: var(--surface3); }
+.tier-badge { display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
+a { color: inherit; }
+</style>
+</head>
+<body>
+<div id="cid" style="display:none">{{ community_id }}</div>
+<div id="root"></div>
+{% raw %}<script type="text/babel">
+
+const COVER_OPTIONS = [
+  { id:1, gradient:'linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 70%,#533483 100%)', label:'Night Run' },
+  { id:2, gradient:'linear-gradient(135deg,#0d0d0d 0%,#1a0a00 40%,#3d1c00 70%,#c43a00 100%)', label:'Desert Heat' },
+  { id:3, gradient:'linear-gradient(135deg,#0a1628 0%,#1b3a4b 50%,#2d6a4f 100%)', label:'Forest Trail' },
+  { id:4, gradient:'linear-gradient(135deg,#1a0a00 0%,#3d2b1f 40%,#8a6a40 70%,#c4a060 100%)', label:'Desert Sand' },
+  { id:5, gradient:'linear-gradient(135deg,#0d0d1a 0%,#1a1a3e 40%,#2d1b69 70%,#6b2d8b 100%)', label:'Deep Purple' },
+  { id:6, gradient:'linear-gradient(135deg,#001a0a 0%,#003d1a 40%,#006b2d 70%,#00a844 100%)', label:'Pitch Green' },
+  { id:7, gradient:'linear-gradient(135deg,#1a0010 0%,#3d0028 40%,#7a0050 70%,#c40080 100%)', label:'Electric Pink' },
+  { id:8, gradient:'linear-gradient(135deg,#0a0a00 0%,#1a1a00 40%,#3d3d00 70%,#7a7a00 100%)', label:'Midnight Gold' },
+];
+
+const IgIcon = ({size=16, color='currentColor'}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+  </svg>
+);
+
+const SubstackIcon = ({size=16, color='currentColor'}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
+    <path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/>
+  </svg>
+);
+
+const GlobeIcon = ({size=16, color='currentColor'}) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="12" r="10"/>
+    <line x1="2" y1="12" x2="22" y2="12"/>
+    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+  </svg>
+);
+
+function TierBadge({ tier }) {
+  const config = {
+    'starter': { label:'Starter', color:'var(--muted)', dot:'#555' },
+    'verified': { label:'Verified', color:'var(--cyan)', dot:'var(--cyan)' },
+    'fully-verified': { label:'Fully Verified', color:'var(--lime)', dot:'var(--lime)' },
+  }[tier] || { label:'Starter', color:'var(--muted)', dot:'#555' };
+  return (
+    <span className="tier-badge" style={{ color: config.color }}>
+      <span style={{ width:6, height:6, borderRadius:'50%', background:config.dot, display:'inline-block' }} />
+      {config.label}
+    </span>
+  );
+}
+
+function ProfilePage() {
+  const communityId = document.getElementById('cid').textContent.trim();
+  const [data, setData] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!communityId) { setError(true); setLoading(false); return; }
+    fetch(`/api/community/${communityId}`)
+      .then(r => { if (!r.ok) throw new Error('not found'); return r.json(); })
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => { setError(true); setLoading(false); });
+  }, []);
+
+  function copyLink() {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  if (loading) {
+    return (
+      <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--muted)', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase' }}>
+        Loading…
+      </div>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <div style={{ minHeight:'100vh', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:12 }}>
+        <div className="bb" style={{ fontSize:32, color:'var(--muted)' }}>Profile Not Found</div>
+        <div style={{ fontSize:13, color:'var(--muted)' }}>This community profile doesn't exist or has been removed.</div>
+        <a href="/" style={{ marginTop:8, fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--lime)', textDecoration:'none' }}>← Back to mayo</a>
+      </div>
+    );
+  }
+
+  const coverOption = data.cover_option || 1;
+  const coverObj = COVER_OPTIONS.find(o => o.id === coverOption) || COVER_OPTIONS[0];
+  const coverBg = data.cover_image_url ? `url(${data.cover_image_url}) center/cover no-repeat` : coverObj.gradient;
+
+  const igData = data.instagram_data || {};
+  const igProfile = igData.profile || {};
+  const igPosts = (igData.media || []).filter(p => p.media_url || p.thumbnail_url);
+
+  const igConnected = !!data.instagram_token || !!data.instagram_user_id;
+  const substackConnected = !!data.substack_url;
+  const connectedCount = [igConnected, substackConnected].filter(Boolean).length;
+  const tier = connectedCount >= 2 ? 'fully-verified' : connectedCount >= 1 ? 'verified' : 'starter';
+
+  const tags = data.tags || [];
+  const capabilities = data.capabilities || [];
+  const partnershipPrefs = data.partnership_preferences || '';
+  const mediaItems = data.media_items || [];
+  const caseStudies = data.case_studies || [];
+  const notableMembers = data.notable_members || [];
+
+  return (
+    <div style={{ minHeight:'100vh', background:'var(--black)' }}>
+      <div style={{ width:'100%', maxWidth:640, margin:'0 auto', paddingBottom:80 }}>
+
+        {/* Top bar */}
+        <div style={{ padding:'20px 24px 0', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <a href="/" style={{ textDecoration:'none' }}>
+            <div className="bb" style={{ fontSize:22, letterSpacing:'0.04em', color:'var(--white)' }}>mayo<span style={{ color:'var(--lime)' }}>.</span></div>
+          </a>
+          <button
+            onClick={copyLink}
+            style={{ background:copied?'var(--lime)':'var(--surface2)', color:copied?'#000':'var(--white)', border:'1px solid var(--border2)', borderRadius:6, padding:'6px 14px', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer', transition:'all 0.2s' }}>
+            {copied ? '✓ Copied' : 'Copy Profile Link'}
+          </button>
+        </div>
+
+        {/* Face card */}
+        <div style={{ margin:'16px 24px 0', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)' }}>
+          <div style={{ aspectRatio:'16/7', position:'relative', background:coverBg }}>
+            <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(0,0,0,0.04),rgba(0,0,0,0.84))' }} />
+            <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'44px 22px 18px' }}>
+              <div className="bb" style={{ fontSize:32, color:'#fff', lineHeight:1, marginBottom:5 }}>{data.name}</div>
+              {data.tagline && <div style={{ fontSize:13, color:'rgba(255,255,255,0.75)', marginBottom:10 }}>{data.tagline}</div>}
+              {tags.length > 0 && (
+                <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginBottom:12 }}>
+                  {tags.slice(0,5).map(t => (
+                    <span key={t} style={{ border:'1px solid rgba(255,255,255,0.3)', color:'rgba(255,255,255,0.85)', borderRadius:3, padding:'2px 7px', fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>{t}</span>
+                  ))}
+                </div>
+              )}
+              <TierBadge tier={tier} />
+            </div>
+          </div>
+        </div>
+
+        {/* Profile info */}
+        <div style={{ margin:'12px 24px 0', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'18px 22px' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px 28px' }}>
+            {data.location && (
+              <div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:3 }}>Location</div>
+                <div style={{ fontSize:13 }}>{data.location}</div>
+              </div>
+            )}
+            {data.active_members && (
+              <div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:3 }}>Active Members</div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:18, fontWeight:700 }}>{Number(data.active_members).toLocaleString()}</div>
+              </div>
+            )}
+            {data.website && (
+              <div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:3 }}>Website</div>
+                <a href={data.website} target="_blank" rel="noopener noreferrer" style={{ fontSize:13, color:'var(--cyan)', display:'flex', alignItems:'center', gap:5, textDecoration:'none' }}>
+                  <GlobeIcon size={12} color="var(--cyan)" />
+                  {data.website.replace(/^https?:\/\//, '')}
+                </a>
+              </div>
+            )}
+            {(igConnected || substackConnected) && (
+              <div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:6 }}>Channels</div>
+                <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                  {igConnected && (
+                    <a href={igProfile.username ? `https://instagram.com/${igProfile.username}` : '#'} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', gap:6, textDecoration:'none', color:'#e1306c', fontSize:12, fontWeight:600 }}>
+                      <IgIcon size={14} color="#e1306c" />
+                      {igProfile.username ? `@${igProfile.username}` : 'Instagram'}
+                    </a>
+                  )}
+                  {substackConnected && (
+                    <a href={data.substack_url} target="_blank" rel="noopener noreferrer" style={{ display:'flex', alignItems:'center', gap:6, textDecoration:'none', color:'#ff6719', fontSize:12, fontWeight:600 }}>
+                      <SubstackIcon size={14} color="#ff6719" />
+                      {data.substack_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          {data.description && (
+            <div style={{ marginTop:16, paddingTop:16, borderTop:'1px solid var(--border)', fontSize:13, color:'var(--muted)', lineHeight:1.7 }}>{data.description}</div>
+          )}
+        </div>
+
+        {/* Capabilities */}
+        {capabilities.length > 0 && (
+          <div style={{ margin:'12px 24px 0', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'18px 22px' }}>
+            <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em', marginBottom:12 }}>What We Offer</div>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:7 }}>
+              {capabilities.map(cap => (
+                <span key={cap} style={{ padding:'5px 11px', borderRadius:4, border:'1px solid var(--border2)', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--white)' }}>{cap}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Partnership preferences */}
+        {partnershipPrefs && (
+          <div style={{ margin:'12px 24px 0', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'18px 22px' }}>
+            <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em', marginBottom:10 }}>What We Look For</div>
+            <div style={{ fontSize:13, color:'var(--muted)', lineHeight:1.75, fontStyle:'italic', borderLeft:'2px solid var(--lime)', paddingLeft:14 }}>"{partnershipPrefs}"</div>
+          </div>
+        )}
+
+        {/* Instagram post grid */}
+        {igPosts.length > 0 && (
+          <div style={{ margin:'16px 24px 0' }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+              <div className="bb" style={{ fontSize:20, letterSpacing:'0.03em' }}>Latest Posts</div>
+              <IgIcon size={14} color="var(--muted)" />
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:4 }}>
+              {igPosts.slice(0,9).map((post, i) => (
+                <div key={i} style={{ aspectRatio:'1', borderRadius:6, overflow:'hidden', background:'var(--surface2)', border:'1px solid var(--border)' }}>
+                  <img src={post.media_url || post.thumbnail_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Photos & Events */}
+        {mediaItems.length > 0 && (
+          <div style={{ margin:'16px 24px 0' }}>
+            <div className="bb" style={{ fontSize:20, letterSpacing:'0.03em', marginBottom:12 }}>Photos &amp; Events</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6 }}>
+              {mediaItems.map((item, i) => (
+                <div key={i} style={{ aspectRatio:'1', borderRadius:8, overflow:'hidden', background:'var(--surface2)', border:'1px solid var(--border)' }}>
+                  <img src={item.url} alt={item.caption||''} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Notable Members */}
+        {notableMembers.length > 0 && (
+          <div style={{ margin:'16px 24px 0' }}>
+            <div className="bb" style={{ fontSize:20, letterSpacing:'0.03em', marginBottom:12 }}>Notable Members</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:8 }}>
+              {notableMembers.map((m, i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10 }}>
+                  <div style={{ width:40, height:40, borderRadius:'50%', background:'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed', fontSize:16, fontWeight:700, color:'var(--muted)', flexShrink:0 }}>
+                    {(m.name||'?')[0].toUpperCase()}
+                  </div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:13, fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.name}</div>
+                    {m.ig_handle && (
+                      <a href={`https://instagram.com/${m.ig_handle}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'var(--muted)', textDecoration:'none', display:'flex', alignItems:'center', gap:3, marginTop:1 }}>
+                        <IgIcon size={10} color="var(--muted)" />@{m.ig_handle}
+                      </a>
+                    )}
+                    {m.role && <div style={{ fontSize:10, color:'var(--muted)', fontFamily:'Barlow Condensed', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', marginTop:2 }}>{m.role}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Past Partnerships */}
+        {caseStudies.length > 0 && (
+          <div style={{ margin:'16px 24px 0' }}>
+            <div className="bb" style={{ fontSize:20, letterSpacing:'0.03em', marginBottom:12 }}>Past Partnerships</div>
+            {caseStudies.map((cs, i) => (
+              <div key={i} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, overflow:'hidden', marginBottom:10 }}>
+                {cs.image_url && (
+                  <img src={cs.image_url} alt="" style={{ width:'100%', maxHeight:200, objectFit:'cover', display:'block' }} />
+                )}
+                <div style={{ padding:'14px 18px' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:5 }}>
+                    <div style={{ fontFamily:'Barlow Condensed', fontSize:16, fontWeight:800, textTransform:'uppercase' }}>{cs.brand}</div>
+                    {cs.year && <div style={{ fontFamily:'Barlow Condensed', fontSize:12, color:'var(--muted)', fontWeight:600 }}>{cs.year}</div>}
+                  </div>
+                  {cs.description && <div style={{ fontSize:13, color:'var(--muted)', lineHeight:1.6 }}>{cs.description}</div>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Footer */}
+        <div style={{ margin:'40px 24px 0', paddingTop:24, borderTop:'1px solid var(--border)', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--muted)' }}>
+            Powered by <a href="/" style={{ color:'var(--lime)', textDecoration:'none' }}>mayo.</a>
+          </div>
+          <a href="/" style={{ fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--cyan)', textDecoration:'none' }}>Join the network →</a>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<ProfilePage />);
+</script>{% endraw %}
+</body>
+</html>

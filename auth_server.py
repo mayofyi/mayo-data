@@ -61,6 +61,9 @@ def init_db():
                     instagram_user_id TEXT,
                     instagram_data JSONB,
                     instagram_connected_at TIMESTAMP,
+                    notable_members JSONB DEFAULT '[]',
+                    partnership_preferences TEXT,
+                    capabilities TEXT[],
                     media_items JSONB DEFAULT '[]',
                     case_studies JSONB DEFAULT '[]',
                     created_at TIMESTAMP DEFAULT NOW(),
@@ -74,6 +77,9 @@ def init_db():
                 ("case_studies", "JSONB DEFAULT '[]'"),
                 ("leader_name", "TEXT"),
                 ("email", "TEXT"),
+                ("notable_members", "JSONB DEFAULT '[]'"),
+                ("partnership_preferences", "TEXT"),
+                ("capabilities", "TEXT[]"),
             ]:
                 cur.execute(f"""
                     ALTER TABLE communities ADD COLUMN IF NOT EXISTS {col} {typedef}
@@ -117,8 +123,8 @@ def create_community():
         with conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO communities
-                    (id, name, tagline, location, description, tags, active_members, website, cover_option, leader_name, email)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    (id, name, tagline, location, description, tags, active_members, website, cover_option, leader_name, email, capabilities, partnership_preferences)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 community_id,
                 data.get("name"),
@@ -131,6 +137,8 @@ def create_community():
                 data.get("cover_option", 1),
                 data.get("leader_name"),
                 data.get("email"),
+                data.get("capabilities", []),
+                data.get("partnership_preferences"),
             ))
         conn.commit()
     return jsonify({"id": community_id})
@@ -152,7 +160,7 @@ def update_community(community_id):
     data = request.json or {}
     allowed = ["name", "tagline", "location", "description", "tags",
                "active_members", "website", "cover_option", "substack_url",
-               "leader_name", "email"]
+               "leader_name", "email", "partnership_preferences", "capabilities"]
     fields, values = [], []
     for field in allowed:
         if field in data:
@@ -226,17 +234,50 @@ def upload_media(community_id):
 
 @app.route("/api/community/<community_id>/case-study", methods=["POST"])
 def add_case_study(community_id):
-    data = request.json or {}
-    entry = {
-        "brand": data.get("brand", ""),
-        "year": data.get("year", ""),
-        "description": data.get("description", ""),
-    }
+    image_url = None
+    if request.content_type and "multipart" in request.content_type:
+        brand = request.form.get("brand", "")
+        year = request.form.get("year", "")
+        description = request.form.get("description", "")
+        file = request.files.get("file")
+        if file and file.filename:
+            ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
+            path = f"case-studies/{community_id}/{int(time.time())}.{ext}"
+            image_url = upload_to_supabase(file.read(), path, file.content_type or "image/jpeg")
+    else:
+        data = request.json or {}
+        brand = data.get("brand", "")
+        year = data.get("year", "")
+        description = data.get("description", "")
+    entry = {"brand": brand, "year": year, "description": description}
+    if image_url:
+        entry["image_url"] = image_url
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """UPDATE communities
                    SET case_studies = COALESCE(case_studies, '[]'::jsonb) || %s::jsonb,
+                       updated_at = NOW()
+                   WHERE id = %s""",
+                (psycopg2.extras.Json([entry]), community_id),
+            )
+        conn.commit()
+    return jsonify({"ok": True, "entry": entry})
+
+
+@app.route("/api/community/<community_id>/notable-member", methods=["POST"])
+def add_notable_member(community_id):
+    data = request.json or {}
+    entry = {
+        "name": data.get("name", ""),
+        "ig_handle": data.get("ig_handle", "").lstrip("@"),
+        "role": data.get("role", ""),
+    }
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """UPDATE communities
+                   SET notable_members = COALESCE(notable_members, '[]'::jsonb) || %s::jsonb,
                        updated_at = NOW()
                    WHERE id = %s""",
                 (psycopg2.extras.Json([entry]), community_id),
@@ -355,6 +396,11 @@ def admin_communities():
                 d[k] = v.isoformat()
         result.append(d)
     return jsonify(result)
+
+
+@app.route("/profile/<community_id>")
+def public_profile(community_id):
+    return render_template("profile.html", community_id=community_id)
 
 
 if __name__ == "__main__":
