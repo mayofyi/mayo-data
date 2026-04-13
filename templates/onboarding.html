@@ -587,8 +587,6 @@ function Step4({ onNext, onBack, form, setForm }) {
         body: JSON.stringify({
           capabilities: form.capabilities,
           partnership_preferences: form.partnershipPrefs,
-          archetype: form.archetype || null,
-          archetype_source: form.archetype ? 'community_suggested' : null,
         }),
       });
     }
@@ -609,21 +607,6 @@ function Step4({ onNext, onBack, form, setForm }) {
           <div style={{ fontSize:13, color:'var(--muted)' }}>Tell brands what you bring and who you're looking to work with.</div>
         </div>
         <div className="onboarding-body" style={{ maxHeight:'62vh', overflowY:'auto' }}>
-
-          {/* Archetype */}
-          <div className="form-group">
-            <label className="label">How would you describe your community?</label>
-            <div style={{ fontSize:12, color:'var(--muted)', marginBottom:10 }}>Pick the one that fits best — this helps brands understand how your community engages.</div>
-            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
-              {ARCHETYPES.map(a => (
-                <button key={a.id} onClick={() => setForm(f => ({ ...f, archetype: f.archetype === a.id ? '' : a.id }))}
-                  style={{ background: form.archetype===a.id ? a.color+'18' : 'var(--surface2)', border: form.archetype===a.id ? `1.5px solid ${a.color}` : '1px solid var(--border)', borderRadius:8, padding:'12px 14px', cursor:'pointer', textAlign:'left', transition:'all 0.15s' }}>
-                  <div style={{ fontFamily:'Bebas Neue', fontSize:18, letterSpacing:'0.03em', color: form.archetype===a.id ? a.color : 'var(--white)', marginBottom:4 }}>{a.label}</div>
-                  <div style={{ fontSize:11, color:'var(--muted)', lineHeight:1.5 }}>{a.desc}</div>
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Capabilities */}
           <div className="form-group">
@@ -978,7 +961,7 @@ function Step6({ form, setForm }) {
           </div>
         )}
 
-        {/* Archetype card */}
+        {/* Archetype card — only shown once Mayo assigns one */}
         {form.archetype && (() => {
           const a = ARCHETYPES.find(x => x.id === form.archetype);
           if (!a) return null;
@@ -991,7 +974,7 @@ function Step6({ form, setForm }) {
                 <span style={{ fontSize:11, color:a.color+'99', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>Best for</span>
                 <span style={{ background:a.color+'20', border:`1px solid ${a.color}44`, color:a.color, fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', padding:'3px 10px', borderRadius:4 }}>{a.best}</span>
               </div>
-              <div style={{ marginTop:6, fontSize:10, color:'#555', fontFamily:'Barlow Condensed', textTransform:'uppercase', letterSpacing:'0.05em' }}>Self-identified · Subject to Mayo review</div>
+              <div style={{ marginTop:6, fontSize:10, color:'var(--lime)', fontFamily:'Barlow Condensed', textTransform:'uppercase', letterSpacing:'0.05em' }}>★ Mayo assigned</div>
             </div>
           );
         })()}

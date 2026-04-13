@@ -349,10 +349,11 @@ function openCommunity(id) {
     <!-- Archetype -->
     <div style="padding:12px 28px 0">
       <div class="panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <div class="section-label" style="margin-bottom:0">Community Archetype</div>
-          ${c.archetype_source ? `<span style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:${c.archetype_source==='mayo_assigned'?'var(--lime)':'var(--muted)'}">${c.archetype_source==='mayo_assigned'?'★ Mayo assigned':'Community suggested'}</span>` : ''}
+          ${c.archetype ? '<span style="color:var(--lime);font-family:\'Barlow Condensed\';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em">★ Mayo assigned</span>' : ''}
         </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Assigned by Mayo based on posting behaviour, purchase signals, and member interaction patterns — not self-reported.</div>
         ${c.archetype ? (() => { const a = ARCHETYPES.find(x=>x.id===c.archetype); return a ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-family:'Bebas Neue';font-size:22px;color:${a.color}">${a.label}</span><span style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:3px">${a.best}</span></div>` : ''; })() : '<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Not set — assign below</div>'}
         <div style="display:flex;align-items:center;gap:8px">
           <select id="arch-select-${c.id}" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:7px 10px;color:var(--white);font-family:'Barlow Condensed';font-size:13px;font-weight:600">
@@ -493,6 +494,7 @@ async function assignArchetype(communityId) {
   await fetch(`/api/community/${communityId}`, {
     method:'PUT', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ archetype: val || null, archetype_source: val ? 'mayo_assigned' : null }),
+    // Archetype is always Mayo-assigned — never self-reported by community
   });
   const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
   communities = await res.json();

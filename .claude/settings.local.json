@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(pip3 install:*)"
+      "Bash(pip3 install:*)",
+      "Bash(python3 -m py_compile auth_server.py)",
+      "Bash(python3 -m py_compile connectors/instagram.py)",
+      "Bash(python3 -m py_compile auth_server.py connectors/instagram.py)"
     ]
   }
 }
