@@ -188,6 +188,8 @@ function renderTable() {
               <td colspan="7" style="padding:0 14px 14px">
                 <div class="detail-panel open">
                   <div class="detail-grid">
+                    <div class="detail-item"><label>Leader</label><span>${c.leader_name || '—'}</span></div>
+                    <div class="detail-item"><label>Email</label><span>${c.email ? `<a href="mailto:${c.email}" style="color:var(--cyan)">${c.email}</a>` : '—'}</span></div>
                     <div class="detail-item"><label>Active Members</label><span>${c.active_members ?? '—'} <span style="color:var(--muted);font-size:11px">(community-reported)</span></span></div>
                     <div class="detail-item"><label>Website</label><span>${c.website ? `<a href="${c.website}" target="_blank" style="color:var(--cyan)">${c.website}</a>` : '—'}</span></div>
                     <div class="detail-item"><label>Substack</label><span>${c.substack_url ? `<a href="${c.substack_url}" target="_blank" style="color:var(--cyan)">${c.substack_url}</a>` : '—'}</span></div>

@@ -154,7 +154,7 @@ function Step2({ onNext, onBack, form, setForm }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const canContinue = form.name.trim() && form.tagline.trim() && form.description.trim();
+  const canContinue = form.leaderName.trim() && form.email.trim() && form.name.trim() && form.tagline.trim() && form.description.trim();
 
   async function handleSubmit() {
     setLoading(true);
@@ -164,6 +164,8 @@ function Step2({ onNext, onBack, form, setForm }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          leader_name: form.leaderName,
+          email: form.email,
           name: form.name,
           tagline: form.tagline,
           location: form.location,
@@ -197,6 +199,16 @@ function Step2({ onNext, onBack, form, setForm }) {
           <div style={{ fontSize:13, color:'var(--muted)' }}>This is what brands see when they find you. Make it count.</div>
         </div>
         <div className="onboarding-body" style={{ maxHeight:'60vh', overflowY:'auto' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12 }}>
+            <div className="form-group">
+              <label className="label">Your Name *</label>
+              <input className="input" placeholder="e.g. Jordan Lee" value={form.leaderName} onChange={e => setForm(f=>({...f,leaderName:e.target.value}))} />
+            </div>
+            <div className="form-group">
+              <label className="label">Email *</label>
+              <input className="input" type="email" placeholder="you@example.com" value={form.email} onChange={e => setForm(f=>({...f,email:e.target.value}))} />
+            </div>
+          </div>
           <div className="form-group">
             <label className="label">Community Name *</label>
             <input className="input" placeholder="" value={form.name} onChange={e => setForm(f=>({...f,name:e.target.value}))} />
@@ -694,6 +706,8 @@ function App() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
     communityId: null,
+    leaderName: '',
+    email: '',
     name: '',
     tagline: '',
     location: '',
@@ -721,6 +735,8 @@ function App() {
           setForm(f => ({
             ...f,
             communityId: cid,
+            leaderName: data.leader_name || '',
+            email: data.email || '',
             name: data.name || '',
             tagline: data.tagline || '',
             location: data.location || '',

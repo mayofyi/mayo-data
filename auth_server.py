@@ -6,6 +6,7 @@ stores community profiles in PostgreSQL, and runs the data pipeline.
 
 import os
 import threading
+import time
 import uuid
 
 import psycopg2
@@ -20,12 +21,16 @@ META_APP_ID = os.getenv("META_APP_ID")
 META_APP_SECRET = os.getenv("META_APP_SECRET")
 REDIRECT_URI = os.getenv("REDIRECT_URI")
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "mayo-admin")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "")
+SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+STORAGE_BUCKET = "mayo-assets"
+
+app = Flask(__name__)
+app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10MB upload limit
 
 # Render uses postgres:// but psycopg2 requires postgresql://
 _db_url = os.getenv("DATABASE_URL", "").replace("postgres://", "postgresql://", 1)
 DATABASE_URL = _db_url if "sslmode" in _db_url else _db_url + "?sslmode=require"
-
-app = Flask(__name__)
 
 
 # ── Database ───────────────────────────────────────────────────────────────────
@@ -48,15 +53,31 @@ def init_db():
                     active_members INTEGER,
                     website TEXT,
                     cover_option INTEGER DEFAULT 1,
+                    cover_image_url TEXT,
+                    leader_name TEXT,
+                    email TEXT,
                     substack_url TEXT,
                     instagram_token TEXT,
                     instagram_user_id TEXT,
                     instagram_data JSONB,
                     instagram_connected_at TIMESTAMP,
+                    media_items JSONB DEFAULT '[]',
+                    case_studies JSONB DEFAULT '[]',
                     created_at TIMESTAMP DEFAULT NOW(),
                     updated_at TIMESTAMP DEFAULT NOW()
                 )
             """)
+            # Add new columns to existing tables
+            for col, typedef in [
+                ("cover_image_url", "TEXT"),
+                ("media_items", "JSONB DEFAULT '[]'"),
+                ("case_studies", "JSONB DEFAULT '[]'"),
+                ("leader_name", "TEXT"),
+                ("email", "TEXT"),
+            ]:
+                cur.execute(f"""
+                    ALTER TABLE communities ADD COLUMN IF NOT EXISTS {col} {typedef}
+                """)
         conn.commit()
 
 
@@ -96,8 +117,8 @@ def create_community():
         with conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO communities
-                    (id, name, tagline, location, description, tags, active_members, website, cover_option)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    (id, name, tagline, location, description, tags, active_members, website, cover_option, leader_name, email)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 community_id,
                 data.get("name"),
@@ -108,6 +129,8 @@ def create_community():
                 data.get("active_members") or None,
                 data.get("website"),
                 data.get("cover_option", 1),
+                data.get("leader_name"),
+                data.get("email"),
             ))
         conn.commit()
     return jsonify({"id": community_id})
@@ -128,7 +151,8 @@ def get_community(community_id):
 def update_community(community_id):
     data = request.json or {}
     allowed = ["name", "tagline", "location", "description", "tags",
-               "active_members", "website", "cover_option", "substack_url"]
+               "active_members", "website", "cover_option", "substack_url",
+               "leader_name", "email"]
     fields, values = [], []
     for field in allowed:
         if field in data:
@@ -142,6 +166,80 @@ def update_community(community_id):
             cur.execute(
                 f"UPDATE communities SET {', '.join(fields)}, updated_at = NOW() WHERE id = %s",
                 values
+            )
+        conn.commit()
+    return jsonify({"ok": True})
+
+
+# ── Supabase Storage ──────────────────────────────────────────────────────────
+
+def upload_to_supabase(file_bytes, path, content_type):
+    url = f"{SUPABASE_URL}/storage/v1/object/{STORAGE_BUCKET}/{path}"
+    headers = {
+        "Authorization": f"Bearer {SUPABASE_SERVICE_KEY}",
+        "Content-Type": content_type,
+    }
+    resp = requests.post(url, data=file_bytes, headers=headers, timeout=30)
+    resp.raise_for_status()
+    return f"{SUPABASE_URL}/storage/v1/object/public/{STORAGE_BUCKET}/{path}"
+
+
+@app.route("/api/community/<community_id>/cover", methods=["POST"])
+def upload_cover(community_id):
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "No file"}), 400
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
+    path = f"covers/{community_id}/cover.{ext}"
+    url = upload_to_supabase(file.read(), path, file.content_type or "image/jpeg")
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE communities SET cover_image_url = %s, updated_at = NOW() WHERE id = %s",
+                (url, community_id),
+            )
+        conn.commit()
+    return jsonify({"url": url})
+
+
+@app.route("/api/community/<community_id>/media", methods=["POST"])
+def upload_media(community_id):
+    file = request.files.get("file")
+    caption = request.form.get("caption", "")
+    if not file:
+        return jsonify({"error": "No file"}), 400
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
+    path = f"media/{community_id}/{int(time.time())}.{ext}"
+    url = upload_to_supabase(file.read(), path, file.content_type or "image/jpeg")
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """UPDATE communities
+                   SET media_items = COALESCE(media_items, '[]'::jsonb) || %s::jsonb,
+                       updated_at = NOW()
+                   WHERE id = %s""",
+                (psycopg2.extras.Json([{"url": url, "caption": caption}]), community_id),
+            )
+        conn.commit()
+    return jsonify({"url": url, "caption": caption})
+
+
+@app.route("/api/community/<community_id>/case-study", methods=["POST"])
+def add_case_study(community_id):
+    data = request.json or {}
+    entry = {
+        "brand": data.get("brand", ""),
+        "year": data.get("year", ""),
+        "description": data.get("description", ""),
+    }
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """UPDATE communities
+                   SET case_studies = COALESCE(case_studies, '[]'::jsonb) || %s::jsonb,
+                       updated_at = NOW()
+                   WHERE id = %s""",
+                (psycopg2.extras.Json([entry]), community_id),
             )
         conn.commit()
     return jsonify({"ok": True})
