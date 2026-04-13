@@ -61,6 +61,7 @@ def init_db():
                     instagram_user_id TEXT,
                     instagram_data JSONB,
                     instagram_connected_at TIMESTAMP,
+                    substack_data JSONB,
                     notable_members JSONB DEFAULT '[]',
                     partnership_preferences TEXT,
                     capabilities TEXT[],
@@ -80,6 +81,7 @@ def init_db():
                 ("notable_members", "JSONB DEFAULT '[]'"),
                 ("partnership_preferences", "TEXT"),
                 ("capabilities", "TEXT[]"),
+                ("substack_data", "JSONB"),
             ]:
                 cur.execute(f"""
                     ALTER TABLE communities ADD COLUMN IF NOT EXISTS {col} {typedef}
@@ -111,6 +113,42 @@ def run_instagram_pipeline(community_id, token):
         print(f"[pipeline] Completed for community {community_id}")
     except Exception as e:
         print(f"[pipeline] Error for community {community_id}: {e}")
+
+
+def run_substack_pipeline(community_id, substack_url):
+    try:
+        import xml.etree.ElementTree as ET
+        feed_url = substack_url.rstrip('/') + '/feed'
+        resp = requests.get(feed_url, timeout=15, headers={'User-Agent': 'Mozilla/5.0'})
+        resp.raise_for_status()
+        root = ET.fromstring(resp.content)
+        channel = root.find('channel')
+        posts = []
+        for item in (channel.findall('item') if channel is not None else [])[:10]:
+            enclosure = item.find('enclosure')
+            media_content = item.find('{http://search.yahoo.com/mrss/}content')
+            image_url = None
+            if enclosure is not None and enclosure.get('type', '').startswith('image'):
+                image_url = enclosure.get('url')
+            elif media_content is not None:
+                image_url = media_content.get('url')
+            posts.append({
+                'title': (item.findtext('title') or '').strip(),
+                'link': (item.findtext('link') or '').strip(),
+                'date': (item.findtext('pubDate') or '').strip(),
+                'excerpt': (item.findtext('description') or '')[:200],
+                'image_url': image_url,
+            })
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    "UPDATE communities SET substack_data = %s, updated_at = NOW() WHERE id = %s",
+                    (psycopg2.extras.Json({'posts': posts}), community_id)
+                )
+            conn.commit()
+        print(f"[substack] Fetched {len(posts)} posts for {community_id}")
+    except Exception as e:
+        print(f"[substack] Error for {community_id}: {e}")
 
 
 # ── Community API ──────────────────────────────────────────────────────────────
@@ -176,6 +214,13 @@ def update_community(community_id):
                 values
             )
         conn.commit()
+    if data.get("substack_url"):
+        thread = threading.Thread(
+            target=run_substack_pipeline,
+            args=(community_id, data["substack_url"]),
+            daemon=True,
+        )
+        thread.start()
     return jsonify({"ok": True})
 
 
@@ -234,24 +279,24 @@ def upload_media(community_id):
 
 @app.route("/api/community/<community_id>/case-study", methods=["POST"])
 def add_case_study(community_id):
-    image_url = None
+    images = []
     if request.content_type and "multipart" in request.content_type:
         brand = request.form.get("brand", "")
         year = request.form.get("year", "")
         description = request.form.get("description", "")
-        file = request.files.get("file")
-        if file and file.filename:
-            ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
-            path = f"case-studies/{community_id}/{int(time.time())}.{ext}"
-            image_url = upload_to_supabase(file.read(), path, file.content_type or "image/jpeg")
+        files = request.files.getlist("files")
+        for i, file in enumerate(files):
+            if file and file.filename:
+                ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
+                path = f"case-studies/{community_id}/{int(time.time())}_{i}.{ext}"
+                url = upload_to_supabase(file.read(), path, file.content_type or "image/jpeg")
+                images.append(url)
     else:
         data = request.json or {}
         brand = data.get("brand", "")
         year = data.get("year", "")
         description = data.get("description", "")
-    entry = {"brand": brand, "year": year, "description": description}
-    if image_url:
-        entry["image_url"] = image_url
+    entry = {"brand": brand, "year": year, "description": description, "images": images}
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(

@@ -83,7 +83,7 @@ def get_media(user_id: str) -> list[dict]:
     data = _get(
         f"/{user_id}/media",
         {
-            "fields": "id,caption,like_count,comments_count,saved_count,timestamp,media_type,media_url,thumbnail_url",
+            "fields": "id,caption,like_count,comments_count,saved_count,timestamp,media_type,media_url,thumbnail_url,permalink",
             "limit": 20,
         },
     )

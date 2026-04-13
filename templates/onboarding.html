@@ -78,7 +78,7 @@ textarea.input { resize:none; }
 {% raw %}<script type="text/babel">
 const { useState, useEffect } = React;
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 const INTEREST_TAGS = [
   'Running','Fitness','Wellness','Cycling','Swimming','Tennis',
@@ -124,6 +124,102 @@ const GlobeIcon = ({size=16, color='currentColor'}) => (
     <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
   </svg>
 );
+
+const AVATAR_COLORS = [
+  { bg:'#d2ff01', text:'#000' }, { bg:'#b1ecf0', text:'#000' },
+  { bg:'#ff6ef2', text:'#000' }, { bg:'#ffab40', text:'#000' },
+  { bg:'#b3ff9e', text:'#000' }, { bg:'#ffea12', text:'#000' },
+  { bg:'#ff6b6b', text:'#000' },
+];
+function avatarColor(name) {
+  let h = 0;
+  for (let i = 0; i < (name||'').length; i++) h = ((h << 5) - h + (name||'').charCodeAt(i)) | 0;
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+
+function Lightbox({ images, startIndex, onClose }) {
+  const [idx, setIdx] = React.useState(startIndex || 0);
+  React.useEffect(() => {
+    const h = e => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight') setIdx(i => Math.min(i+1, images.length-1));
+      if (e.key === 'ArrowLeft') setIdx(i => Math.max(i-1, 0));
+    };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, [images.length]);
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.93)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div onClick={e => e.stopPropagation()} style={{ position:'relative', display:'flex', alignItems:'center', gap:12 }}>
+        {images.length > 1 && (
+          <button onClick={() => setIdx(i => Math.max(i-1,0))} disabled={idx===0}
+            style={{ background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'50%', width:40, height:40, color:'#fff', fontSize:20, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:idx===0?0.3:1 }}>‹</button>
+        )}
+        <img src={images[idx]} alt="" style={{ maxWidth:'80vw', maxHeight:'85vh', objectFit:'contain', borderRadius:8, display:'block' }} />
+        {images.length > 1 && (
+          <button onClick={() => setIdx(i => Math.min(i+1,images.length-1))} disabled={idx===images.length-1}
+            style={{ background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'50%', width:40, height:40, color:'#fff', fontSize:20, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:idx===images.length-1?0.3:1 }}>›</button>
+        )}
+        <button onClick={onClose} style={{ position:'absolute', top:-14, right:images.length>1?-14:-14, background:'rgba(255,255,255,0.15)', border:'none', borderRadius:'50%', width:30, height:30, color:'#fff', fontSize:14, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+        {images.length > 1 && (
+          <div style={{ position:'absolute', bottom:-24, left:'50%', transform:'translateX(-50%)', color:'rgba(255,255,255,0.5)', fontSize:11, fontFamily:'Barlow Condensed', fontWeight:600 }}>{idx+1} / {images.length}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PostCarousel({ igPosts, substackPosts }) {
+  const ig = (igPosts||[]).filter(p => p.media_url||p.thumbnail_url).map(p => ({ ...p, _type:'ig' }));
+  const sub = (substackPosts||[]).map(p => ({ ...p, _type:'sub' }));
+  const all = [...ig, ...sub].sort((a,b) => {
+    const da = new Date(a.timestamp||a.date||0), db = new Date(b.timestamp||b.date||0);
+    return db - da;
+  });
+  if (!all.length) return null;
+  return (
+    <div>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+        <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em' }}>Latest</div>
+        <div style={{ display:'flex', gap:5 }}>
+          {ig.length>0 && <IgIcon size={12} color="var(--muted)" />}
+          {sub.length>0 && <SubstackIcon size={12} color="var(--muted)" />}
+        </div>
+      </div>
+      <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:8, scrollSnapType:'x mandatory', WebkitOverflowScrolling:'touch', msOverflowStyle:'none', scrollbarWidth:'none' }}>
+        {all.map((post, i) => (
+          post._type === 'ig' ? (
+            <a key={i} href={post.permalink||'#'} target="_blank" rel="noopener noreferrer"
+              style={{ flexShrink:0, width:130, height:190, borderRadius:8, overflow:'hidden', display:'block', position:'relative', scrollSnapAlign:'start', textDecoration:'none', background:'var(--surface2)' }}>
+              <img src={post.media_url||post.thumbnail_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'22px 8px 6px', background:'linear-gradient(to top,rgba(0,0,0,0.75),transparent)' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:3, color:'#fff' }}>
+                  <IgIcon size={9} color="#fff" />
+                  {post.like_count>0 && <span style={{ fontSize:10, fontFamily:'Barlow Condensed', fontWeight:700 }}>{post.like_count.toLocaleString()}</span>}
+                </div>
+              </div>
+            </a>
+          ) : (
+            <a key={i} href={post.link||'#'} target="_blank" rel="noopener noreferrer"
+              style={{ flexShrink:0, width:130, height:190, borderRadius:8, overflow:'hidden', display:'block', position:'relative', scrollSnapAlign:'start', textDecoration:'none', background:'var(--surface2)', border:'1px solid var(--border)' }}>
+              {post.image_url
+                ? <img src={post.image_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+                : null}
+              <div style={{ position:'absolute', inset:0, padding:'10px 10px 8px', display:'flex', flexDirection:'column', justifyContent:post.image_url?'flex-end':'space-between', background:post.image_url?'linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.2) 50%,transparent 100%)':'none' }}>
+                {!post.image_url && <div style={{ fontSize:11, fontWeight:600, color:'var(--white)', lineHeight:1.4 }}>{post.title}</div>}
+                {post.image_url && <div style={{ fontSize:11, fontWeight:600, color:'#fff', lineHeight:1.35 }}>{(post.title||'').slice(0,50)}</div>}
+                <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                  <SubstackIcon size={9} color="#ff6719" />
+                  <span style={{ fontSize:9, color:'#ff6719', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em' }}>Substack</span>
+                </div>
+              </div>
+            </a>
+          )
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function StepDots({ current }) {
   return (
@@ -269,17 +365,6 @@ function Step2({ onNext, onBack, form, setForm }) {
               ))}
             </div>
           </div>
-          <div className="form-group" style={{ marginTop:18 }}>
-            <label className="label">What can your community offer? <span style={{ color:'var(--muted)', fontWeight:400, textTransform:'none', fontSize:11 }}>Pick all that apply</span></label>
-            <div className="tag-grid">
-              {CAPABILITIES.map(cap => (
-                <button key={cap} className={`tag-item ${form.capabilities.includes(cap) ? 'selected' : ''}`}
-                  onClick={() => setForm(f => ({ ...f, capabilities: f.capabilities.includes(cap) ? f.capabilities.filter(c => c !== cap) : [...f.capabilities, cap] }))}>
-                  {cap}
-                </button>
-              ))}
-            </div>
-          </div>
           {error && <div style={{ color:'#ff6b6b', fontSize:12, marginTop:12 }}>{error}</div>}
         </div>
         <div className="onboarding-footer">
@@ -297,26 +382,6 @@ function Step2({ onNext, onBack, form, setForm }) {
 function Step3({ onNext, onBack, form, setForm }) {
   const [substackInput, setSubstackInput] = useState(form.substackUrl || '');
   const [savingSubstack, setSavingSubstack] = useState(false);
-  const [notableMembers, setNotableMembers] = React.useState(form.notableMembers || []);
-  const [addingMember, setAddingMember] = React.useState(false);
-  const [memberForm, setMemberForm] = React.useState({ name: '', ig_handle: '', role: '' });
-  const [savingMember, setSavingMember] = React.useState(false);
-
-  async function saveMember() {
-    if (!memberForm.name || !memberForm.ig_handle || !form.communityId) return;
-    setSavingMember(true);
-    await fetch(`/api/community/${form.communityId}/notable-member`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(memberForm),
-    });
-    const newMember = { ...memberForm, ig_handle: memberForm.ig_handle.replace(/^@/, '') };
-    setNotableMembers(m => [...m, newMember]);
-    setForm(f => ({ ...f, notableMembers: [...(f.notableMembers || []), newMember] }));
-    setMemberForm({ name: '', ig_handle: '', role: '' });
-    setAddingMember(false);
-    setSavingMember(false);
-  }
 
   const igConnected = form.instagramConnected;
   const substackConnected = !!form.substackUrl;
@@ -418,48 +483,6 @@ function Step3({ onNext, onBack, form, setForm }) {
               💡 <strong>Not ready to connect yet?</strong> You can connect channels any time from your profile settings.
             </div>
           </div>
-
-          {/* Notable Members */}
-          <div style={{ marginTop:20, paddingTop:20, borderTop:'1px solid var(--border)' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
-              <div>
-                <div style={{ fontSize:13, fontWeight:600, marginBottom:2 }}>Notable Members</div>
-                <div style={{ fontSize:11, color:'var(--muted)' }}>People your community is known for</div>
-              </div>
-              {!addingMember && (
-                <button onClick={() => setAddingMember(true)} style={{ background:'none', border:'1px solid var(--border2)', borderRadius:6, padding:'5px 10px', cursor:'pointer', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--white)' }}>+ Add</button>
-              )}
-            </div>
-
-            {notableMembers.map((m, i) => (
-              <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, marginBottom:6 }}>
-                <div style={{ width:32, height:32, borderRadius:'50%', background:'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, color:'var(--muted)', flexShrink:0 }}>
-                  {(m.name||'?')[0].toUpperCase()}
-                </div>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:13, fontWeight:600 }}>{m.name}</div>
-                  {m.ig_handle && <div style={{ fontSize:11, color:'var(--muted)' }}>@{m.ig_handle}</div>}
-                </div>
-                {m.role && <div style={{ fontSize:11, color:'var(--muted)', fontFamily:'Barlow Condensed', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{m.role}</div>}
-              </div>
-            ))}
-
-            {addingMember && (
-              <div style={{ background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:8, padding:14 }}>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
-                  <input className="input" placeholder="Name" value={memberForm.name} onChange={e => setMemberForm(f=>({...f,name:e.target.value}))} style={{ fontSize:13 }} />
-                  <input className="input" placeholder="@instagram" value={memberForm.ig_handle} onChange={e => setMemberForm(f=>({...f,ig_handle:e.target.value}))} style={{ fontSize:13 }} />
-                </div>
-                <input className="input" placeholder="Role or title (optional)" value={memberForm.role} onChange={e => setMemberForm(f=>({...f,role:e.target.value}))} style={{ fontSize:13, marginBottom:8 }} />
-                <div style={{ display:'flex', gap:8 }}>
-                  <button onClick={saveMember} disabled={!memberForm.name||!memberForm.ig_handle||savingMember} style={{ flex:1, background:'var(--lime)', color:'#000', border:'none', borderRadius:6, padding:'8px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
-                    {savingMember ? 'Saving…' : 'Add Member'}
-                  </button>
-                  <button onClick={() => { setAddingMember(false); setMemberForm({name:'',ig_handle:'',role:''}); }} style={{ background:'transparent', color:'var(--muted)', border:'1px solid var(--border)', borderRadius:6, padding:'8px 12px', fontFamily:'Barlow Condensed', fontSize:12, fontWeight:700, cursor:'pointer' }}>Cancel</button>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
         <div className="onboarding-footer">
           <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back</button>
@@ -470,8 +493,135 @@ function Step3({ onNext, onBack, form, setForm }) {
   );
 }
 
-// ── Step 4: Cover + Partnership ────────────────────────────────────────────────
+// ── Step 4: Partnerships & People ─────────────────────────────────────────────
 function Step4({ onNext, onBack, form, setForm }) {
+  const [notableMembers, setNotableMembers] = React.useState(form.notableMembers || []);
+  const [addingMember, setAddingMember] = React.useState(false);
+  const [memberForm, setMemberForm] = React.useState({ name:'', ig_handle:'', role:'' });
+  const [savingMember, setSavingMember] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+
+  async function saveMember() {
+    if (!memberForm.name || !memberForm.ig_handle || !form.communityId) return;
+    setSavingMember(true);
+    await fetch(`/api/community/${form.communityId}/notable-member`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ ...memberForm, ig_handle: memberForm.ig_handle.replace(/^@/,'') }),
+    });
+    const m = { ...memberForm, ig_handle: memberForm.ig_handle.replace(/^@/,'') };
+    setNotableMembers(ms => [...ms, m]);
+    setForm(f => ({ ...f, notableMembers:[...(f.notableMembers||[]),m] }));
+    setMemberForm({ name:'', ig_handle:'', role:'' });
+    setAddingMember(false);
+    setSavingMember(false);
+  }
+
+  async function handleContinue() {
+    setSaving(true);
+    if (form.communityId) {
+      await fetch(`/api/community/${form.communityId}`, {
+        method:'PUT', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ capabilities: form.capabilities, partnership_preferences: form.partnershipPrefs }),
+      });
+    }
+    setSaving(false);
+    onNext();
+  }
+
+  const toggleCap = cap => setForm(f => ({
+    ...f, capabilities: f.capabilities.includes(cap) ? f.capabilities.filter(c=>c!==cap) : [...f.capabilities, cap]
+  }));
+
+  return (
+    <div className="onboarding-screen">
+      <div className="onboarding-box" style={{ maxWidth:520 }}>
+        <div className="onboarding-header">
+          <StepDots current={4} />
+          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Partnerships &amp; People</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>Tell brands what you bring and who you're looking to work with.</div>
+        </div>
+        <div className="onboarding-body" style={{ maxHeight:'62vh', overflowY:'auto' }}>
+
+          {/* Capabilities */}
+          <div className="form-group">
+            <label className="label">What can your community offer? <span style={{ color:'var(--muted)', fontWeight:400, textTransform:'none', fontSize:11 }}>Pick all that apply</span></label>
+            <div className="tag-grid">
+              {CAPABILITIES.map(cap => (
+                <button key={cap} className={`tag-item ${form.capabilities.includes(cap)?'selected':''}`} onClick={() => toggleCap(cap)}>{cap}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Partnership preferences */}
+          <div className="form-group">
+            <label className="label">What makes a great brand partner? <span style={{ color:'var(--muted)', fontWeight:400, textTransform:'none', fontSize:11 }}>— optional</span></label>
+            <textarea className="input" rows={3}
+              placeholder="e.g. Brands that align with our values, want a genuine presence in our community, and are open to long-term relationships."
+              value={form.partnershipPrefs}
+              onChange={e => setForm(f=>({...f, partnershipPrefs:e.target.value.slice(0,400)}))}
+            />
+            <div className="char-count">{(form.partnershipPrefs||'').length}/400</div>
+          </div>
+
+          {/* Notable Members */}
+          <div>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+              <div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:2 }}>Notable Members</div>
+                <div style={{ fontSize:12, color:'var(--muted)' }}>People your community is known for</div>
+              </div>
+              {!addingMember && (
+                <button onClick={() => setAddingMember(true)} style={{ background:'none', border:'1px solid var(--border2)', borderRadius:6, padding:'5px 10px', cursor:'pointer', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--white)' }}>+ Add</button>
+              )}
+            </div>
+
+            {notableMembers.map((m, i) => {
+              const ac = avatarColor(m.name);
+              return (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 12px', background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, marginBottom:6 }}>
+                  <div style={{ width:32, height:32, borderRadius:'50%', background:ac.bg, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed', fontSize:14, fontWeight:800, color:ac.text, flexShrink:0 }}>
+                    {(m.name||'?')[0].toUpperCase()}
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:600 }}>{m.name}</div>
+                    {m.ig_handle && <div style={{ fontSize:11, color:'var(--muted)' }}>@{m.ig_handle}</div>}
+                  </div>
+                  {m.role && <div style={{ fontSize:10, color:'var(--muted)', fontFamily:'Barlow Condensed', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{m.role}</div>}
+                </div>
+              );
+            })}
+
+            {addingMember && (
+              <div style={{ background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:8, padding:14 }}>
+                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
+                  <input className="input" placeholder="Name" value={memberForm.name} onChange={e=>setMemberForm(f=>({...f,name:e.target.value}))} style={{ fontSize:13 }} />
+                  <input className="input" placeholder="@instagram" value={memberForm.ig_handle} onChange={e=>setMemberForm(f=>({...f,ig_handle:e.target.value}))} style={{ fontSize:13 }} />
+                </div>
+                <input className="input" placeholder="Role or title (optional)" value={memberForm.role} onChange={e=>setMemberForm(f=>({...f,role:e.target.value}))} style={{ fontSize:13, marginBottom:8 }} />
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={saveMember} disabled={!memberForm.name||!memberForm.ig_handle||savingMember}
+                    style={{ flex:1, background:'var(--lime)', color:'#000', border:'none', borderRadius:6, padding:'8px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
+                    {savingMember?'Saving…':'Add Member'}
+                  </button>
+                  <button onClick={()=>{setAddingMember(false);setMemberForm({name:'',ig_handle:'',role:''}); }}
+                    style={{ background:'transparent', color:'var(--muted)', border:'1px solid var(--border)', borderRadius:6, padding:'8px 12px', fontFamily:'Barlow Condensed', fontSize:12, fontWeight:700, cursor:'pointer' }}>Cancel</button>
+                </div>
+              </div>
+            )}
+          </div>
+
+        </div>
+        <div className="onboarding-footer">
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back</button>
+          <button className="btn btn-lime" onClick={handleContinue} disabled={saving}>{saving?'Saving…':'Continue →'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 5: Cover ────────────────────────────────────────────────────────────
+function Step5({ onNext, onBack, form, setForm }) {
   const cover = COVER_OPTIONS.find(o => o.id === form.coverOption) || COVER_OPTIONS[0];
   const coverBg = form.coverImageUrl ? `url(${form.coverImageUrl}) center/cover no-repeat` : cover.gradient;
   const igConnected = form.instagramConnected;
@@ -479,7 +629,6 @@ function Step4({ onNext, onBack, form, setForm }) {
   const connectedCount = [igConnected, substackConnected].filter(Boolean).length;
   const tier = connectedCount >= 2 ? 'fully-verified' : connectedCount >= 1 ? 'verified' : 'starter';
   const [uploading, setUploading] = React.useState(false);
-  const [saving, setSaving] = React.useState(false);
 
   async function saveCover(id) {
     setForm(f => ({ ...f, coverOption: id, coverImageUrl: null }));
@@ -505,26 +654,13 @@ function Step4({ onNext, onBack, form, setForm }) {
     }
   }
 
-  async function handleContinue() {
-    setSaving(true);
-    if (form.communityId) {
-      await fetch(`/api/community/${form.communityId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ partnership_preferences: form.partnershipPrefs }),
-      });
-    }
-    setSaving(false);
-    onNext();
-  }
-
   return (
     <div className="onboarding-screen">
       <div className="onboarding-box" style={{ maxWidth:560 }}>
         <div className="onboarding-header">
-          <StepDots current={4} />
+          <StepDots current={5} />
           <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Make it yours</div>
-          <div style={{ fontSize:13, color:'var(--muted)' }}>Cover photo, and tell brands what a great partnership looks like for you.</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>Choose a cover photo or gradient for your profile card.</div>
         </div>
         <div className="onboarding-body" style={{ maxHeight:'65vh', overflowY:'auto' }}>
 
@@ -569,31 +705,18 @@ function Step4({ onNext, onBack, form, setForm }) {
             ))}
           </div>
 
-          {/* Partnership preferences */}
-          <div className="form-group" style={{ marginBottom:0 }}>
-            <label className="label">What makes a great brand partner for you? <span style={{ color:'var(--muted)', fontWeight:400, textTransform:'none', fontSize:11 }}>— optional</span></label>
-            <textarea className="input" rows={3}
-              placeholder="e.g. Brands that align with our values, want a genuine presence in our community, and are open to long-term relationships. No one-off logo placements."
-              value={form.partnershipPrefs}
-              onChange={e => setForm(f => ({ ...f, partnershipPrefs: e.target.value.slice(0, 400) }))}
-            />
-            <div className="char-count">{(form.partnershipPrefs||'').length}/400</div>
-          </div>
-
         </div>
         <div className="onboarding-footer">
           <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back</button>
-          <button className="btn btn-lime" onClick={handleContinue} disabled={saving}>
-            {saving ? 'Saving…' : 'See your profile →'}
-          </button>
+          <button className="btn btn-lime" onClick={onNext}>See your profile →</button>
         </div>
       </div>
     </div>
   );
 }
 
-// ── Step 5: Profile View ───────────────────────────────────────────────────────
-function Step5({ form, setForm }) {
+// ── Step 6: Profile View ─────────────────────────────────────────────────────
+function Step6({ form, setForm }) {
   const cover = COVER_OPTIONS.find(o => o.id === form.coverOption) || COVER_OPTIONS[0];
   const coverBg = form.coverImageUrl ? `url(${form.coverImageUrl}) center/cover no-repeat` : cover.gradient;
   const igConnected = form.instagramConnected;
@@ -607,10 +730,11 @@ function Step5({ form, setForm }) {
   const [notableMembers, setNotableMembers] = React.useState([]);
   const [uploadingMedia, setUploadingMedia] = React.useState(false);
   const [csForm, setCsForm] = React.useState({ brand:'', year:'', description:'' });
-  const [csFile, setCsFile] = React.useState(null);
+  const [csFiles, setCsFiles] = React.useState([]);
   const [addingCs, setAddingCs] = React.useState(false);
   const [savingCs, setSavingCs] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const [lightbox, setLightbox] = React.useState(null);
 
   React.useEffect(() => {
     if (!form.communityId) return;
@@ -646,12 +770,12 @@ function Step5({ form, setForm }) {
     fd.append('brand', csForm.brand);
     fd.append('year', csForm.year);
     fd.append('description', csForm.description);
-    if (csFile) fd.append('file', csFile);
+    csFiles.forEach(f => fd.append('files', f));
     const res = await fetch(`/api/community/${form.communityId}/case-study`, { method:'POST', body:fd });
     const data = await res.json();
     if (data.entry) setCaseStudies(cs => [...cs, data.entry]);
     setCsForm({ brand:'', year:'', description:'' });
-    setCsFile(null);
+    setCsFiles([]);
     setAddingCs(false);
     setSavingCs(false);
   }
@@ -685,18 +809,20 @@ function Step5({ form, setForm }) {
         </div>
 
         {/* Face card */}
-        <div style={{ margin:'16px 24px 0', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)' }}>
-          <div style={{ aspectRatio:'16/7', position:'relative', background:coverBg }}>
-            <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(0,0,0,0.05),rgba(0,0,0,0.82))' }} />
-            <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'40px 20px 16px' }}>
-              <div className="bb" style={{ fontSize:28, color:'#fff', lineHeight:1, marginBottom:4 }}>{form.name}</div>
-              <div style={{ fontSize:12, color:'rgba(255,255,255,0.75)', marginBottom:8 }}>{form.tagline}</div>
-              <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginBottom:10 }}>
-                {form.tags.slice(0,4).map(t => (
-                  <span key={t} style={{ border:'1px solid rgba(255,255,255,0.3)', color:'rgba(255,255,255,0.85)', borderRadius:3, padding:'2px 6px', fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>{t}</span>
-                ))}
+        <div style={{ margin:'16px 24px 0', maxWidth:280, marginLeft:'auto', marginRight:'auto' }}>
+          <div style={{ borderRadius:12, overflow:'hidden', border:'1px solid var(--border)' }}>
+            <div style={{ aspectRatio:'3/4', position:'relative', background:coverBg }}>
+              <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(0,0,0,0.05),rgba(0,0,0,0.82))' }} />
+              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'40px 20px 16px' }}>
+                <div className="bb" style={{ fontSize:28, color:'#fff', lineHeight:1, marginBottom:4 }}>{form.name}</div>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,0.75)', marginBottom:8 }}>{form.tagline}</div>
+                <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginBottom:10 }}>
+                  {form.tags.slice(0,4).map(t => (
+                    <span key={t} style={{ border:'1px solid rgba(255,255,255,0.3)', color:'rgba(255,255,255,0.85)', borderRadius:3, padding:'2px 6px', fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>{t}</span>
+                  ))}
+                </div>
+                <TierBadge tier={tier} />
               </div>
-              <TierBadge tier={tier} />
             </div>
           </div>
         </div>
@@ -769,21 +895,10 @@ function Step5({ form, setForm }) {
           </div>
         )}
 
-        {/* Instagram post feed */}
-        {igPosts.length > 0 && (
+        {/* Latest posts carousel */}
+        {(igPosts.length > 0 || (communityData?.substack_data?.posts||[]).length > 0) && (
           <div style={{ margin:'16px 24px 0' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
-              <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em' }}>Latest Posts</div>
-              <IgIcon size={14} color="var(--muted)" />
-            </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:4 }}>
-              {igPosts.slice(0,9).map((post, i) => (
-                <div key={i} style={{ aspectRatio:'1', borderRadius:6, overflow:'hidden', background:'var(--surface)', border:'1px solid var(--border)', position:'relative' }}>
-                  <img src={post.media_url || post.thumbnail_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                  <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0)', transition:'background 0.15s' }} />
-                </div>
-              ))}
-            </div>
+            <PostCarousel igPosts={igPosts} substackPosts={communityData?.substack_data?.posts||[]} />
           </div>
         )}
 
@@ -809,7 +924,7 @@ function Step5({ form, setForm }) {
           ) : (
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6 }}>
               {mediaItems.map((item, i) => (
-                <div key={i} style={{ aspectRatio:'1', borderRadius:8, overflow:'hidden', background:'var(--surface)', border:'1px solid var(--border)' }}>
+                <div key={i} onClick={() => setLightbox({ images: mediaItems.map(m=>m.url), index:i })} style={{ cursor:'pointer', aspectRatio:'1', borderRadius:8, overflow:'hidden', background:'var(--surface)', border:'1px solid var(--border)' }}>
                   <img src={item.url} alt={item.caption||''} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
                 </div>
               ))}
@@ -857,7 +972,14 @@ function Step5({ form, setForm }) {
 
           {caseStudies.map((cs, i) => (
             <div key={i} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, overflow:'hidden', marginBottom:8 }}>
-              {cs.image_url && <img src={cs.image_url} alt="" style={{ width:'100%', maxHeight:180, objectFit:'cover' }} />}
+              {(() => { const imgs = cs.images?.length ? cs.images : cs.image_url ? [cs.image_url] : []; return imgs.length ? (
+                <div style={{ display:'flex', gap:4, overflowX:'auto', padding:'0 0 4px' }}>
+                  {imgs.map((url,j) => (
+                    <img key={j} src={url} alt="" onClick={e=>{e.stopPropagation();setLightbox({images:imgs,index:j});}}
+                      style={{ height:80, width:80, objectFit:'cover', borderRadius:4, flexShrink:0, cursor:'pointer', display:'block' }} />
+                  ))}
+                </div>
+              ) : null; })()}
               <div style={{ padding:'12px 16px' }}>
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
                   <div style={{ fontFamily:'Barlow Condensed', fontSize:15, fontWeight:800, textTransform:'uppercase' }}>{cs.brand}</div>
@@ -886,9 +1008,9 @@ function Step5({ form, setForm }) {
               <textarea placeholder="What did you do together? (optional)" value={csForm.description} onChange={e => setCsForm(f=>({...f,description:e.target.value}))} rows={2}
                 style={{ width:'100%', background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:6, padding:'8px 10px', color:'var(--white)', fontFamily:'Barlow', fontSize:13, outline:'none', resize:'vertical', marginBottom:8, boxSizing:'border-box' }} />
               <label style={{ display:'block', marginBottom:8, cursor:'pointer' }}>
-                <input type="file" accept="image/*" style={{ display:'none' }} onChange={e => setCsFile(e.target.files[0])} />
-                <div style={{ border:'1px dashed var(--border2)', borderRadius:6, padding:'8px 12px', fontSize:12, color: csFile ? 'var(--lime)' : 'var(--muted)', display:'flex', alignItems:'center', gap:6 }}>
-                  <span>{csFile ? `✓ ${csFile.name}` : '+ Attach a photo (optional)'}</span>
+                <input type="file" accept="image/*" multiple style={{ display:'none' }} onChange={e => setCsFiles(Array.from(e.target.files))} />
+                <div style={{ border:'1px dashed var(--border2)', borderRadius:6, padding:'8px 12px', fontSize:12, color: csFiles.length ? 'var(--lime)' : 'var(--muted)', display:'flex', alignItems:'center', gap:6 }}>
+                  <span>{csFiles.length ? `✓ ${csFiles.length} photo${csFiles.length>1?'s':''} selected` : '+ Attach photos (optional)'}</span>
                 </div>
               </label>
               <div style={{ display:'flex', gap:8 }}>
@@ -896,7 +1018,7 @@ function Step5({ form, setForm }) {
                   style={{ flex:1, background:'var(--lime)', color:'#000', border:'none', borderRadius:6, padding:'9px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
                   {savingCs ? 'Saving…' : 'Save'}
                 </button>
-                <button onClick={() => { setAddingCs(false); setCsForm({brand:'',year:'',description:''}); setCsFile(null); }}
+                <button onClick={() => { setAddingCs(false); setCsForm({brand:'',year:'',description:''}); setCsFiles([]); }}
                   style={{ background:'var(--surface2)', color:'var(--muted)', border:'1px solid var(--border)', borderRadius:6, padding:'9px 14px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, cursor:'pointer' }}>
                   Cancel
                 </button>
@@ -914,6 +1036,7 @@ function Step5({ form, setForm }) {
           </div>
         </div>
 
+        {lightbox && <Lightbox images={lightbox.images} startIndex={lightbox.index} onClose={() => setLightbox(null)} />}
       </div>
     </div>
   );
@@ -985,7 +1108,8 @@ function App() {
       {step === 2 && <Step2 onNext={() => setStep(3)} onBack={() => setStep(1)} form={form} setForm={setForm} />}
       {step === 3 && <Step3 onNext={() => setStep(4)} onBack={() => setStep(2)} form={form} setForm={setForm} />}
       {step === 4 && <Step4 onNext={() => setStep(5)} onBack={() => setStep(3)} form={form} setForm={setForm} />}
-      {step === 5 && <Step5 form={form} setForm={setForm} />}
+      {step === 5 && <Step5 onNext={() => setStep(6)} onBack={() => setStep(4)} form={form} setForm={setForm} />}
+      {step === 6 && <Step6 form={form} setForm={setForm} />}
     </>
   );
 }

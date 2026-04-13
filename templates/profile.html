@@ -70,6 +70,102 @@ const GlobeIcon = ({size=16, color='currentColor'}) => (
   </svg>
 );
 
+const AVATAR_COLORS = [
+  { bg:'#d2ff01', text:'#000' }, { bg:'#b1ecf0', text:'#000' },
+  { bg:'#ff6ef2', text:'#000' }, { bg:'#ffab40', text:'#000' },
+  { bg:'#b3ff9e', text:'#000' }, { bg:'#ffea12', text:'#000' },
+  { bg:'#ff6b6b', text:'#000' },
+];
+function avatarColor(name) {
+  let h = 0;
+  for (let i = 0; i < (name||'').length; i++) h = ((h << 5) - h + (name||'').charCodeAt(i)) | 0;
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+
+function Lightbox({ images, startIndex, onClose }) {
+  const [idx, setIdx] = React.useState(startIndex || 0);
+  React.useEffect(() => {
+    const h = e => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight') setIdx(i => Math.min(i+1, images.length-1));
+      if (e.key === 'ArrowLeft') setIdx(i => Math.max(i-1, 0));
+    };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, [images.length]);
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.93)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div onClick={e => e.stopPropagation()} style={{ position:'relative', display:'flex', alignItems:'center', gap:12 }}>
+        {images.length > 1 && (
+          <button onClick={() => setIdx(i => Math.max(i-1,0))} disabled={idx===0}
+            style={{ background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'50%', width:40, height:40, color:'#fff', fontSize:20, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:idx===0?0.3:1 }}>‹</button>
+        )}
+        <img src={images[idx]} alt="" style={{ maxWidth:'80vw', maxHeight:'85vh', objectFit:'contain', borderRadius:8, display:'block' }} />
+        {images.length > 1 && (
+          <button onClick={() => setIdx(i => Math.min(i+1,images.length-1))} disabled={idx===images.length-1}
+            style={{ background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'50%', width:40, height:40, color:'#fff', fontSize:20, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', opacity:idx===images.length-1?0.3:1 }}>›</button>
+        )}
+        <button onClick={onClose} style={{ position:'absolute', top:-14, right:images.length>1?-14:-14, background:'rgba(255,255,255,0.15)', border:'none', borderRadius:'50%', width:30, height:30, color:'#fff', fontSize:14, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>✕</button>
+        {images.length > 1 && (
+          <div style={{ position:'absolute', bottom:-24, left:'50%', transform:'translateX(-50%)', color:'rgba(255,255,255,0.5)', fontSize:11, fontFamily:'Barlow Condensed', fontWeight:600 }}>{idx+1} / {images.length}</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function PostCarousel({ igPosts, substackPosts }) {
+  const ig = (igPosts||[]).filter(p => p.media_url||p.thumbnail_url).map(p => ({ ...p, _type:'ig' }));
+  const sub = (substackPosts||[]).map(p => ({ ...p, _type:'sub' }));
+  const all = [...ig, ...sub].sort((a,b) => {
+    const da = new Date(a.timestamp||a.date||0), db = new Date(b.timestamp||b.date||0);
+    return db - da;
+  });
+  if (!all.length) return null;
+  return (
+    <div>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
+        <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em' }}>Latest</div>
+        <div style={{ display:'flex', gap:5 }}>
+          {ig.length>0 && <IgIcon size={12} color="var(--muted)" />}
+          {sub.length>0 && <SubstackIcon size={12} color="var(--muted)" />}
+        </div>
+      </div>
+      <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:8, scrollSnapType:'x mandatory', WebkitOverflowScrolling:'touch', msOverflowStyle:'none', scrollbarWidth:'none' }}>
+        {all.map((post, i) => (
+          post._type === 'ig' ? (
+            <a key={i} href={post.permalink||'#'} target="_blank" rel="noopener noreferrer"
+              style={{ flexShrink:0, width:130, height:190, borderRadius:8, overflow:'hidden', display:'block', position:'relative', scrollSnapAlign:'start', textDecoration:'none', background:'var(--surface2)' }}>
+              <img src={post.media_url||post.thumbnail_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'22px 8px 6px', background:'linear-gradient(to top,rgba(0,0,0,0.75),transparent)' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:3, color:'#fff' }}>
+                  <IgIcon size={9} color="#fff" />
+                  {post.like_count>0 && <span style={{ fontSize:10, fontFamily:'Barlow Condensed', fontWeight:700 }}>{post.like_count.toLocaleString()}</span>}
+                </div>
+              </div>
+            </a>
+          ) : (
+            <a key={i} href={post.link||'#'} target="_blank" rel="noopener noreferrer"
+              style={{ flexShrink:0, width:130, height:190, borderRadius:8, overflow:'hidden', display:'block', position:'relative', scrollSnapAlign:'start', textDecoration:'none', background:'var(--surface2)', border:'1px solid var(--border)' }}>
+              {post.image_url
+                ? <img src={post.image_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
+                : null}
+              <div style={{ position:'absolute', inset:0, padding:'10px 10px 8px', display:'flex', flexDirection:'column', justifyContent:post.image_url?'flex-end':'space-between', background:post.image_url?'linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.2) 50%,transparent 100%)':'none' }}>
+                {!post.image_url && <div style={{ fontSize:11, fontWeight:600, color:'var(--white)', lineHeight:1.4 }}>{post.title}</div>}
+                {post.image_url && <div style={{ fontSize:11, fontWeight:600, color:'#fff', lineHeight:1.35 }}>{(post.title||'').slice(0,50)}</div>}
+                <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                  <SubstackIcon size={9} color="#ff6719" />
+                  <span style={{ fontSize:9, color:'#ff6719', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em' }}>Substack</span>
+                </div>
+              </div>
+            </a>
+          )
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TierBadge({ tier }) {
   const config = {
     'starter': { label:'Starter', color:'var(--muted)', dot:'#555' },
@@ -90,6 +186,7 @@ function ProfilePage() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const [lightbox, setLightbox] = React.useState(null);
 
   React.useEffect(() => {
     if (!communityId) { setError(true); setLoading(false); return; }
@@ -161,20 +258,22 @@ function ProfilePage() {
         </div>
 
         {/* Face card */}
-        <div style={{ margin:'16px 24px 0', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)' }}>
-          <div style={{ aspectRatio:'16/7', position:'relative', background:coverBg }}>
-            <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(0,0,0,0.04),rgba(0,0,0,0.84))' }} />
-            <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'44px 22px 18px' }}>
-              <div className="bb" style={{ fontSize:32, color:'#fff', lineHeight:1, marginBottom:5 }}>{data.name}</div>
-              {data.tagline && <div style={{ fontSize:13, color:'rgba(255,255,255,0.75)', marginBottom:10 }}>{data.tagline}</div>}
-              {tags.length > 0 && (
-                <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginBottom:12 }}>
-                  {tags.slice(0,5).map(t => (
-                    <span key={t} style={{ border:'1px solid rgba(255,255,255,0.3)', color:'rgba(255,255,255,0.85)', borderRadius:3, padding:'2px 7px', fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>{t}</span>
-                  ))}
-                </div>
-              )}
-              <TierBadge tier={tier} />
+        <div style={{ maxWidth:280, margin:'0 auto 20px' }}>
+          <div style={{ borderRadius:12, overflow:'hidden', border:'1px solid var(--border)' }}>
+            <div style={{ aspectRatio:'3/4', position:'relative', background:coverBg }}>
+              <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(0,0,0,0.04),rgba(0,0,0,0.84))' }} />
+              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'44px 22px 18px' }}>
+                <div className="bb" style={{ fontSize:32, color:'#fff', lineHeight:1, marginBottom:5 }}>{data.name}</div>
+                {data.tagline && <div style={{ fontSize:13, color:'rgba(255,255,255,0.75)', marginBottom:10 }}>{data.tagline}</div>}
+                {tags.length > 0 && (
+                  <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginBottom:12 }}>
+                    {tags.slice(0,5).map(t => (
+                      <span key={t} style={{ border:'1px solid rgba(255,255,255,0.3)', color:'rgba(255,255,255,0.85)', borderRadius:3, padding:'2px 7px', fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>{t}</span>
+                    ))}
+                  </div>
+                )}
+                <TierBadge tier={tier} />
+              </div>
             </div>
           </div>
         </div>
@@ -248,20 +347,10 @@ function ProfilePage() {
           </div>
         )}
 
-        {/* Instagram post grid */}
-        {igPosts.length > 0 && (
+        {/* Latest posts carousel */}
+        {(igPosts.length > 0 || (data.substack_data?.posts||[]).length > 0) && (
           <div style={{ margin:'16px 24px 0' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
-              <div className="bb" style={{ fontSize:20, letterSpacing:'0.03em' }}>Latest Posts</div>
-              <IgIcon size={14} color="var(--muted)" />
-            </div>
-            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:4 }}>
-              {igPosts.slice(0,9).map((post, i) => (
-                <div key={i} style={{ aspectRatio:'1', borderRadius:6, overflow:'hidden', background:'var(--surface2)', border:'1px solid var(--border)' }}>
-                  <img src={post.media_url || post.thumbnail_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
-                </div>
-              ))}
-            </div>
+            <PostCarousel igPosts={igPosts} substackPosts={data.substack_data?.posts||[]} />
           </div>
         )}
 
@@ -271,7 +360,7 @@ function ProfilePage() {
             <div className="bb" style={{ fontSize:20, letterSpacing:'0.03em', marginBottom:12 }}>Photos &amp; Events</div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6 }}>
               {mediaItems.map((item, i) => (
-                <div key={i} style={{ aspectRatio:'1', borderRadius:8, overflow:'hidden', background:'var(--surface2)', border:'1px solid var(--border)' }}>
+                <div key={i} onClick={() => setLightbox({images:data.media_items.map(m=>m.url), index:i})} style={{ cursor:'pointer', aspectRatio:'1', borderRadius:8, overflow:'hidden', background:'var(--surface2)', border:'1px solid var(--border)' }}>
                   <img src={item.url} alt={item.caption||''} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
                 </div>
               ))}
@@ -284,22 +373,25 @@ function ProfilePage() {
           <div style={{ margin:'16px 24px 0' }}>
             <div className="bb" style={{ fontSize:20, letterSpacing:'0.03em', marginBottom:12 }}>Notable Members</div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:8 }}>
-              {notableMembers.map((m, i) => (
-                <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10 }}>
-                  <div style={{ width:40, height:40, borderRadius:'50%', background:'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed', fontSize:16, fontWeight:700, color:'var(--muted)', flexShrink:0 }}>
-                    {(m.name||'?')[0].toUpperCase()}
+              {notableMembers.map((m, i) => {
+                const ac = avatarColor(m.name);
+                return (
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 16px', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10 }}>
+                    <div style={{ width:40, height:40, borderRadius:'50%', background:ac.bg, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed', fontSize:16, fontWeight:700, color:ac.text, flexShrink:0 }}>
+                      {(m.name||'?')[0].toUpperCase()}
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:13, fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.name}</div>
+                      {m.ig_handle && (
+                        <a href={`https://instagram.com/${m.ig_handle}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'var(--muted)', textDecoration:'none', display:'flex', alignItems:'center', gap:3, marginTop:1 }}>
+                          <IgIcon size={10} color="var(--muted)" />@{m.ig_handle}
+                        </a>
+                      )}
+                      {m.role && <div style={{ fontSize:10, color:'var(--muted)', fontFamily:'Barlow Condensed', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', marginTop:2 }}>{m.role}</div>}
+                    </div>
                   </div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:13, fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.name}</div>
-                    {m.ig_handle && (
-                      <a href={`https://instagram.com/${m.ig_handle}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'var(--muted)', textDecoration:'none', display:'flex', alignItems:'center', gap:3, marginTop:1 }}>
-                        <IgIcon size={10} color="var(--muted)" />@{m.ig_handle}
-                      </a>
-                    )}
-                    {m.role && <div style={{ fontSize:10, color:'var(--muted)', fontFamily:'Barlow Condensed', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em', marginTop:2 }}>{m.role}</div>}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -310,9 +402,14 @@ function ProfilePage() {
             <div className="bb" style={{ fontSize:20, letterSpacing:'0.03em', marginBottom:12 }}>Past Partnerships</div>
             {caseStudies.map((cs, i) => (
               <div key={i} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, overflow:'hidden', marginBottom:10 }}>
-                {cs.image_url && (
-                  <img src={cs.image_url} alt="" style={{ width:'100%', maxHeight:200, objectFit:'cover', display:'block' }} />
-                )}
+                {(() => { const imgs = cs.images?.length ? cs.images : cs.image_url ? [cs.image_url] : []; return imgs.length ? (
+                  <div style={{ display:'flex', gap:4, overflowX:'auto', padding:'0 0 4px' }}>
+                    {imgs.map((url,j) => (
+                      <img key={j} src={url} alt="" onClick={e=>{e.stopPropagation();setLightbox({images:imgs,index:j});}}
+                        style={{ height:80, width:80, objectFit:'cover', borderRadius:4, flexShrink:0, cursor:'pointer', display:'block' }} />
+                    ))}
+                  </div>
+                ) : null; })()}
                 <div style={{ padding:'14px 18px' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:5 }}>
                     <div style={{ fontFamily:'Barlow Condensed', fontSize:16, fontWeight:800, textTransform:'uppercase' }}>{cs.brand}</div>
@@ -333,6 +430,7 @@ function ProfilePage() {
           <a href="/" style={{ fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--cyan)', textDecoration:'none' }}>Join the network →</a>
         </div>
 
+        {lightbox && <Lightbox images={lightbox.images} startIndex={lightbox.index} onClose={() => setLightbox(null)} />}
       </div>
     </div>
   );
