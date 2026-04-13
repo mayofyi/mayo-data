@@ -2,7 +2,3 @@ requests
 flask
 python-dotenv
 psycopg2-binary
-pandas
-tabulate
-beautifulsoup4
-anthropic

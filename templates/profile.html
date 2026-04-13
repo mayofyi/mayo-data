@@ -29,7 +29,7 @@
 html, body { min-height:100%; background: var(--black); color: var(--white); font-family: 'Barlow', sans-serif; font-size: 14px; line-height: 1.5; }
 .bb { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.03em; }
 .bc { font-family: 'Barlow Condensed', sans-serif; }
-::-webkit-scrollbar { width: 3px; height: 3px; } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; } ::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar { width: 4px; height: 6px; } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; } ::-webkit-scrollbar-track { background: transparent; }
 .tier-badge { display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
 a { color: inherit; }
 </style>
@@ -131,6 +131,36 @@ function Lightbox({ items, startIndex, onClose }) {
 }
 
 function PostCarousel({ igPosts, substackPosts }) {
+  const scrollRef = React.useRef(null);
+  const drag = React.useRef({ down: false, startX: 0, scrollLeft: 0, moved: false });
+
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onDown = e => {
+      drag.current = { down: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft, moved: false };
+      el.style.cursor = 'grabbing';
+    };
+    const onMove = e => {
+      if (!drag.current.down) return;
+      e.preventDefault();
+      const dist = (e.pageX - el.offsetLeft) - drag.current.startX;
+      if (Math.abs(dist) > 4) drag.current.moved = true;
+      el.scrollLeft = drag.current.scrollLeft - dist;
+    };
+    const onUp = () => { drag.current.down = false; el.style.cursor = 'grab'; };
+    el.addEventListener('mousedown', onDown);
+    document.addEventListener('mousemove', onMove, { passive: false });
+    document.addEventListener('mouseup', onUp);
+    return () => {
+      el.removeEventListener('mousedown', onDown);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+  }, []);
+
+  const onClickCapture = e => { if (drag.current.moved) { e.preventDefault(); e.stopPropagation(); drag.current.moved = false; } };
+
   const ig = (igPosts||[]).filter(p => p.media_url||p.thumbnail_url).map(p => ({ ...p, _type:'ig' }));
   const sub = (substackPosts||[]).map(p => ({ ...p, _type:'sub' }));
   const all = [...ig, ...sub].sort((a,b) => {
@@ -138,6 +168,9 @@ function PostCarousel({ igPosts, substackPosts }) {
     return db - da;
   });
   if (!all.length) return null;
+
+  const cardStyle = { flexShrink:0, width:130, height:190, borderRadius:8, overflow:'hidden', display:'block', position:'relative', scrollSnapAlign:'start', textDecoration:'none', background:'var(--surface2)', userSelect:'none' };
+
   return (
     <div>
       <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:10 }}>
@@ -147,36 +180,43 @@ function PostCarousel({ igPosts, substackPosts }) {
           {sub.length>0 && <SubstackIcon size={12} color="var(--muted)" />}
         </div>
       </div>
-      <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:10, scrollSnapType:'x mandatory', WebkitOverflowScrolling:'touch' }}>
-        {all.map((post, i) => (
-          post._type === 'ig' ? (
-            <a key={i} href={post.permalink||'#'} target="_blank" rel="noopener noreferrer"
-              style={{ flexShrink:0, width:130, height:190, borderRadius:8, overflow:'hidden', display:'block', position:'relative', scrollSnapAlign:'start', textDecoration:'none', background:'var(--surface2)' }}>
-              <img src={post.media_url||post.thumbnail_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
-              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'22px 8px 6px', background:'linear-gradient(to top,rgba(0,0,0,0.75),transparent)' }}>
-                <div style={{ display:'flex', alignItems:'center', gap:3, color:'#fff' }}>
-                  <IgIcon size={9} color="#fff" />
-                  {post.like_count>0 && <span style={{ fontSize:10, fontFamily:'Barlow Condensed', fontWeight:700 }}>{post.like_count.toLocaleString()}</span>}
+      <div ref={scrollRef} onClickCapture={onClickCapture}
+        style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:10, scrollSnapType:'x mandatory', WebkitOverflowScrolling:'touch', cursor:'grab' }}>
+        {all.map((post, i) => {
+          if (post._type === 'ig') {
+            const inner = (
+              <>
+                <img src={post.media_url||post.thumbnail_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', pointerEvents:'none' }} />
+                <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'22px 8px 6px', background:'linear-gradient(to top,rgba(0,0,0,0.75),transparent)' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:3, color:'#fff' }}>
+                    <IgIcon size={9} color="#fff" />
+                    {post.like_count>0 && <span style={{ fontSize:10, fontFamily:'Barlow Condensed', fontWeight:700 }}>{post.like_count.toLocaleString()}</span>}
+                  </div>
                 </div>
-              </div>
-            </a>
-          ) : (
-            <a key={i} href={post.link||'#'} target="_blank" rel="noopener noreferrer"
-              style={{ flexShrink:0, width:130, height:190, borderRadius:8, overflow:'hidden', display:'block', position:'relative', scrollSnapAlign:'start', textDecoration:'none', background:'var(--surface2)', border:'1px solid var(--border)' }}>
-              {post.image_url
-                ? <img src={post.image_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
-                : null}
-              <div style={{ position:'absolute', inset:0, padding:'10px 10px 8px', display:'flex', flexDirection:'column', justifyContent:post.image_url?'flex-end':'space-between', background:post.image_url?'linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.2) 50%,transparent 100%)':'none' }}>
-                {!post.image_url && <div style={{ fontSize:11, fontWeight:600, color:'var(--white)', lineHeight:1.4 }}>{post.title}</div>}
-                {post.image_url && <div style={{ fontSize:11, fontWeight:600, color:'#fff', lineHeight:1.35 }}>{(post.title||'').slice(0,50)}</div>}
-                <div style={{ display:'flex', alignItems:'center', gap:4 }}>
-                  <SubstackIcon size={9} color="#ff6719" />
-                  <span style={{ fontSize:9, color:'#ff6719', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em' }}>Substack</span>
+              </>
+            );
+            return post.permalink
+              ? <a key={i} href={post.permalink} target="_blank" rel="noopener noreferrer" style={cardStyle}>{inner}</a>
+              : <div key={i} style={cardStyle}>{inner}</div>;
+          } else {
+            const inner = (
+              <>
+                {post.image_url ? <img src={post.image_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', pointerEvents:'none' }} /> : null}
+                <div style={{ position:'absolute', inset:0, padding:'10px 10px 8px', display:'flex', flexDirection:'column', justifyContent:post.image_url?'flex-end':'space-between', background:post.image_url?'linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.2) 50%,transparent 100%)':'none' }}>
+                  {!post.image_url && <div style={{ fontSize:11, fontWeight:600, color:'var(--white)', lineHeight:1.4 }}>{post.title}</div>}
+                  {post.image_url && <div style={{ fontSize:11, fontWeight:600, color:'#fff', lineHeight:1.35 }}>{(post.title||'').slice(0,50)}</div>}
+                  <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                    <SubstackIcon size={9} color="#ff6719" />
+                    <span style={{ fontSize:9, color:'#ff6719', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em' }}>Substack</span>
+                  </div>
                 </div>
-              </div>
-            </a>
-          )
-        ))}
+              </>
+            );
+            return post.link
+              ? <a key={i} href={post.link} target="_blank" rel="noopener noreferrer" style={{ ...cardStyle, border:'1px solid var(--border)' }}>{inner}</a>
+              : <div key={i} style={{ ...cardStyle, border:'1px solid var(--border)' }}>{inner}</div>;
+          }
+        })}
       </div>
     </div>
   );
