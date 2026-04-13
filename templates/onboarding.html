@@ -560,7 +560,7 @@ function Step3({ onNext, onBack, form, setForm }) {
 function Step4({ onNext, onBack, form, setForm }) {
   const [notableMembers, setNotableMembers] = React.useState(form.notableMembers || []);
   const [addingMember, setAddingMember] = React.useState(false);
-  const [memberForm, setMemberForm] = React.useState({ name:'', ig_handle:'', role:'', follower_tier:'' });
+  const [memberForm, setMemberForm] = React.useState({ name:'', ig_handle:'', role:'' });
   const [savingMember, setSavingMember] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
@@ -574,7 +574,7 @@ function Step4({ onNext, onBack, form, setForm }) {
     const m = { ...memberForm, ig_handle: memberForm.ig_handle.replace(/^@/,'') };
     setNotableMembers(ms => [...ms, m]);
     setForm(f => ({ ...f, notableMembers:[...(f.notableMembers||[]),m] }));
-    setMemberForm({ name:'', ig_handle:'', role:'', follower_tier:'' });
+    setMemberForm({ name:'', ig_handle:'', role:'' });
     setAddingMember(false);
     setSavingMember(false);
   }
@@ -663,15 +663,7 @@ function Step4({ onNext, onBack, form, setForm }) {
                   <input className="input" placeholder="Name" value={memberForm.name} onChange={e=>setMemberForm(f=>({...f,name:e.target.value}))} style={{ fontSize:13 }} />
                   <input className="input" placeholder="@instagram" value={memberForm.ig_handle} onChange={e=>setMemberForm(f=>({...f,ig_handle:e.target.value}))} style={{ fontSize:13 }} />
                 </div>
-                <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginBottom:8 }}>
-                  <input className="input" placeholder="Role or title (optional)" value={memberForm.role} onChange={e=>setMemberForm(f=>({...f,role:e.target.value}))} style={{ fontSize:13 }} />
-                  <select className="input" value={memberForm.follower_tier} onChange={e=>setMemberForm(f=>({...f,follower_tier:e.target.value}))} style={{ fontSize:13 }}>
-                    <option value="">Approx. follower count</option>
-                    <option value="micro">Micro (1k–10k)</option>
-                    <option value="mid">Mid (10k–100k)</option>
-                    <option value="macro">Macro (100k+)</option>
-                  </select>
-                </div>
+                <input className="input" placeholder="Role or title (optional)" value={memberForm.role} onChange={e=>setMemberForm(f=>({...f,role:e.target.value}))} style={{ fontSize:13, marginBottom:8 }} />
                 <div style={{ display:'flex', gap:8 }}>
                   <button onClick={saveMember} disabled={!memberForm.name||!memberForm.ig_handle||savingMember}
                     style={{ flex:1, background:'var(--lime)', color:'#000', border:'none', borderRadius:6, padding:'8px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
