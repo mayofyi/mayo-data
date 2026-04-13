@@ -105,6 +105,13 @@ const CAPABILITIES = [
   'Podcast / Newsletter', 'Long-term Partnerships', 'One-off Campaigns', 'Grassroots Marketing',
 ];
 
+const ARCHETYPES = [
+  { id:'evangelists',    label:'Evangelists',    color:'#ff6ef2', best:'Brand Awareness',     kpi:'Reach & Share Rate',       desc:'Champions brands they believe in. High share rate, unsolicited advocacy, identity-linked.' },
+  { id:'early_adopters', label:'Early Adopters',  color:'#d2ff01', best:'Product Launches',    kpi:'Trial Rate & Buzz',         desc:'Loves being first. Trend-forward, high try rate, first-to-know pride.' },
+  { id:'loyalists',      label:'Loyalists',       color:'#b1ecf0', best:'Long-term Sponsorship',kpi:'Retention & Attendance',   desc:'Shows up every time. Repeat engagement, high attendance, low churn.' },
+  { id:'buyers',         label:'Buyers',          color:'#ffab40', best:'Direct Response',     kpi:'Conversion Rate & Sales',   desc:'Converts. Purchase intent, conversion signals, practical focus.' },
+];
+
 const IgIcon = ({size=16, color='currentColor'}) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -577,7 +584,12 @@ function Step4({ onNext, onBack, form, setForm }) {
     if (form.communityId) {
       await fetch(`/api/community/${form.communityId}`, {
         method:'PUT', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ capabilities: form.capabilities, partnership_preferences: form.partnershipPrefs }),
+        body: JSON.stringify({
+          capabilities: form.capabilities,
+          partnership_preferences: form.partnershipPrefs,
+          archetype: form.archetype || null,
+          archetype_source: form.archetype ? 'community_suggested' : null,
+        }),
       });
     }
     setSaving(false);
@@ -597,6 +609,21 @@ function Step4({ onNext, onBack, form, setForm }) {
           <div style={{ fontSize:13, color:'var(--muted)' }}>Tell brands what you bring and who you're looking to work with.</div>
         </div>
         <div className="onboarding-body" style={{ maxHeight:'62vh', overflowY:'auto' }}>
+
+          {/* Archetype */}
+          <div className="form-group">
+            <label className="label">How would you describe your community?</label>
+            <div style={{ fontSize:12, color:'var(--muted)', marginBottom:10 }}>Pick the one that fits best — this helps brands understand how your community engages.</div>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8 }}>
+              {ARCHETYPES.map(a => (
+                <button key={a.id} onClick={() => setForm(f => ({ ...f, archetype: f.archetype === a.id ? '' : a.id }))}
+                  style={{ background: form.archetype===a.id ? a.color+'18' : 'var(--surface2)', border: form.archetype===a.id ? `1.5px solid ${a.color}` : '1px solid var(--border)', borderRadius:8, padding:'12px 14px', cursor:'pointer', textAlign:'left', transition:'all 0.15s' }}>
+                  <div style={{ fontFamily:'Bebas Neue', fontSize:18, letterSpacing:'0.03em', color: form.archetype===a.id ? a.color : 'var(--white)', marginBottom:4 }}>{a.label}</div>
+                  <div style={{ fontSize:11, color:'var(--muted)', lineHeight:1.5 }}>{a.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Capabilities */}
           <div className="form-group">
@@ -951,6 +978,24 @@ function Step6({ form, setForm }) {
           </div>
         )}
 
+        {/* Archetype card */}
+        {form.archetype && (() => {
+          const a = ARCHETYPES.find(x => x.id === form.archetype);
+          if (!a) return null;
+          return (
+            <div style={{ margin:'12px 24px 0', background:a.color+'12', border:`1px solid ${a.color}33`, borderRadius:12, padding:'18px 20px' }}>
+              <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:a.color+'aa', marginBottom:6 }}>Community Type</div>
+              <div style={{ fontFamily:'Bebas Neue', fontSize:32, letterSpacing:'0.03em', color:a.color, marginBottom:6 }}>{a.label}</div>
+              <div style={{ fontSize:12, color:'rgba(240,240,240,0.6)', lineHeight:1.6, marginBottom:10 }}>{a.desc}</div>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <span style={{ fontSize:11, color:a.color+'99', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>Best for</span>
+                <span style={{ background:a.color+'20', border:`1px solid ${a.color}44`, color:a.color, fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', padding:'3px 10px', borderRadius:4 }}>{a.best}</span>
+              </div>
+              <div style={{ marginTop:6, fontSize:10, color:'#555', fontFamily:'Barlow Condensed', textTransform:'uppercase', letterSpacing:'0.05em' }}>Self-identified · Subject to Mayo review</div>
+            </div>
+          );
+        })()}
+
         {/* Latest posts carousel */}
         {(igPosts.length > 0 || (communityData?.substack_data?.posts||[]).length > 0) && (
           <div style={{ margin:'16px 24px 0' }}>
@@ -995,24 +1040,32 @@ function Step6({ form, setForm }) {
         {/* Notable members */}
         {notableMembers.length > 0 && (
           <div style={{ margin:'16px 24px 0' }}>
-            <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em', marginBottom:10 }}>Notable Members</div>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+              <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em' }}>Notable Members</div>
+              <div style={{ fontSize:11, color:'var(--muted)', fontFamily:'Barlow Condensed' }}>Approved by Mayo before shown publicly</div>
+            </div>
             <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:8 }}>
-              {notableMembers.map((m, i) => (
-                <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10 }}>
-                  <div style={{ width:36, height:36, borderRadius:'50%', background:'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed', fontSize:15, fontWeight:700, color:'var(--muted)', flexShrink:0 }}>
-                    {(m.name||'?')[0].toUpperCase()}
+              {notableMembers.map((m, i) => {
+                const ac = avatarColor(m.name);
+                return (
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:'var(--surface)', border:`1px solid ${m.verified ? 'var(--lime)33' : 'var(--border)'}`, borderRadius:10, position:'relative' }}>
+                    <div style={{ width:36, height:36, borderRadius:'50%', background:ac.bg, display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Barlow Condensed', fontSize:15, fontWeight:700, color:ac.text, flexShrink:0 }}>
+                      {(m.name||'?')[0].toUpperCase()}
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:13, fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.name}</div>
+                      {m.ig_handle && (
+                        <div style={{ fontSize:11, color:'var(--muted)', display:'flex', alignItems:'center', gap:3 }}>
+                          <IgIcon size={10} color="var(--muted)" />@{m.ig_handle}
+                        </div>
+                      )}
+                      <div style={{ fontSize:10, fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', marginTop:2, color: m.verified ? 'var(--lime)' : '#555' }}>
+                        {m.verified ? '✓ Verified' : 'Pending approval'}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ fontSize:13, fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{m.name}</div>
-                    {m.ig_handle && (
-                      <a href={`https://instagram.com/${m.ig_handle}`} target="_blank" rel="noopener noreferrer" style={{ fontSize:11, color:'var(--muted)', textDecoration:'none', display:'flex', alignItems:'center', gap:3 }}>
-                        <IgIcon size={10} color="var(--muted)" />@{m.ig_handle}
-                      </a>
-                    )}
-                    {m.role && <div style={{ fontSize:10, color:'var(--muted)', fontFamily:'Barlow Condensed', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>{m.role}</div>}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -1027,7 +1080,7 @@ function Step6({ form, setForm }) {
           </div>
 
           {caseStudies.map((cs, i) => (
-            <div key={i} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, overflow:'hidden', marginBottom:8 }}>
+            <div key={i} style={{ background:'var(--surface)', border:`1px solid ${cs.verified ? 'var(--lime)33' : 'var(--border)'}`, borderRadius:10, overflow:'hidden', marginBottom:8 }}>
               {(() => {
                 const imgs = cs.images?.length ? cs.images : cs.image_url ? [cs.image_url] : [];
                 if (!imgs.length) return null;
@@ -1045,6 +1098,9 @@ function Step6({ form, setForm }) {
                 <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
                   <div style={{ fontFamily:'Barlow Condensed', fontSize:15, fontWeight:800, textTransform:'uppercase' }}>{cs.brand}</div>
                   {cs.year && <div style={{ fontFamily:'Barlow Condensed', fontSize:12, color:'var(--muted)', fontWeight:600 }}>{cs.year}</div>}
+                  <div style={{ marginLeft:'auto', fontSize:10, fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em', color: cs.verified ? 'var(--lime)' : '#555' }}>
+                    {cs.verified ? '✓ Verified' : 'Pending approval'}
+                  </div>
                 </div>
                 {cs.description && <div style={{ fontSize:12, color:'var(--muted)', lineHeight:1.5 }}>{cs.description}</div>}
               </div>
@@ -1124,6 +1180,7 @@ function App() {
     capabilities: [],
     partnershipPrefs: '',
     notableMembers: [],
+    archetype: '',
   });
 
   useEffect(() => {
@@ -1156,6 +1213,7 @@ function App() {
             capabilities: data.capabilities || [],
             partnershipPrefs: data.partnership_preferences || '',
             notableMembers: data.notable_members || [],
+            archetype: data.archetype || '',
           }));
           if (s) setStep(s);
         });

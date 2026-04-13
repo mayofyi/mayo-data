@@ -82,6 +82,8 @@ def init_db():
                 ("partnership_preferences", "TEXT"),
                 ("capabilities", "TEXT[]"),
                 ("substack_data", "JSONB"),
+                ("archetype", "TEXT"),
+                ("archetype_source", "TEXT"),
             ]:
                 cur.execute(f"""
                     ALTER TABLE communities ADD COLUMN IF NOT EXISTS {col} {typedef}
@@ -198,7 +200,8 @@ def update_community(community_id):
     data = request.json or {}
     allowed = ["name", "tagline", "location", "description", "tags",
                "active_members", "website", "cover_option", "substack_url",
-               "leader_name", "email", "partnership_preferences", "capabilities"]
+               "leader_name", "email", "partnership_preferences", "capabilities",
+               "archetype", "archetype_source"]
     fields, values = [], []
     for field in allowed:
         if field in data:
@@ -296,7 +299,7 @@ def add_case_study(community_id):
         brand = data.get("brand", "")
         year = data.get("year", "")
         description = data.get("description", "")
-    entry = {"brand": brand, "year": year, "description": description, "images": images}
+    entry = {"brand": brand, "year": year, "description": description, "images": images, "verified": False}
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -310,6 +313,48 @@ def add_case_study(community_id):
     return jsonify({"ok": True, "entry": entry})
 
 
+@app.route("/api/community/<community_id>/notable-member/<int:idx>/verify", methods=["PUT"])
+def verify_notable_member(community_id, idx):
+    verified = (request.json or {}).get("verified", True)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT notable_members FROM communities WHERE id = %s", (community_id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({"error": "Not found"}), 404
+            members = list(row["notable_members"] or [])
+            if idx >= len(members):
+                return jsonify({"error": "Index out of range"}), 400
+            members[idx]["verified"] = verified
+            cur.execute(
+                "UPDATE communities SET notable_members = %s, updated_at = NOW() WHERE id = %s",
+                (psycopg2.extras.Json(members), community_id),
+            )
+        conn.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/community/<community_id>/case-study/<int:idx>/verify", methods=["PUT"])
+def verify_case_study(community_id, idx):
+    verified = (request.json or {}).get("verified", True)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT case_studies FROM communities WHERE id = %s", (community_id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({"error": "Not found"}), 404
+            studies = list(row["case_studies"] or [])
+            if idx >= len(studies):
+                return jsonify({"error": "Index out of range"}), 400
+            studies[idx]["verified"] = verified
+            cur.execute(
+                "UPDATE communities SET case_studies = %s, updated_at = NOW() WHERE id = %s",
+                (psycopg2.extras.Json(studies), community_id),
+            )
+        conn.commit()
+    return jsonify({"ok": True})
+
+
 @app.route("/api/community/<community_id>/notable-member", methods=["POST"])
 def add_notable_member(community_id):
     data = request.json or {}
@@ -317,6 +362,7 @@ def add_notable_member(community_id):
         "name": data.get("name", ""),
         "ig_handle": data.get("ig_handle", "").lstrip("@"),
         "role": data.get("role", ""),
+        "verified": False,
     }
     with get_db() as conn:
         with conn.cursor() as cur:

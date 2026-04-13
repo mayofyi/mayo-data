@@ -105,6 +105,13 @@ const COVER_OPTIONS = [
   { id:8, gradient:'linear-gradient(135deg,#0a0a00 0%,#1a1a00 40%,#3d3d00 70%,#7a7a00 100%)' },
 ];
 
+const ARCHETYPES = [
+  { id:'evangelists',    label:'Evangelists',    color:'#ff6ef2', best:'Brand Awareness' },
+  { id:'early_adopters', label:'Early Adopters',  color:'#d2ff01', best:'Product Launches' },
+  { id:'loyalists',      label:'Loyalists',       color:'#b1ecf0', best:'Long-term Sponsorship' },
+  { id:'buyers',         label:'Buyers',          color:'#ffab40', best:'Direct Response' },
+];
+
 const AVATAR_COLORS = [
   {bg:'#d2ff01',text:'#000'},{bg:'#b1ecf0',text:'#000'},{bg:'#ff6ef2',text:'#000'},
   {bg:'#ffab40',text:'#000'},{bg:'#b3ff9e',text:'#000'},{bg:'#ff6b6b',text:'#000'},
@@ -339,25 +346,43 @@ function openCommunity(id) {
       </div>
     </div>
 
+    <!-- Archetype -->
+    <div style="padding:12px 28px 0">
+      <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div class="section-label" style="margin-bottom:0">Community Archetype</div>
+          ${c.archetype_source ? `<span style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:${c.archetype_source==='mayo_assigned'?'var(--lime)':'var(--muted)'}">${c.archetype_source==='mayo_assigned'?'★ Mayo assigned':'Community suggested'}</span>` : ''}
+        </div>
+        ${c.archetype ? (() => { const a = ARCHETYPES.find(x=>x.id===c.archetype); return a ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-family:'Bebas Neue';font-size:22px;color:${a.color}">${a.label}</span><span style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:3px">${a.best}</span></div>` : ''; })() : '<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Not set — assign below</div>'}
+        <div style="display:flex;align-items:center;gap:8px">
+          <select id="arch-select-${c.id}" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:7px 10px;color:var(--white);font-family:'Barlow Condensed';font-size:13px;font-weight:600">
+            <option value="">— Remove archetype —</option>
+            ${ARCHETYPES.map(a=>`<option value="${a.id}" ${c.archetype===a.id?'selected':''}>${a.label} — ${a.best}</option>`).join('')}
+          </select>
+          <button onclick="assignArchetype('${c.id}')" style="background:var(--lime);color:#000;border:none;border-radius:5px;padding:8px 16px;font-family:'Barlow Condensed';font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap">Assign</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Notable Members -->
     ${notableMembers.length ? `
     <div style="padding:12px 28px 0">
       <div class="panel">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
           <div class="section-label" style="margin-bottom:0">Notable Members</div>
-          <span style="font-family:'Barlow Condensed';font-size:11px;color:var(--muted)">${notableMembers.length} featured</span>
+          <span style="font-family:'Barlow Condensed';font-size:11px;color:var(--muted)">${notableMembers.filter(m=>m.verified).length}/${notableMembers.length} approved</span>
         </div>
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
-          ${notableMembers.map(m => {
+          ${notableMembers.map((m, idx) => {
             const col = avatarColor(m.name||'');
-            return `<div class="member-card">
+            return `<div class="member-card" style="border-color:${m.verified?'rgba(210,255,1,0.2)':'var(--border)'}">
               <div style="width:36px;height:36px;border-radius:50%;background:${col.bg};color:${col.text};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:16px;flex-shrink:0">${(m.name||'?')[0].toUpperCase()}</div>
-              <div>
+              <div style="flex:1;min-width:0">
                 <div style="font-weight:600;font-size:13px">${m.name||'—'}</div>
                 ${m.ig_handle ? `<div style="font-size:11px;color:var(--muted)">@${m.ig_handle}</div>` : ''}
                 ${m.role ? `<div style="font-size:11px;color:var(--muted)">${m.role}</div>` : ''}
-                <div style="font-size:10px;color:#444;margin-top:2px;font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.04em">Verification pending</div>
               </div>
+              <button onclick="verifyMember('${c.id}',${idx},${!m.verified})" style="background:${m.verified?'transparent':'var(--lime)'};color:${m.verified?'var(--muted)':'#000'};border:1px solid ${m.verified?'var(--border)':'var(--lime)'};border-radius:4px;padding:4px 10px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;flex-shrink:0;white-space:nowrap">${m.verified?'Revoke':'Approve'}</button>
             </div>`;
           }).join('')}
         </div>
@@ -370,22 +395,25 @@ function openCommunity(id) {
       <div class="panel">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
           <div class="section-label" style="margin-bottom:0">Past Partnerships</div>
-          <span style="font-family:'Barlow Condensed';font-size:11px;color:var(--muted)">${caseStudies.length} case ${caseStudies.length===1?'study':'studies'}</span>
+          <span style="font-family:'Barlow Condensed';font-size:11px;color:var(--muted)">${caseStudies.filter(cs=>cs.verified).length}/${caseStudies.length} approved</span>
         </div>
         <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px">
-          ${caseStudies.map(cs => {
+          ${caseStudies.map((cs, idx) => {
             const imgs = cs.images || [];
             const hero = imgs[0] || cs.image_url || null;
             const col = avatarColor(cs.brand||'P');
-            return `<div class="cs-card">
-              <div style="height:110px;${hero ? `background:url(${hero}) center/cover no-repeat` : `background:${col.bg};display:flex;align-items:center;justify-content:center`}">
+            return `<div class="cs-card" style="border-color:${cs.verified?'rgba(210,255,1,0.25)':'var(--border)'}">
+              <div style="height:110px;position:relative;${hero ? `background:url(${hero}) center/cover no-repeat` : `background:${col.bg};display:flex;align-items:center;justify-content:center`}">
                 ${!hero ? `<span style="font-family:'Bebas Neue';font-size:36px;color:${col.text}">${(cs.brand||'?')[0].toUpperCase()}</span>` : ''}
+                <div style="position:absolute;top:6px;right:6px">
+                  ${cs.verified ? '<span style="background:var(--lime);color:#000;font-family:\'Barlow Condensed\';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:2px 6px;border-radius:3px">✓ Verified</span>' : '<span style="background:rgba(0,0,0,0.65);color:#666;font-family:\'Barlow Condensed\';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:2px 6px;border-radius:3px">Pending</span>'}
+                </div>
               </div>
-              <div style="padding:12px">
+              <div style="padding:10px 12px">
                 <div style="font-weight:700;font-size:13px">${cs.brand||'—'}</div>
-                ${cs.year ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${cs.year}</div>` : ''}
-                ${cs.description ? `<div style="font-size:11px;color:rgba(240,240,240,0.55);margin-top:6px;line-height:1.5">${cs.description.slice(0,90)}${cs.description.length>90?'…':''}</div>` : ''}
-                ${imgs.length > 1 ? `<div style="font-size:10px;color:var(--muted);margin-top:6px;font-family:'Barlow Condensed'">${imgs.length} images</div>` : ''}
+                ${cs.year ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">${cs.year}</div>` : ''}
+                ${cs.description ? `<div style="font-size:11px;color:rgba(240,240,240,0.5);margin-top:5px;line-height:1.4">${cs.description.slice(0,70)}${cs.description.length>70?'…':''}</div>` : ''}
+                <button onclick="verifyCaseStudy('${c.id}',${idx},${!cs.verified})" style="margin-top:8px;width:100%;background:${cs.verified?'transparent':'var(--lime)'};color:${cs.verified?'var(--muted)':'#000'};border:1px solid ${cs.verified?'var(--border)':'var(--lime)'};border-radius:4px;padding:5px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer">${cs.verified?'Revoke':'Approve'}</button>
               </div>
             </div>`;
           }).join('')}
@@ -436,6 +464,40 @@ function openCommunity(id) {
   const modal = document.getElementById('modal');
   modal.style.display = 'block';
   modal.scrollTop = 0;
+}
+
+async function verifyMember(communityId, idx, verified) {
+  await fetch(`/api/community/${communityId}/notable-member/${idx}/verify`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ verified }),
+  });
+  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
+  communities = await res.json();
+  renderTable();
+  openCommunity(communityId);
+}
+
+async function verifyCaseStudy(communityId, idx, verified) {
+  await fetch(`/api/community/${communityId}/case-study/${idx}/verify`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ verified }),
+  });
+  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
+  communities = await res.json();
+  renderTable();
+  openCommunity(communityId);
+}
+
+async function assignArchetype(communityId) {
+  const val = document.getElementById(`arch-select-${communityId}`).value;
+  await fetch(`/api/community/${communityId}`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ archetype: val || null, archetype_source: val ? 'mayo_assigned' : null }),
+  });
+  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
+  communities = await res.json();
+  renderTable();
+  openCommunity(communityId);
 }
 
 function closeModal() {

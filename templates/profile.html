@@ -50,6 +50,13 @@ const COVER_OPTIONS = [
   { id:8, gradient:'linear-gradient(135deg,#0a0a00 0%,#1a1a00 40%,#3d3d00 70%,#7a7a00 100%)', label:'Midnight Gold' },
 ];
 
+const ARCHETYPES = [
+  { id:'evangelists',    label:'Evangelists',    color:'#ff6ef2', best:'Brand Awareness',      kpi:'Reach & Share Rate',      desc:'Champions brands they believe in. High share rate, unsolicited advocacy, identity-linked.' },
+  { id:'early_adopters', label:'Early Adopters',  color:'#d2ff01', best:'Product Launches',     kpi:'Trial Rate & Buzz',        desc:'Loves being first. Trend-forward, high try rate, first-to-know pride.' },
+  { id:'loyalists',      label:'Loyalists',       color:'#b1ecf0', best:'Long-term Sponsorship', kpi:'Retention & Attendance',  desc:'Shows up every time. Repeat engagement, high attendance, low churn.' },
+  { id:'buyers',         label:'Buyers',          color:'#ffab40', best:'Direct Response',      kpi:'Conversion Rate & Sales',  desc:'Converts. Purchase intent, conversion signals, practical focus.' },
+];
+
 const IgIcon = ({size=16, color='currentColor'}) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill={color}>
     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
@@ -294,8 +301,9 @@ function ProfilePage() {
   const capabilities = data.capabilities || [];
   const partnershipPrefs = data.partnership_preferences || '';
   const mediaItems = data.media_items || [];
-  const caseStudies = data.case_studies || [];
-  const notableMembers = data.notable_members || [];
+  const caseStudies = (data.case_studies || []).filter(cs => cs.verified);
+  const notableMembers = (data.notable_members || []).filter(m => m.verified);
+  const archetype = ARCHETYPES.find(a => a.id === data.archetype) || null;
 
   return (
     <div style={{ minHeight:'100vh', background:'var(--black)' }}>
@@ -400,6 +408,21 @@ function ProfilePage() {
           <div style={{ margin:'12px 24px 0', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'18px 22px' }}>
             <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em', marginBottom:10 }}>What We Look For</div>
             <div style={{ fontSize:13, color:'var(--muted)', lineHeight:1.75, fontStyle:'italic', borderLeft:'2px solid var(--lime)', paddingLeft:14 }}>"{partnershipPrefs}"</div>
+          </div>
+        )}
+
+        {/* Archetype card */}
+        {archetype && (
+          <div style={{ margin:'0 24px 16px', background:archetype.color+'12', border:`1px solid ${archetype.color}33`, borderRadius:12, padding:'18px 22px' }}>
+            <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:archetype.color+'99', marginBottom:6 }}>Community Type</div>
+            <div style={{ fontFamily:'Bebas Neue', fontSize:34, letterSpacing:'0.03em', color:archetype.color, marginBottom:6 }}>{archetype.label}</div>
+            <div style={{ fontSize:12, color:'rgba(240,240,240,0.6)', lineHeight:1.6, marginBottom:12 }}>{archetype.desc}</div>
+            <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+              <span style={{ fontSize:11, color:archetype.color+'99', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>Best for</span>
+              <span style={{ background:archetype.color+'20', border:`1px solid ${archetype.color}44`, color:archetype.color, fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', padding:'3px 10px', borderRadius:4 }}>{archetype.best}</span>
+              <span style={{ fontSize:11, color:archetype.color+'99', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>Primary KPI</span>
+              <span style={{ fontSize:11, color:'rgba(240,240,240,0.5)', fontFamily:'Barlow Condensed' }}>{archetype.kpi}</span>
+            </div>
           </div>
         )}
 
