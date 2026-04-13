@@ -11,14 +11,15 @@
   --surface3: #222; --white: #f0f0f0; --muted: #888;
   --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
   --cyan: #b1ecf0; --pink: #ff6ef2; --green: #b3ff9e; --red: #ff6b6b;
+  --orange: #ffab40; --yellow: #ffea12;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
 body { background:var(--black); color:var(--white); font-family:'Barlow',sans-serif; font-size:14px; min-height:100vh; }
 .bb { font-family:'Bebas Neue',sans-serif; letter-spacing:0.03em; }
 .bc { font-family:'Barlow Condensed',sans-serif; }
-::-webkit-scrollbar { width:3px; height:3px; } ::-webkit-scrollbar-thumb { background:var(--surface3); }
+::-webkit-scrollbar { width:4px; height:6px; } ::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:3px; } ::-webkit-scrollbar-track { background:transparent; }
 
-header { padding:20px 32px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+header { padding:20px 32px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10; background:var(--black); }
 .logo { font-family:'Bebas Neue'; font-size:28px; letter-spacing:0.05em; }
 .logo span { color:var(--lime); }
 .badge { display:inline-block; padding:3px 9px; border-radius:3px; font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
@@ -31,7 +32,6 @@ header { padding:20px 32px; border-bottom:1px solid var(--border); display:flex;
 main { padding:32px; }
 .page-title { font-family:'Bebas Neue'; font-size:36px; letter-spacing:0.03em; margin-bottom:6px; }
 .page-sub { font-size:13px; color:var(--muted); margin-bottom:28px; }
-
 .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
 .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 20px; }
 .stat-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
@@ -48,88 +48,114 @@ tbody td { padding:14px; vertical-align:top; font-size:13px; }
 .tag { display:inline-block; padding:2px 6px; border-radius:3px; font-family:'Barlow Condensed'; font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; border:1px solid var(--border2); color:var(--muted); }
 .metric { font-family:'Barlow Condensed'; font-size:16px; font-weight:700; }
 .metric-label { font-size:10px; color:var(--muted); font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:0.05em; }
-
-.detail-panel { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:20px; margin-top:8px; display:none; }
-.detail-panel.open { display:block; }
-.detail-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-.detail-item label { font-family:'Barlow Condensed'; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:4px; }
-.detail-item span { font-size:13px; }
-
 .empty { text-align:center; padding:60px 20px; color:var(--muted); }
 .loading { text-align:center; padding:60px; color:var(--muted); font-family:'Barlow Condensed'; font-size:16px; letter-spacing:0.06em; text-transform:uppercase; }
+
+/* Modal */
+#modal { position:fixed; inset:0; z-index:200; overflow-y:auto; background:var(--black); display:none; }
+.modal-inner { max-width:980px; margin:0 auto; padding-bottom:80px; }
+.back-btn { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); color:var(--white); font-family:'Barlow Condensed'; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:7px 14px; border-radius:5px; cursor:pointer; transition:background 0.15s; }
+.back-btn:hover { background:rgba(255,255,255,0.18); }
+.section-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+.metric-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px 16px; }
+.chip { display:inline-block; padding:4px 10px; border-radius:4px; font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; background:var(--surface3); border:1px solid var(--border2); color:var(--white); margin:2px; }
+.member-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
+.cs-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; overflow:hidden; min-width:200px; max-width:220px; flex-shrink:0; }
+.panel { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px; }
 </style>
 </head>
 <body>
+
 <header>
   <div class="logo">mayo<span>.</span></div>
   <div style="font-family:'Barlow Condensed';font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Admin Panel</div>
 </header>
 
-<main>
+<main id="main-view">
   <div class="page-title">Communities</div>
   <div class="page-sub" id="last-updated">Loading…</div>
-
-  <div class="stats-row" id="stats-row">
+  <div class="stats-row">
     <div class="stat-card"><div class="stat-label">Total Profiles</div><div class="stat-value" id="stat-total">—</div></div>
     <div class="stat-card"><div class="stat-label">Instagram Connected</div><div class="stat-value" id="stat-ig">—</div></div>
     <div class="stat-card"><div class="stat-label">Fully Verified</div><div class="stat-value" id="stat-fv">—</div></div>
-    <div class="stat-card"><div class="stat-label">Avg. Weighted ER</div><div class="stat-value" id="stat-er">—</div></div>
+    <div class="stat-card"><div class="stat-label">Avg. ER</div><div class="stat-value" id="stat-er">—</div></div>
   </div>
-
   <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
     <div id="table-container" class="loading">Loading communities…</div>
   </div>
 </main>
 
+<div id="modal">
+  <div class="modal-inner" id="modal-inner"></div>
+</div>
+
 <div id="admin-token" style="display:none">{{ admin_token }}</div>
+
 <script>
-const ADMIN_TOKEN = document.getElementById('admin-token').textContent;
+const ADMIN_TOKEN = document.getElementById('admin-token').textContent.trim();
+
+const COVER_OPTIONS = [
+  { id:1, gradient:'linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 70%,#533483 100%)' },
+  { id:2, gradient:'linear-gradient(135deg,#0d0d0d 0%,#1a0a00 40%,#3d1c00 70%,#c43a00 100%)' },
+  { id:3, gradient:'linear-gradient(135deg,#0a1628 0%,#1b3a4b 50%,#2d6a4f 100%)' },
+  { id:4, gradient:'linear-gradient(135deg,#1a0a00 0%,#3d2b1f 40%,#8a6a40 70%,#c4a060 100%)' },
+  { id:5, gradient:'linear-gradient(135deg,#0d0d1a 0%,#1a1a3e 40%,#2d1b69 70%,#6b2d8b 100%)' },
+  { id:6, gradient:'linear-gradient(135deg,#001a0a 0%,#003d1a 40%,#006b2d 70%,#00a844 100%)' },
+  { id:7, gradient:'linear-gradient(135deg,#1a0010 0%,#3d0028 40%,#7a0050 70%,#c40080 100%)' },
+  { id:8, gradient:'linear-gradient(135deg,#0a0a00 0%,#1a1a00 40%,#3d3d00 70%,#7a7a00 100%)' },
+];
+
+const AVATAR_COLORS = [
+  {bg:'#d2ff01',text:'#000'},{bg:'#b1ecf0',text:'#000'},{bg:'#ff6ef2',text:'#000'},
+  {bg:'#ffab40',text:'#000'},{bg:'#b3ff9e',text:'#000'},{bg:'#ff6b6b',text:'#000'},
+  {bg:'#a78bfa',text:'#000'},{bg:'#34d399',text:'#000'},
+];
+
+function avatarColor(name) {
+  let h = 0;
+  for (let i = 0; i < (name||'').length; i++) h = (h * 31 + (name||'').charCodeAt(i)) & 0xffff;
+  return AVATAR_COLORS[h % AVATAR_COLORS.length];
+}
 
 function formatDate(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
 }
 
-function getER(community) {
-  return community.instagram_data?.engagement_rate ?? null;
-}
+function getER(c) { return c.instagram_data?.engagement_rate ?? null; }
+function getFollowers(c) { return c.instagram_data?.profile?.followers_count ?? null; }
 
-function getFollowers(community) {
-  return community.instagram_data?.profile?.followers_count ?? null;
-}
-
-function getTier(community) {
-  const channels = [!!community.instagram_token, !!community.substack_url].filter(Boolean).length;
-  if (channels >= 2) return 'fully-verified';
-  if (channels >= 1) return 'verified';
+function getTier(c) {
+  const n = [!!c.instagram_token, !!c.substack_url].filter(Boolean).length;
+  if (n >= 2) return 'fully-verified';
+  if (n >= 1) return 'verified';
   return 'starter';
 }
 
 function tierBadge(tier) {
-  if (tier === 'fully-verified') return '<span class="badge badge-lime">Fully Verified</span>';
-  if (tier === 'verified') return '<span class="badge badge-cyan">Verified</span>';
+  if (tier === 'fully-verified') return '<span class="badge badge-lime">✦ Fully Verified</span>';
+  if (tier === 'verified') return '<span class="badge badge-cyan">✦ Verified</span>';
   return '<span class="badge badge-muted">Starter</span>';
 }
 
-function igStatus(community) {
-  if (community.instagram_data) return '<span class="badge badge-green">✓ Data collected</span>';
-  if (community.instagram_token) return '<span style="color:var(--lime);font-family:Barlow Condensed;font-size:12px;font-weight:700">✓ Connected — collecting…</span>';
+function igStatusBadge(c) {
+  if (c.instagram_data) return '<span class="badge badge-green">✓ Data collected</span>';
+  if (c.instagram_token) return '<span style="color:var(--lime);font-family:\'Barlow Condensed\';font-size:12px;font-weight:700">✓ Connected</span>';
   return '<span class="badge-red">Not connected</span>';
 }
 
 let communities = [];
-let openRows = new Set();
+
+// ── Table ─────────────────────────────────────────────────────────────────────
 
 function renderTable() {
   if (!communities.length) {
     document.getElementById('table-container').innerHTML = '<div class="empty">No communities yet. Share the onboarding link to get started.</div>';
     return;
   }
-
-  // Stats
   const igConnected = communities.filter(c => c.instagram_token).length;
   const fullyVerified = communities.filter(c => getTier(c) === 'fully-verified').length;
-  const ers = communities.map(c => getER(c)).filter(v => v !== null);
+  const ers = communities.map(getER).filter(v => v !== null);
   const avgER = ers.length ? (ers.reduce((a,b)=>a+b,0)/ers.length).toFixed(1) : '—';
 
   document.getElementById('stat-total').textContent = communities.length;
@@ -138,88 +164,286 @@ function renderTable() {
   document.getElementById('stat-er').textContent = avgER + (ers.length ? '%' : '');
   document.getElementById('last-updated').textContent = `Last refreshed ${new Date().toLocaleTimeString()}`;
 
-  const html = `
+  document.getElementById('table-container').innerHTML = `
     <table>
-      <thead>
-        <tr>
-          <th>Community</th>
-          <th>Tier</th>
-          <th>Instagram</th>
-          <th>Followers</th>
-          <th>Weighted ER</th>
-          <th>Tags</th>
-          <th>Joined</th>
-        </tr>
-      </thead>
+      <thead><tr>
+        <th>Community</th><th>Tier</th><th>Instagram</th>
+        <th>Followers</th><th>ER</th><th>Tags</th><th>Joined</th>
+      </tr></thead>
       <tbody>
-        ${communities.map((c, i) => {
-          const er = getER(c);
-          const followers = getFollowers(c);
-          const tier = getTier(c);
-          const isOpen = openRows.has(c.id);
-
-          const profile = c.instagram_data?.profile || {};
-          const insights = c.instagram_data?.insights || {};
-
-          return `
-            <tr onclick="toggleRow('${c.id}')">
-              <td>
-                <div class="community-name">${c.name}</div>
-                <div class="community-sub">${c.location || '—'}</div>
-                ${c.tagline ? `<div class="community-sub" style="margin-top:2px;font-style:italic">${c.tagline}</div>` : ''}
-              </td>
-              <td>${tierBadge(tier)}</td>
-              <td>${igStatus(c)}</td>
-              <td>
-                ${followers !== null ? `<div class="metric">${followers.toLocaleString()}</div><div class="metric-label">followers</div>` : '<span style="color:var(--muted)">—</span>'}
-              </td>
-              <td>
-                ${er !== null ? `<div class="metric">${er}%</div><div class="metric-label">weighted ER</div>` : '<span style="color:var(--muted)">—</span>'}
-              </td>
-              <td>
-                <div class="tags-list">
-                  ${(c.tags || []).slice(0,4).map(t => `<span class="tag">${t}</span>`).join('')}
-                  ${(c.tags || []).length > 4 ? `<span class="tag">+${c.tags.length-4}</span>` : ''}
-                </div>
-              </td>
-              <td style="color:var(--muted);font-size:12px">${formatDate(c.created_at)}</td>
-            </tr>
-            <tr id="detail-${c.id}" style="display:${isOpen?'table-row':'none'}">
-              <td colspan="7" style="padding:0 14px 14px">
-                <div class="detail-panel open">
-                  <div class="detail-grid">
-                    <div class="detail-item"><label>Leader</label><span>${c.leader_name || '—'}</span></div>
-                    <div class="detail-item"><label>Email</label><span>${c.email ? `<a href="mailto:${c.email}" style="color:var(--cyan)">${c.email}</a>` : '—'}</span></div>
-                    <div class="detail-item"><label>Active Members</label><span>${c.active_members ?? '—'} <span style="color:var(--muted);font-size:11px">(community-reported)</span></span></div>
-                    <div class="detail-item"><label>Website</label><span>${c.website ? `<a href="${c.website}" target="_blank" style="color:var(--cyan)">${c.website}</a>` : '—'}</span></div>
-                    <div class="detail-item"><label>Substack</label><span>${c.substack_url ? `<a href="${c.substack_url}" target="_blank" style="color:var(--cyan)">${c.substack_url}</a>` : '—'}</span></div>
-                    <div class="detail-item"><label>Reach</label><span>${insights.reach ? insights.reach.toLocaleString() : 'Blocked (needs insights permission)'}</span></div>
-                    <div class="detail-item"><label>Profile Views</label><span>${insights.profile_views ? insights.profile_views.toLocaleString() : '—'}</span></div>
-                    <div class="detail-item"><label>Instagram Connected</label><span>${c.instagram_connected_at ? formatDate(c.instagram_connected_at) : '—'}</span></div>
-                    <div class="detail-item"><label>Bio</label><span style="color:var(--muted)">${profile.biography || '—'}</span></div>
-                    <div class="detail-item"><label>Description</label><span style="color:var(--muted)">${c.description || '—'}</span></div>
-                    <div class="detail-item"><label>Community ID</label><span style="color:var(--muted);font-size:11px">${c.id}</span></div>
-                  </div>
-                </div>
-              </td>
-            </tr>
-          `;
+        ${communities.map(c => {
+          const er = getER(c), followers = getFollowers(c), tier = getTier(c);
+          return `<tr onclick="openCommunity('${c.id}')">
+            <td>
+              <div class="community-name">${c.name}</div>
+              <div class="community-sub">${c.location || '—'}</div>
+              ${c.tagline ? `<div class="community-sub" style="margin-top:2px;font-style:italic">${c.tagline}</div>` : ''}
+            </td>
+            <td>${tierBadge(tier)}</td>
+            <td>${igStatusBadge(c)}</td>
+            <td>${followers !== null ? `<div class="metric">${followers.toLocaleString()}</div><div class="metric-label">followers</div>` : '<span style="color:var(--muted)">—</span>'}</td>
+            <td>${er !== null ? `<div class="metric">${er}%</div><div class="metric-label">engagement rate</div>` : '<span style="color:var(--muted)">—</span>'}</td>
+            <td><div class="tags-list">
+              ${(c.tags||[]).slice(0,3).map(t=>`<span class="tag">${t}</span>`).join('')}
+              ${(c.tags||[]).length>3?`<span class="tag">+${c.tags.length-3}</span>`:''}
+            </div></td>
+            <td style="color:var(--muted);font-size:12px">${formatDate(c.created_at)}</td>
+          </tr>`;
         }).join('')}
       </tbody>
-    </table>
+    </table>`;
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────────
+
+function openCommunity(id) {
+  const c = communities.find(x => x.id === id);
+  if (!c) return;
+
+  const igData = c.instagram_data || {};
+  const igProfile = igData.profile || {};
+  const tier = getTier(c);
+  const er = getER(c);
+  const followers = getFollowers(c);
+  const coverObj = COVER_OPTIONS.find(o => o.id === (c.cover_option || 1)) || COVER_OPTIONS[0];
+  const coverBg = c.cover_image_url
+    ? `url(${c.cover_image_url}) center/cover no-repeat`
+    : coverObj.gradient;
+  const igUsername = igProfile.username || '';
+  const notableMembers = c.notable_members || [];
+  const caseStudies = c.case_studies || [];
+  const capabilities = c.capabilities || [];
+
+  const statItems = [
+    er !== null ? `${er}% ER` : null,
+    c.active_members ? `${Number(c.active_members).toLocaleString()} members` : null,
+    followers ? `${followers.toLocaleString()} reach` : null,
+  ].filter(Boolean).join(' · ');
+
+  const igIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`;
+  const globeIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
+
+  document.getElementById('modal-inner').innerHTML = `
+
+    <!-- Cover / Header -->
+    <div style="position:relative;background:${coverBg};min-height:200px;display:flex;flex-direction:column;justify-content:flex-end;">
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.2) 50%,transparent 100%);pointer-events:none"></div>
+      <div style="position:absolute;top:20px;left:24px;z-index:1">
+        <button class="back-btn" onclick="closeModal()">← Back</button>
+      </div>
+      <div style="position:absolute;top:20px;right:24px;z-index:1">
+        <a href="/profile/${c.id}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);color:#fff;font-family:'Barlow Condensed';font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:7px 14px;border-radius:5px;text-decoration:none">↗ Public Profile</a>
+      </div>
+      <div style="position:relative;z-index:1;padding:24px 28px 22px">
+        <div class="bb" style="font-size:44px;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,0.6)">${c.name}</div>
+        ${c.tagline || c.location ? `<div style="font-size:14px;color:rgba(255,255,255,0.7);margin-top:5px">${[c.tagline, c.location].filter(Boolean).join(' · ')}</div>` : ''}
+        ${(c.tags||[]).length ? `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">${(c.tags||[]).map(t=>`<span style="padding:3px 10px;border-radius:4px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase">${t}</span>`).join('')}</div>` : ''}
+      </div>
+    </div>
+
+    <!-- Verification strip -->
+    <div style="background:#0d0d0d;border-bottom:1px solid var(--border);padding:10px 28px;display:flex;align-items:center;gap:14px">
+      ${tierBadge(tier)}
+      <span style="color:var(--muted);font-size:13px">${statItems || 'No data collected yet'}</span>
+    </div>
+
+    <!-- Metric cards -->
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:20px 28px 0">
+      <div class="metric-card" style="background:#0f0f00;border-color:#2a2800">
+        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Match Score</div>
+        <div style="font-family:'Bebas Neue';font-size:30px;color:#555;line-height:1">—</div>
+        <div style="font-size:10px;color:#444;margin-top:4px">No active brief</div>
+      </div>
+      <div class="metric-card">
+        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Engagement Rate</div>
+        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${er !== null ? `${er}%` : '—'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">${er !== null ? (igUsername ? `@${igUsername}` : 'Instagram') : 'No IG data'}</div>
+      </div>
+      <div class="metric-card">
+        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Active Members</div>
+        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${c.active_members ? Number(c.active_members).toLocaleString() : '—'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">${c.active_members ? 'community-reported' : 'Not set'}</div>
+      </div>
+      <div class="metric-card">
+        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Total Reach</div>
+        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${followers !== null ? followers.toLocaleString() : '—'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">${followers !== null ? 'Instagram' : 'Not connected'}</div>
+      </div>
+      <div class="metric-card" style="background:#090005;border-color:#1f0015">
+        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Network Multiplier</div>
+        <div style="font-family:'Bebas Neue';font-size:20px;color:#444;line-height:1;padding-top:4px">Pending</div>
+        <div style="font-size:10px;color:#444;margin-top:4px">Member verification needed</div>
+      </div>
+      <div class="metric-card" style="background:#0a0700;border-color:#221a00">
+        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Cultural Impact</div>
+        <div style="font-family:'Bebas Neue';font-size:20px;color:#444;line-height:1;padding-top:4px">Pending</div>
+        <div style="font-size:10px;color:#444;margin-top:4px">Editorial review required</div>
+      </div>
+    </div>
+
+    <!-- Channels + Capabilities -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 28px 0">
+
+      <!-- Channels -->
+      <div class="panel">
+        <div class="section-label">Channels</div>
+
+        ${(c.instagram_token || c.instagram_data) ? `
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)">
+          <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0">${igIcon}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px">Instagram${igUsername ? ` · <span style="color:var(--muted);font-weight:400">@${igUsername}</span>` : ''}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">
+              ${[followers ? `${followers.toLocaleString()} followers` : null, er !== null ? `${er}% ER` : null, c.instagram_connected_at ? `Since ${formatDate(c.instagram_connected_at)}` : null].filter(Boolean).join(' · ')}
+            </div>
+          </div>
+          ${c.instagram_data ? '<span class="badge badge-green" style="font-size:9px;flex-shrink:0">✓ Live</span>' : '<span style="color:var(--lime);font-family:\'Barlow Condensed\';font-size:10px;font-weight:700;flex-shrink:0">Connected</span>'}
+        </div>` : `<div style="font-size:12px;color:var(--muted);padding:10px 0;border-bottom:1px solid var(--border)">Instagram not connected</div>`}
+
+        ${c.substack_url ? `
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)">
+          <div style="width:30px;height:30px;border-radius:50%;background:#ff6719;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;color:#fff;flex-shrink:0">S</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:13px">Substack</div>
+            <div style="font-size:11px;margin-top:2px"><a href="${c.substack_url}" target="_blank" style="color:var(--cyan);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">${c.substack_url.replace(/^https?:\/\//,'')}</a></div>
+          </div>
+          ${c.substack_data ? '<span class="badge badge-green" style="font-size:9px;flex-shrink:0">✓ Feed fetched</span>' : '<span style="color:var(--muted);font-size:10px;font-family:\'Barlow Condensed\';flex-shrink:0">URL saved</span>'}
+        </div>` : ''}
+
+        ${c.website ? `
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 0">
+          <div style="width:30px;height:30px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0">${globeIcon}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px">Website <span style="font-weight:400;color:var(--muted);font-size:11px">— reference only</span></div>
+            <div style="font-size:11px;margin-top:2px"><a href="${c.website}" target="_blank" style="color:var(--cyan);text-decoration:none">${c.website.replace(/^https?:\/\//,'')}</a></div>
+          </div>
+        </div>` : ''}
+
+        ${!c.instagram_token && !c.substack_url && !c.website ? '<div style="font-size:12px;color:var(--muted)">No channels connected</div>' : ''}
+      </div>
+
+      <!-- Capabilities & Preferences -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+        ${capabilities.length ? `
+        <div class="panel">
+          <div class="section-label">What we offer</div>
+          <div>${capabilities.map(cap=>`<span class="chip">${cap}</span>`).join('')}</div>
+        </div>` : ''}
+        ${c.partnership_preferences ? `
+        <div class="panel">
+          <div class="section-label">Looking for</div>
+          <p style="font-size:13px;color:rgba(240,240,240,0.75);line-height:1.65">${c.partnership_preferences}</p>
+        </div>` : ''}
+        ${!capabilities.length && !c.partnership_preferences ? `
+        <div class="panel" style="color:var(--muted);font-size:13px">Capabilities & preferences not set</div>` : ''}
+      </div>
+    </div>
+
+    <!-- Notable Members -->
+    ${notableMembers.length ? `
+    <div style="padding:12px 28px 0">
+      <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="section-label" style="margin-bottom:0">Notable Members</div>
+          <span style="font-family:'Barlow Condensed';font-size:11px;color:var(--muted)">${notableMembers.length} featured</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+          ${notableMembers.map(m => {
+            const col = avatarColor(m.name||'');
+            return `<div class="member-card">
+              <div style="width:36px;height:36px;border-radius:50%;background:${col.bg};color:${col.text};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:16px;flex-shrink:0">${(m.name||'?')[0].toUpperCase()}</div>
+              <div>
+                <div style="font-weight:600;font-size:13px">${m.name||'—'}</div>
+                ${m.ig_handle ? `<div style="font-size:11px;color:var(--muted)">@${m.ig_handle}</div>` : ''}
+                ${m.role ? `<div style="font-size:11px;color:var(--muted)">${m.role}</div>` : ''}
+                <div style="font-size:10px;color:#444;margin-top:2px;font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.04em">Verification pending</div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>` : ''}
+
+    <!-- Past Partnerships -->
+    ${caseStudies.length ? `
+    <div style="padding:12px 28px 0">
+      <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div class="section-label" style="margin-bottom:0">Past Partnerships</div>
+          <span style="font-family:'Barlow Condensed';font-size:11px;color:var(--muted)">${caseStudies.length} case ${caseStudies.length===1?'study':'studies'}</span>
+        </div>
+        <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px">
+          ${caseStudies.map(cs => {
+            const imgs = cs.images || [];
+            const hero = imgs[0] || cs.image_url || null;
+            const col = avatarColor(cs.brand||'P');
+            return `<div class="cs-card">
+              <div style="height:110px;${hero ? `background:url(${hero}) center/cover no-repeat` : `background:${col.bg};display:flex;align-items:center;justify-content:center`}">
+                ${!hero ? `<span style="font-family:'Bebas Neue';font-size:36px;color:${col.text}">${(cs.brand||'?')[0].toUpperCase()}</span>` : ''}
+              </div>
+              <div style="padding:12px">
+                <div style="font-weight:700;font-size:13px">${cs.brand||'—'}</div>
+                ${cs.year ? `<div style="font-size:11px;color:var(--muted);margin-top:2px">${cs.year}</div>` : ''}
+                ${cs.description ? `<div style="font-size:11px;color:rgba(240,240,240,0.55);margin-top:6px;line-height:1.5">${cs.description.slice(0,90)}${cs.description.length>90?'…':''}</div>` : ''}
+                ${imgs.length > 1 ? `<div style="font-size:10px;color:var(--muted);margin-top:6px;font-family:'Barlow Condensed'">${imgs.length} images</div>` : ''}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>` : ''}
+
+    <!-- Admin Info -->
+    <div style="padding:12px 28px 0">
+      <div class="panel">
+        <div class="section-label">Admin Info</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Leader</div>
+            <div style="font-size:13px">${c.leader_name||'—'}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Email</div>
+            <div style="font-size:13px">${c.email ? `<a href="mailto:${c.email}" style="color:var(--cyan);text-decoration:none">${c.email}</a>` : '—'}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Joined</div>
+            <div style="font-size:13px">${formatDate(c.created_at)}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">IG Connected</div>
+            <div style="font-size:13px">${c.instagram_connected_at ? formatDate(c.instagram_connected_at) : '—'}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Last Updated</div>
+            <div style="font-size:13px">${formatDate(c.updated_at)}</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Community ID</div>
+            <div style="font-size:10px;color:#555;word-break:break-all;font-family:'Barlow Condensed'">${c.id}</div>
+          </div>
+          ${c.description ? `
+          <div style="grid-column:1/-1">
+            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Description</div>
+            <div style="font-size:13px;color:rgba(240,240,240,0.7);line-height:1.65">${c.description}</div>
+          </div>` : ''}
+        </div>
+      </div>
+    </div>
   `;
 
-  document.getElementById('table-container').innerHTML = html;
+  document.getElementById('main-view').style.display = 'none';
+  const modal = document.getElementById('modal');
+  modal.style.display = 'block';
+  modal.scrollTop = 0;
 }
 
-function toggleRow(id) {
-  if (openRows.has(id)) {
-    openRows.delete(id);
-  } else {
-    openRows.add(id);
-  }
-  renderTable();
+function closeModal() {
+  document.getElementById('modal').style.display = 'none';
+  document.getElementById('main-view').style.display = 'block';
 }
+
+// ── Data ──────────────────────────────────────────────────────────────────────
 
 async function load() {
   try {
@@ -231,8 +455,8 @@ async function load() {
   }
 }
 
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 load();
-// Auto-refresh every 30 seconds
 setInterval(load, 30000);
 </script>
 </body>

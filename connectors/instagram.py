@@ -167,27 +167,24 @@ def get_media_shares(media: list[dict]) -> dict:
 
 def get_engagement_rate(media: list[dict], followers: int, shares: dict = None) -> float:
     """
-    Calculate weighted engagement rate using Mayo formula:
-    (Likes×1 + Comments×2 + Saves×3 + Shares×4) ÷ Followers × 100
+    Calculate engagement rate using the industry-standard formula:
+    average(Likes + Comments) per post ÷ Followers × 100
 
-    Shares are not available as a direct media field via the Instagram Graph API
-    and default to 0. Saves require saved_count field on media objects.
+    This matches the methodology used by Sprout Social, Hootsuite, Later,
+    and most benchmarking tools, enabling direct comparison against published
+    industry averages (typically 1–3% for mid-tier accounts on Instagram).
 
     Args:
         media: List of post dicts from get_media.
         followers: Follower count from get_profile.
 
     Returns:
-        Weighted engagement rate as a percentage (e.g. 3.4 means 3.4%).
+        Engagement rate as a percentage (e.g. 3.4 means 3.4%).
     """
     if not media or followers == 0:
         return 0.0
-    shares = shares or {}
     total = sum(
-        p.get("like_count", 0) * 1
-        + p.get("comments_count", 0) * 2
-        + p.get("saved_count", 0) * 3
-        + shares.get(p.get("id"), 0) * 4
+        p.get("like_count", 0) + p.get("comments_count", 0)
         for p in media
     )
     avg = total / len(media)
