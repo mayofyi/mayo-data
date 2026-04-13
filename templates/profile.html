@@ -411,21 +411,7 @@ function ProfilePage() {
           </div>
         )}
 
-        {/* Archetype card */}
-        {archetype && (
-          <div style={{ margin:'0 24px 16px', background:archetype.color+'12', border:`1px solid ${archetype.color}33`, borderRadius:12, padding:'18px 22px' }}>
-            <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.1em', textTransform:'uppercase', color:archetype.color+'99', marginBottom:6 }}>Community Type</div>
-            <div style={{ fontFamily:'Bebas Neue', fontSize:34, letterSpacing:'0.03em', color:archetype.color, marginBottom:6 }}>{archetype.label}</div>
-            <div style={{ fontSize:12, color:'rgba(240,240,240,0.6)', lineHeight:1.6, marginBottom:12 }}>{archetype.desc}</div>
-            <div style={{ display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
-              <span style={{ fontSize:11, color:archetype.color+'99', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>Best for</span>
-              <span style={{ background:archetype.color+'20', border:`1px solid ${archetype.color}44`, color:archetype.color, fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', padding:'3px 10px', borderRadius:4 }}>{archetype.best}</span>
-              <span style={{ fontSize:11, color:archetype.color+'99', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em' }}>Primary KPI</span>
-              <span style={{ fontSize:11, color:'rgba(240,240,240,0.5)', fontFamily:'Barlow Condensed' }}>{archetype.kpi}</span>
-            </div>
-            <div style={{ marginTop:8, fontSize:10, color:'var(--lime)', fontFamily:'Barlow Condensed', textTransform:'uppercase', letterSpacing:'0.05em' }}>★ Mayo assigned</div>
-          </div>
-        )}
+        {/* Archetype card — brand-facing only, reinstated when brand auth is built */}
 
         {/* Latest posts carousel */}
         {(igPosts.length > 0 || (data.substack_data?.posts||[]).length > 0) && (

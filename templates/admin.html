@@ -93,6 +93,7 @@ tbody td { padding:14px; vertical-align:top; font-size:13px; }
 
 <script>
 const ADMIN_TOKEN = document.getElementById('admin-token').textContent.trim();
+const archetypeResults = {}; // keyed by communityId — persists across modal re-renders
 
 const COVER_OPTIONS = [
   { id:1, gradient:'linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 70%,#533483 100%)' },
@@ -129,7 +130,15 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
 }
 
-function getER(c) { return c.instagram_data?.engagement_rate ?? null; }
+function getER(c) {
+  // Recalculate live from raw media so it always reflects the current formula,
+  // regardless of when the pipeline ran or which formula was active at the time.
+  const media = c.instagram_data?.media || [];
+  const followers = c.instagram_data?.profile?.followers_count || 0;
+  if (!media.length || !followers) return null;
+  const total = media.reduce((sum, p) => sum + (p.like_count||0) + (p.comments_count||0), 0);
+  return Math.round(total / media.length / followers * 10000) / 100;
+}
 function getFollowers(c) { return c.instagram_data?.profile?.followers_count ?? null; }
 
 function getTier(c) {
@@ -523,6 +532,9 @@ async function analyseArchetype(communityId) {
     // Pre-select recommended archetype in dropdown
     document.getElementById(`arch-select-${communityId}`).value = data.archetype;
 
+    // Persist result so it survives modal re-renders
+    archetypeResults[communityId] = data;
+
     btn.textContent = '↺ Re-analyse';
     btn.disabled = false;
   } catch (e) {
@@ -542,6 +554,22 @@ async function assignArchetype(communityId) {
   communities = await res.json();
   renderTable();
   openCommunity(communityId);
+  restoreArchetypeResult(communityId);
+}
+
+function restoreArchetypeResult(communityId) {
+  const data = archetypeResults[communityId];
+  if (!data) return;
+  const resultBox = document.getElementById(`arch-result-${communityId}`);
+  if (!resultBox) return;
+  const a = ARCHETYPES.find(x => x.id === data.archetype);
+  document.getElementById(`arch-label-${communityId}`).innerHTML =
+    a ? `<span style="color:${a.color}">${a.label}</span> <span style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:3px">${a.best}</span>` : data.archetype;
+  document.getElementById(`arch-confidence-${communityId}`).textContent = `${data.confidence}% confidence`;
+  document.getElementById(`arch-reasoning-${communityId}`).textContent = data.reasoning;
+  resultBox.style.display = 'block';
+  const btn = document.getElementById(`arch-analyse-${communityId}`);
+  if (btn) { btn.textContent = '↺ Re-analyse'; btn.disabled = false; }
 }
 
 function closeModal() {
