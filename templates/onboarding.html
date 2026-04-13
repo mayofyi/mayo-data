@@ -199,11 +199,11 @@ function Step2({ onNext, onBack, form, setForm }) {
         <div className="onboarding-body" style={{ maxHeight:'60vh', overflowY:'auto' }}>
           <div className="form-group">
             <label className="label">Community Name *</label>
-            <input className="input" placeholder="e.g. Southbound 400" value={form.name} onChange={e => setForm(f=>({...f,name:e.target.value}))} />
+            <input className="input" placeholder="" value={form.name} onChange={e => setForm(f=>({...f,name:e.target.value}))} />
           </div>
           <div className="form-group">
             <label className="label">One-line tagline *</label>
-            <input className="input" placeholder="e.g. 400 miles. 3 stages. 5 teams." value={form.tagline} onChange={e => setForm(f=>({...f,tagline:e.target.value}))} />
+            <input className="input" placeholder="" value={form.tagline} onChange={e => setForm(f=>({...f,tagline:e.target.value}))} />
           </div>
           <div className="form-group">
             <label className="label">Location</label>

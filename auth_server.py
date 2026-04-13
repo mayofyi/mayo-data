@@ -22,7 +22,8 @@ REDIRECT_URI = os.getenv("REDIRECT_URI")
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "mayo-admin")
 
 # Render uses postgres:// but psycopg2 requires postgresql://
-DATABASE_URL = os.getenv("DATABASE_URL", "").replace("postgres://", "postgresql://", 1)
+_db_url = os.getenv("DATABASE_URL", "").replace("postgres://", "postgresql://", 1)
+DATABASE_URL = _db_url if "sslmode" in _db_url else _db_url + "?sslmode=require"
 
 app = Flask(__name__)
 
