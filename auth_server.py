@@ -355,6 +355,91 @@ def verify_case_study(community_id, idx):
     return jsonify({"ok": True})
 
 
+@app.route("/api/community/<community_id>/suggest-archetype", methods=["POST"])
+def suggest_archetype(community_id):
+    import json as _json
+    import anthropic
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM communities WHERE id = %s", (community_id,))
+            row = cur.fetchone()
+    if not row:
+        return jsonify({"error": "Not found"}), 404
+
+    c = dict(row)
+    ig = c.get("instagram_data") or {}
+    ig_profile = ig.get("profile") or {}
+    media = ig.get("media") or []
+
+    captions = []
+    for post in media[:12]:
+        cap = (post.get("caption") or "").strip()
+        if cap:
+            captions.append(f"- {cap[:200]}")
+
+    members = c.get("notable_members") or []
+    member_lines = [
+        f"- {m.get('name','')} | role: {m.get('role','unspecified')} | @{m.get('ig_handle','')}"
+        for m in members if m.get("name")
+    ]
+
+    prompt = f"""You are classifying a community for the Mayo partnership platform.
+
+ARCHETYPES:
+- evangelists: Brand awareness, cultural association. Members champion brands they genuinely believe in. Key signals: high share rate, unsolicited brand mentions, identity-linked content, tribal language.
+- early_adopters: Product launches, first-mover campaigns. Members love being first. Key signals: trend-forward content, new product excitement, "first look" framing, innovation language.
+- loyalists: Long-term sponsorship, repeat events. Members show up every time. Key signals: recurring event attendance, high retention language, community pride, consistency-focused content.
+- buyers: Direct response, product seeding. Members convert. Key signals: purchase intent, reviews and recommendations, practical/functional content, "worth it" framing.
+
+COMMUNITY DATA:
+
+Name: {c.get('name') or '—'}
+Tagline: {c.get('tagline') or '—'}
+Description: {c.get('description') or '—'}
+Location: {c.get('location') or '—'}
+Interest tags: {', '.join(c.get('tags') or []) or '—'}
+Active members: {c.get('active_members') or '—'}
+Capabilities: {', '.join(c.get('capabilities') or []) or '—'}
+Partnership preferences: {c.get('partnership_preferences') or '—'}
+
+Instagram handle: @{ig_profile.get('username') or '—'}
+Instagram followers: {ig_profile.get('followers_count') or '—'}
+Instagram bio: {ig_profile.get('biography') or '—'}
+Engagement rate: {ig.get('engagement_rate') or '—'}%
+
+Recent captions:
+{chr(10).join(captions) if captions else '— none available —'}
+
+Notable members:
+{chr(10).join(member_lines) if member_lines else '— none listed —'}
+
+TASK:
+Based on these signals, determine which single archetype best fits this community.
+Go beyond the surface label — consider what communities built around these interest areas typically care about, how they relate to brands, and what the language and content patterns reveal about member motivation.
+
+Respond with JSON only. No preamble, no markdown, no explanation outside the JSON:
+{{"archetype":"evangelists|early_adopters|loyalists|buyers","confidence":0-100,"reasoning":"2-3 sentences citing the specific signals that drove this recommendation"}}"""
+
+    try:
+        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=400,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        result = _json.loads(message.content[0].text.strip())
+        # Validate archetype value
+        valid = {"evangelists", "early_adopters", "loyalists", "buyers"}
+        if result.get("archetype") not in valid:
+            return jsonify({"error": "Invalid archetype returned"}), 500
+        return jsonify(result)
+    except _json.JSONDecodeError:
+        return jsonify({"error": "Could not parse AI response"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/community/<community_id>/notable-member", methods=["POST"])
 def add_notable_member(community_id):
     data = request.json or {}

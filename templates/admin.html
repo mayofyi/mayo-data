@@ -354,8 +354,20 @@ function openCommunity(id) {
           ${c.archetype ? '<span style="color:var(--lime);font-family:\'Barlow Condensed\';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em">★ Mayo assigned</span>' : ''}
         </div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Assigned by Mayo based on posting behaviour, purchase signals, and member interaction patterns — not self-reported.</div>
-        ${c.archetype ? (() => { const a = ARCHETYPES.find(x=>x.id===c.archetype); return a ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-family:'Bebas Neue';font-size:22px;color:${a.color}">${a.label}</span><span style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:3px">${a.best}</span></div>` : ''; })() : '<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Not set — assign below</div>'}
+        ${c.archetype ? (() => { const a = ARCHETYPES.find(x=>x.id===c.archetype); return a ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-family:'Bebas Neue';font-size:22px;color:${a.color}">${a.label}</span><span style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:3px">${a.best}</span></div>` : ''; })() : '<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Not yet assigned</div>'}
+
+        <!-- AI analysis result -->
+        <div id="arch-result-${c.id}" style="display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">AI Recommendation</div>
+            <div id="arch-confidence-${c.id}" style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;color:var(--lime)"></div>
+          </div>
+          <div id="arch-label-${c.id}" style="font-family:'Bebas Neue';font-size:20px;margin-bottom:6px"></div>
+          <div id="arch-reasoning-${c.id}" style="font-size:12px;color:rgba(240,240,240,0.65);line-height:1.6"></div>
+        </div>
+
         <div style="display:flex;align-items:center;gap:8px">
+          <button id="arch-analyse-${c.id}" onclick="analyseArchetype('${c.id}')" style="background:var(--surface2);color:var(--white);border:1px solid var(--border2);border-radius:5px;padding:8px 14px;font-family:'Barlow Condensed';font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;flex-shrink:0">✦ Analyse</button>
           <select id="arch-select-${c.id}" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:7px 10px;color:var(--white);font-family:'Barlow Condensed';font-size:13px;font-weight:600">
             <option value="">— Remove archetype —</option>
             ${ARCHETYPES.map(a=>`<option value="${a.id}" ${c.archetype===a.id?'selected':''}>${a.label} — ${a.best}</option>`).join('')}
@@ -487,6 +499,36 @@ async function verifyCaseStudy(communityId, idx, verified) {
   communities = await res.json();
   renderTable();
   openCommunity(communityId);
+}
+
+async function analyseArchetype(communityId) {
+  const btn = document.getElementById(`arch-analyse-${communityId}`);
+  const resultBox = document.getElementById(`arch-result-${communityId}`);
+  btn.textContent = 'Analysing…';
+  btn.disabled = true;
+  resultBox.style.display = 'none';
+
+  try {
+    const res = await fetch(`/api/community/${communityId}/suggest-archetype`, { method:'POST' });
+    const data = await res.json();
+    if (data.error) { btn.textContent = 'Error — retry'; btn.disabled = false; return; }
+
+    const a = ARCHETYPES.find(x => x.id === data.archetype);
+    document.getElementById(`arch-label-${communityId}`).innerHTML =
+      a ? `<span style="color:${a.color}">${a.label}</span> <span style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:3px">${a.best}</span>` : data.archetype;
+    document.getElementById(`arch-confidence-${communityId}`).textContent = `${data.confidence}% confidence`;
+    document.getElementById(`arch-reasoning-${communityId}`).textContent = data.reasoning;
+    resultBox.style.display = 'block';
+
+    // Pre-select recommended archetype in dropdown
+    document.getElementById(`arch-select-${communityId}`).value = data.archetype;
+
+    btn.textContent = '↺ Re-analyse';
+    btn.disabled = false;
+  } catch (e) {
+    btn.textContent = 'Error — retry';
+    btn.disabled = false;
+  }
 }
 
 async function assignArchetype(communityId) {
