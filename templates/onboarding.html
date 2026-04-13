@@ -75,7 +75,7 @@ textarea.input { resize:none; }
 </head>
 <body>
 <div id="root"></div>
-<script type="text/babel">
+{% raw %}<script type="text/babel">
 const { useState, useEffect } = React;
 
 const TOTAL_STEPS = 5;
@@ -556,6 +556,6 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
-</script>
+</script>{% endraw %}
 </body>
 </html>
