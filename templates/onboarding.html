@@ -358,21 +358,38 @@ function Step3({ onNext, onBack, form, setForm }) {
   );
 }
 
-// ── Step 4: Preview ───────────────────────────────────────────────────────────
+// ── Step 4: Cover ─────────────────────────────────────────────────────────────
 function Step4({ onNext, onBack, form, setForm }) {
   const cover = COVER_OPTIONS.find(o => o.id === form.coverOption) || COVER_OPTIONS[0];
+  const coverBg = form.coverImageUrl ? `url(${form.coverImageUrl}) center/cover no-repeat` : cover.gradient;
   const igConnected = form.instagramConnected;
   const substackConnected = !!form.substackUrl;
   const connectedCount = [igConnected, substackConnected].filter(Boolean).length;
   const tier = connectedCount >= 2 ? 'fully-verified' : connectedCount >= 1 ? 'verified' : 'starter';
+  const [uploading, setUploading] = React.useState(false);
 
   async function saveCover(id) {
-    setForm(f => ({ ...f, coverOption: id }));
+    setForm(f => ({ ...f, coverOption: id, coverImageUrl: null }));
     await fetch(`/api/community/${form.communityId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cover_option: id }),
     });
+  }
+
+  async function uploadCoverPhoto(e) {
+    const file = e.target.files[0];
+    if (!file || !form.communityId) return;
+    setUploading(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await fetch(`/api/community/${form.communityId}/cover`, { method:'POST', body:fd });
+      const data = await res.json();
+      if (data.url) setForm(f => ({ ...f, coverImageUrl: data.url }));
+    } finally {
+      setUploading(false);
+    }
   }
 
   return (
@@ -381,25 +398,18 @@ function Step4({ onNext, onBack, form, setForm }) {
         <div className="onboarding-header">
           <StepDots current={4} />
           <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Make it yours</div>
-          <div style={{ fontSize:13, color:'var(--muted)' }}>Choose a cover and preview how your community will look to brands.</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>Add a cover photo or choose a gradient. This is what brands see first.</div>
         </div>
         <div className="onboarding-body">
 
           {/* Face card preview */}
           <div style={{ maxWidth:220, margin:'0 auto 24px', borderRadius:10, overflow:'hidden', border:'1px solid var(--border)' }}>
-            <div style={{ aspectRatio:'3/4', position:'relative', background:cover.gradient }}>
+            <div style={{ aspectRatio:'3/4', position:'relative', background:coverBg }}>
               <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(0,0,0,0.05),rgba(0,0,0,0.78))' }} />
-              <div style={{ position:'absolute', top:10, left:10 }}>
-                <span style={{ background:'var(--pink)', color:'#000', borderRadius:4, padding:'3px 8px', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>● Evangelists</span>
-              </div>
-              <div style={{ position:'absolute', top:10, right:10, background:'var(--yellow)', color:'#000', borderRadius:6, padding:'3px 8px', textAlign:'center' }}>
-                <div className="bb" style={{ fontSize:18, lineHeight:1 }}>—</div>
-                <div style={{ fontSize:9, fontWeight:700, fontFamily:'Barlow Condensed', letterSpacing:'0.08em' }}>MATCH</div>
-              </div>
-              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'28px 10px 10px', background:'linear-gradient(to top,rgba(0,0,0,0.92),rgba(0,0,0,0.7) 50%,transparent)' }}>
+              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'28px 10px 10px' }}>
                 <div className="bb" style={{ fontSize:18, color:'#fff', lineHeight:1, marginBottom:2 }}>{form.name || 'Your Community'}</div>
                 <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', marginBottom:5 }}>{form.tagline || 'Your tagline'}</div>
-                <div style={{ display:'flex', gap:3, flexWrap:'wrap', marginBottom:6 }}>
+                <div style={{ display:'flex', gap:3, flexWrap:'wrap' }}>
                   {form.tags.slice(0,3).map(t => (
                     <span key={t} style={{ border:'1px solid rgba(255,255,255,0.3)', color:'rgba(255,255,255,0.85)', borderRadius:3, padding:'1px 5px', fontFamily:'Barlow Condensed', fontSize:9, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>{t}</span>
                   ))}
@@ -412,84 +422,267 @@ function Step4({ onNext, onBack, form, setForm }) {
             </div>
           </div>
 
-          {/* Cover picker */}
-          <div style={{ marginBottom:4, fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)' }}>Choose your cover</div>
+          {/* Photo upload */}
+          <label style={{ display:'block', marginBottom:16, cursor:'pointer' }}>
+            <input type="file" accept="image/*" style={{ display:'none' }} onChange={uploadCoverPhoto} disabled={uploading} />
+            <div style={{ border:'1px dashed var(--border2)', borderRadius:8, padding:'12px 16px', display:'flex', alignItems:'center', gap:10, background:uploading?'var(--surface2)':'transparent', transition:'background 0.15s' }}>
+              <div style={{ width:32, height:32, borderRadius:6, background:'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>
+                {uploading ? '…' : form.coverImageUrl ? '✓' : '+'}
+              </div>
+              <div>
+                <div style={{ fontSize:13, fontWeight:600, color: form.coverImageUrl ? 'var(--lime)' : 'var(--white)' }}>
+                  {uploading ? 'Uploading…' : form.coverImageUrl ? 'Cover photo uploaded' : 'Upload a cover photo'}
+                </div>
+                <div style={{ fontSize:11, color:'var(--muted)' }}>JPG or PNG recommended · replaces gradient</div>
+              </div>
+            </div>
+          </label>
+
+          {/* Cover gradient picker */}
+          <div style={{ marginBottom:4, fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)' }}>
+            {form.coverImageUrl ? 'Or choose a gradient instead' : 'Or choose a gradient'}
+          </div>
           <div className="cover-grid" style={{ marginBottom:20 }}>
             {COVER_OPTIONS.map(opt => (
               <div
                 key={opt.id}
-                className={`cover-opt ${form.coverOption === opt.id ? 'selected' : ''}`}
+                className={`cover-opt ${!form.coverImageUrl && form.coverOption === opt.id ? 'selected' : ''}`}
                 style={{ background: opt.gradient }}
                 onClick={() => saveCover(opt.id)}
                 title={opt.label}
               />
             ))}
           </div>
-
-          {/* Tier status */}
-          <div style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, padding:'14px 16px' }}>
-            <div style={{ fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:12 }}>Profile Status</div>
-            {[
-              { tier:'starter', label:'Starter', desc:'Profile visible in discovery with self-reported data', done: true },
-              { tier:'verified', label:'Verified', desc:'One channel connected — real data backs your match score', done: tier==='verified'||tier==='fully-verified' },
-              { tier:'fully-verified', label:'Fully Verified', desc:'Two or more channels — best matches, most brand confidence', done: tier==='fully-verified' },
-            ].map((t, i) => (
-              <div key={t.tier} style={{ display:'flex', alignItems:'flex-start', gap:10, marginBottom: i<2?12:0 }}>
-                <div style={{ width:20, height:20, borderRadius:'50%', background:t.done?'var(--lime)':'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, color:t.done?'#000':'var(--muted)', flexShrink:0, marginTop:1 }}>{t.done?'✓':''}</div>
-                <div>
-                  <div style={{ fontSize:13, fontWeight:600, color:t.done?'var(--white)':'var(--muted)' }}>{t.label}</div>
-                  <div style={{ fontSize:11, color:'var(--muted)' }}>{t.desc}</div>
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
         <div className="onboarding-footer">
           <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back</button>
-          <button className="btn btn-lime" onClick={onNext}>Looks good →</button>
+          <button className="btn btn-lime" onClick={onNext}>See your profile →</button>
         </div>
       </div>
     </div>
   );
 }
 
-// ── Step 5: Done ──────────────────────────────────────────────────────────────
-function Step5({ form }) {
+// ── Step 5: Profile View ───────────────────────────────────────────────────────
+function Step5({ form, setForm }) {
+  const cover = COVER_OPTIONS.find(o => o.id === form.coverOption) || COVER_OPTIONS[0];
+  const coverBg = form.coverImageUrl ? `url(${form.coverImageUrl}) center/cover no-repeat` : cover.gradient;
   const igConnected = form.instagramConnected;
   const substackConnected = !!form.substackUrl;
   const connectedCount = [igConnected, substackConnected].filter(Boolean).length;
   const tier = connectedCount >= 2 ? 'fully-verified' : connectedCount >= 1 ? 'verified' : 'starter';
 
+  const [mediaItems, setMediaItems] = React.useState([]);
+  const [caseStudies, setCaseStudies] = React.useState([]);
+  const [uploadingMedia, setUploadingMedia] = React.useState(false);
+  const [csForm, setCsForm] = React.useState({ brand:'', year:'', description:'' });
+  const [addingCs, setAddingCs] = React.useState(false);
+  const [savingCs, setSavingCs] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!form.communityId) return;
+    fetch(`/api/community/${form.communityId}`)
+      .then(r => r.json())
+      .then(data => {
+        setMediaItems(data.media_items || []);
+        setCaseStudies(data.case_studies || []);
+      });
+  }, [form.communityId]);
+
+  async function uploadMedia(e) {
+    const file = e.target.files[0];
+    if (!file || !form.communityId) return;
+    setUploadingMedia(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await fetch(`/api/community/${form.communityId}/media`, { method:'POST', body:fd });
+      const data = await res.json();
+      if (data.url) setMediaItems(items => [...items, { url: data.url, caption: '' }]);
+    } finally {
+      setUploadingMedia(false);
+    }
+  }
+
+  async function saveCaseStudy() {
+    if (!csForm.brand || !form.communityId) return;
+    setSavingCs(true);
+    await fetch(`/api/community/${form.communityId}/case-study`, {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(csForm),
+    });
+    setCaseStudies(cs => [...cs, { ...csForm }]);
+    setCsForm({ brand:'', year:'', description:'' });
+    setAddingCs(false);
+    setSavingCs(false);
+  }
+
   return (
-    <div className="onboarding-screen">
-      <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 50% 30%,rgba(210,255,1,0.07) 0%,transparent 65%)', pointerEvents:'none' }} />
-      <div className="onboarding-box" style={{ position:'relative', zIndex:1 }}>
-        <div style={{ padding:'48px 36px', textAlign:'center' }}>
-          <div className="bb" style={{ fontSize:64, color:'var(--lime)', lineHeight:1, marginBottom:8 }}>✓</div>
-          <div className="bb" style={{ fontSize:36, marginBottom:10 }}>You're in.</div>
-          <p style={{ fontSize:13, color:'var(--muted)', lineHeight:1.7, marginBottom:28, maxWidth:340, margin:'0 auto 28px' }}>
-            Your community profile is live. Brands can now discover you and send partnership proposals.
-            We'll let you know when something worth looking at comes in.
-          </p>
-          <div style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, padding:14, textAlign:'left' }}>
-            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
-              <div style={{ fontFamily:'Barlow Condensed', fontSize:16, fontWeight:800, textTransform:'uppercase' }}>{form.name}</div>
+    <div className="onboarding-screen" style={{ overflowY:'auto', alignItems:'flex-start', paddingTop:0 }}>
+      <div style={{ width:'100%', maxWidth:640, margin:'0 auto', paddingBottom:60 }}>
+
+        {/* Header bar */}
+        <div style={{ padding:'20px 24px 0', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div className="bb" style={{ fontSize:20, letterSpacing:'0.04em' }}>mayo<span style={{ color:'var(--lime)' }}>.</span></div>
+          <div style={{ fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--lime)' }}>Profile Live</div>
+        </div>
+
+        {/* Face card */}
+        <div style={{ margin:'20px 24px 0', borderRadius:12, overflow:'hidden', border:'1px solid var(--border)' }}>
+          <div style={{ aspectRatio:'16/7', position:'relative', background:coverBg }}>
+            <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(0,0,0,0.05),rgba(0,0,0,0.82))' }} />
+            <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'40px 20px 16px' }}>
+              <div className="bb" style={{ fontSize:28, color:'#fff', lineHeight:1, marginBottom:4 }}>{form.name || 'Your Community'}</div>
+              <div style={{ fontSize:12, color:'rgba(255,255,255,0.75)', marginBottom:8 }}>{form.tagline}</div>
+              <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginBottom:10 }}>
+                {form.tags.slice(0,4).map(t => (
+                  <span key={t} style={{ border:'1px solid rgba(255,255,255,0.3)', color:'rgba(255,255,255,0.85)', borderRadius:3, padding:'2px 6px', fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>{t}</span>
+                ))}
+              </div>
               <TierBadge tier={tier} />
             </div>
-            <div style={{ fontSize:12, color:'var(--muted)', marginBottom: tier!=='fully-verified'?10:0 }}>{form.tagline}</div>
-            {tier !== 'fully-verified' && (
-              <div style={{ paddingTop:10, borderTop:'1px solid var(--border)', fontSize:12, color:'var(--cyan)' }}>
-                {tier === 'starter'
-                  ? '→ Connect a channel to unlock Verified status'
-                  : '→ Connect one more channel to unlock Fully Verified'}
+          </div>
+        </div>
+
+        {/* Profile header */}
+        <div style={{ margin:'16px 24px 0', background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'16px 20px' }}>
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'14px 24px' }}>
+            {form.location && (
+              <div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:2 }}>Location</div>
+                <div style={{ fontSize:13 }}>{form.location}</div>
+              </div>
+            )}
+            {form.activeMembers && (
+              <div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:2 }}>Members</div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:16, fontWeight:700 }}>{parseInt(form.activeMembers).toLocaleString()}</div>
+              </div>
+            )}
+            {form.website && (
+              <div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:2 }}>Website</div>
+                <div style={{ fontSize:13, color:'var(--cyan)' }}>{form.website}</div>
+              </div>
+            )}
+            {igConnected && (
+              <div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:2 }}>Channels</div>
+                <div style={{ display:'flex', gap:6 }}>
+                  {igConnected && <span style={{ background:'rgba(210,255,1,0.1)', border:'1px solid rgba(210,255,1,0.3)', borderRadius:4, padding:'2px 7px', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, color:'var(--lime)' }}>IG</span>}
+                  {substackConnected && <span style={{ background:'rgba(177,236,240,0.1)', border:'1px solid rgba(177,236,240,0.3)', borderRadius:4, padding:'2px 7px', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, color:'var(--cyan)' }}>Substack</span>}
+                </div>
               </div>
             )}
           </div>
-          {igConnected && (
-            <div style={{ marginTop:16, padding:'12px 14px', background:'rgba(210,255,1,0.06)', border:'1px solid rgba(210,255,1,0.2)', borderRadius:8, fontSize:12, color:'var(--lime)', textAlign:'left' }}>
-              ✓ Instagram connected — your analytics are being collected in the background.
+          {form.description && (
+            <div style={{ marginTop:14, paddingTop:14, borderTop:'1px solid var(--border)', fontSize:13, color:'var(--muted)', lineHeight:1.6 }}>{form.description}</div>
+          )}
+        </div>
+
+        {/* Content gallery */}
+        <div style={{ margin:'16px 24px 0' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+            <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em' }}>Photos &amp; Events</div>
+            <label style={{ cursor:'pointer' }}>
+              <input type="file" accept="image/*" style={{ display:'none' }} onChange={uploadMedia} disabled={uploadingMedia} />
+              <span style={{ fontFamily:'Barlow Condensed', fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--lime)', cursor:'pointer' }}>
+                {uploadingMedia ? 'Uploading…' : '+ Add photo'}
+              </span>
+            </label>
+          </div>
+          {mediaItems.length === 0 ? (
+            <label style={{ cursor:'pointer', display:'block' }}>
+              <input type="file" accept="image/*" style={{ display:'none' }} onChange={uploadMedia} disabled={uploadingMedia} />
+              <div style={{ border:'1px dashed var(--border2)', borderRadius:10, padding:'32px 20px', textAlign:'center', color:'var(--muted)' }}>
+                <div style={{ fontSize:28, marginBottom:8 }}>+</div>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>Add your first photo</div>
+                <div style={{ fontSize:11, marginTop:4 }}>Events, people, community moments</div>
+              </div>
+            </label>
+          ) : (
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6 }}>
+              {mediaItems.map((item, i) => (
+                <div key={i} style={{ aspectRatio:'1', borderRadius:8, overflow:'hidden', background:'var(--surface)', border:'1px solid var(--border)' }}>
+                  <img src={item.url} alt={item.caption || ''} style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                </div>
+              ))}
+              <label style={{ aspectRatio:'1', borderRadius:8, border:'1px dashed var(--border2)', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'var(--muted)', fontSize:22 }}>
+                <input type="file" accept="image/*" style={{ display:'none' }} onChange={uploadMedia} disabled={uploadingMedia} />
+                {uploadingMedia ? '…' : '+'}
+              </label>
             </div>
           )}
+        </div>
+
+        {/* Case studies */}
+        <div style={{ margin:'16px 24px 0' }}>
+          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+            <div className="bb" style={{ fontSize:18, letterSpacing:'0.03em' }}>Past Partnerships</div>
+            {!addingCs && (
+              <button onClick={() => setAddingCs(true)} style={{ background:'none', border:'none', cursor:'pointer', fontFamily:'Barlow Condensed', fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--lime)', padding:0 }}>
+                + Add
+              </button>
+            )}
+          </div>
+
+          {caseStudies.map((cs, i) => (
+            <div key={i} style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:10, padding:'14px 16px', marginBottom:8 }}>
+              <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+                <div style={{ fontFamily:'Barlow Condensed', fontSize:15, fontWeight:800, textTransform:'uppercase' }}>{cs.brand}</div>
+                {cs.year && <div style={{ fontFamily:'Barlow Condensed', fontSize:12, color:'var(--muted)', fontWeight:600 }}>{cs.year}</div>}
+              </div>
+              {cs.description && <div style={{ fontSize:12, color:'var(--muted)', lineHeight:1.5 }}>{cs.description}</div>}
+            </div>
+          ))}
+
+          {caseStudies.length === 0 && !addingCs && (
+            <div style={{ border:'1px dashed var(--border2)', borderRadius:10, padding:'24px 20px', textAlign:'center', color:'var(--muted)' }}>
+              <div style={{ fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', marginBottom:4 }}>No partnerships yet</div>
+              <div style={{ fontSize:11 }}>Add brands you've worked with to build credibility</div>
+            </div>
+          )}
+
+          {addingCs && (
+            <div style={{ background:'var(--surface)', border:'1px solid var(--border2)', borderRadius:10, padding:'16px' }}>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 80px', gap:8, marginBottom:8 }}>
+                <input
+                  placeholder="Brand name"
+                  value={csForm.brand}
+                  onChange={e => setCsForm(f => ({ ...f, brand: e.target.value }))}
+                  style={{ background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:6, padding:'8px 10px', color:'var(--white)', fontFamily:'Barlow', fontSize:13, outline:'none' }}
+                />
+                <input
+                  placeholder="Year"
+                  value={csForm.year}
+                  onChange={e => setCsForm(f => ({ ...f, year: e.target.value }))}
+                  style={{ background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:6, padding:'8px 10px', color:'var(--white)', fontFamily:'Barlow', fontSize:13, outline:'none' }}
+                />
+              </div>
+              <textarea
+                placeholder="What did you do together? (optional)"
+                value={csForm.description}
+                onChange={e => setCsForm(f => ({ ...f, description: e.target.value }))}
+                rows={2}
+                style={{ width:'100%', background:'var(--surface2)', border:'1px solid var(--border2)', borderRadius:6, padding:'8px 10px', color:'var(--white)', fontFamily:'Barlow', fontSize:13, outline:'none', resize:'vertical', marginBottom:8, boxSizing:'border-box' }}
+              />
+              <div style={{ display:'flex', gap:8 }}>
+                <button onClick={saveCaseStudy} disabled={!csForm.brand || savingCs} style={{ flex:1, background:'var(--lime)', color:'#000', border:'none', borderRadius:6, padding:'9px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
+                  {savingCs ? 'Saving…' : 'Save'}
+                </button>
+                <button onClick={() => { setAddingCs(false); setCsForm({ brand:'', year:'', description:'' }); }} style={{ background:'var(--surface2)', color:'var(--muted)', border:'1px solid var(--border)', borderRadius:6, padding:'9px 14px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Done message */}
+        <div style={{ margin:'24px 24px 0', padding:'16px 20px', background:'rgba(210,255,1,0.06)', border:'1px solid rgba(210,255,1,0.2)', borderRadius:10 }}>
+          <div style={{ fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--lime)', marginBottom:4 }}>You're live</div>
+          <div style={{ fontSize:12, color:'var(--muted)', lineHeight:1.6 }}>Your profile is in the mayo network. Brands can discover you and send partnership proposals. We'll reach out when something comes in.</div>
         </div>
       </div>
     </div>
@@ -510,6 +703,7 @@ function App() {
     activeMembers: '',
     substackUrl: '',
     coverOption: 1,
+    coverImageUrl: null,
     instagramConnected: false,
   });
 
@@ -536,6 +730,7 @@ function App() {
             activeMembers: data.active_members || '',
             substackUrl: data.substack_url || '',
             coverOption: data.cover_option || 1,
+            coverImageUrl: data.cover_image_url || null,
             instagramConnected: igConnected || !!data.instagram_token,
           }));
           if (s) setStep(s);
@@ -550,7 +745,7 @@ function App() {
       {step === 2 && <Step2 onNext={() => setStep(3)} onBack={() => setStep(1)} form={form} setForm={setForm} />}
       {step === 3 && <Step3 onNext={() => setStep(4)} onBack={() => setStep(2)} form={form} setForm={setForm} />}
       {step === 4 && <Step4 onNext={() => setStep(5)} onBack={() => setStep(3)} form={form} setForm={setForm} />}
-      {step === 5 && <Step5 form={form} />}
+      {step === 5 && <Step5 form={form} setForm={setForm} />}
     </>
   );
 }
