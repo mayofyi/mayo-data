@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mayo — join as a community</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+:root {
+  --lime: #d2ff01;
+  --yellow: #ffea12;
+  --black: #080808;
+  --surface: #111111;
+  --surface2: #1a1a1a;
+  --surface3: #222222;
+  --white: #f0f0f0;
+  --muted: #888;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --cyan: #b1ecf0;
+  --pink: #ff6ef2;
+  --orange: #ffab40;
+  --green: #b3ff9e;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; background: var(--black); color: var(--white); font-family: 'Barlow', sans-serif; font-size: 14px; line-height: 1.5; }
+.bb { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.03em; }
+.bc { font-family: 'Barlow Condensed', sans-serif; }
+::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: var(--surface3); }
+
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:9px 18px; border-radius:6px; border:none; cursor:pointer; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.06em; text-transform:uppercase; transition:all 0.15s; white-space:nowrap; }
+.btn-lime { background:var(--lime); color:var(--black); }
+.btn-lime:hover { background:#bfee00; }
+.btn-ghost { background:transparent; color:var(--white); border:1px solid var(--border2); }
+.btn-ghost:hover { background:var(--surface2); }
+.btn-sm { padding:6px 13px; font-size:12px; }
+.btn-lg { padding:12px 28px; font-size:15px; }
+.btn:disabled { opacity:0.35; cursor:not-allowed; }
+
+.input { width:100%; background:var(--surface2); border:1px solid var(--border2); border-radius:6px; padding:10px 12px; color:var(--white); font-family:'Barlow',sans-serif; font-size:14px; outline:none; transition:border 0.15s; }
+.input:focus { border-color:rgba(255,255,255,0.3); }
+textarea.input { resize:none; }
+.label { display:block; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.form-group { margin-bottom:18px; }
+
+.onboarding-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+.onboarding-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; width:100%; max-width:480px; overflow:hidden; }
+.onboarding-header { padding:28px 36px 0; border-bottom:1px solid var(--border); padding-bottom:24px; }
+.onboarding-body { padding:28px 36px; }
+.onboarding-footer { padding:16px 36px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.step-dots { display:flex; gap:5px; margin-bottom:16px; }
+.step-dot { height:4px; width:12px; border-radius:2px; background:var(--surface3); transition:all 0.2s; }
+.step-dot.active { background:var(--lime); width:20px; }
+.step-dot.done { background:var(--lime); opacity:0.4; }
+
+.tag-grid { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.tag-item { padding:5px 10px; border-radius:4px; border:1px solid var(--border2); color:var(--muted); font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer; background:transparent; transition:all 0.12s; }
+.tag-item:hover { border-color:rgba(255,255,255,0.25); color:var(--white); }
+.tag-item.selected { background:var(--lime); border-color:var(--lime); color:var(--black); }
+
+.channel-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px 16px; margin-bottom:8px; }
+.channel-card.connected { border-color:rgba(210,255,1,0.3); }
+
+.cover-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+.cover-opt { height:48px; border-radius:6px; cursor:pointer; border:2px solid transparent; transition:all 0.12s; }
+.cover-opt.selected { border-color:var(--lime); box-shadow:0 0 0 1px var(--lime); }
+
+.tier-badge { display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
+
+.char-count { font-size:11px; color:var(--muted); text-align:right; margin-top:4px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const TOTAL_STEPS = 5;
+
+const INTEREST_TAGS = [
+  'Running','Fitness','Wellness','Cycling','Swimming','Tennis',
+  'Football','Basketball','Yoga','Hiking','Climbing','Triathlon',
+  'Culture','Music','Art','Photography','Film','Fashion',
+  'Food','Travel','Technology','Gaming','Newsletter','Podcast',
+  'Lifestyle','Collective Action','Environment','Education','Business',
+];
+
+const COVER_OPTIONS = [
+  { id:1, gradient:'linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 70%,#533483 100%)', label:'Night Run' },
+  { id:2, gradient:'linear-gradient(135deg,#0d0d0d 0%,#1a0a00 40%,#3d1c00 70%,#c43a00 100%)', label:'Desert Heat' },
+  { id:3, gradient:'linear-gradient(135deg,#0a1628 0%,#1b3a4b 50%,#2d6a4f 100%)', label:'Forest Trail' },
+  { id:4, gradient:'linear-gradient(135deg,#1a0a00 0%,#3d2b1f 40%,#8a6a40 70%,#c4a060 100%)', label:'Desert Sand' },
+  { id:5, gradient:'linear-gradient(135deg,#0d0d1a 0%,#1a1a3e 40%,#2d1b69 70%,#6b2d8b 100%)', label:'Deep Purple' },
+  { id:6, gradient:'linear-gradient(135deg,#001a0a 0%,#003d1a 40%,#006b2d 70%,#00a844 100%)', label:'Pitch Green' },
+  { id:7, gradient:'linear-gradient(135deg,#1a0010 0%,#3d0028 40%,#7a0050 70%,#c40080 100%)', label:'Electric Pink' },
+  { id:8, gradient:'linear-gradient(135deg,#0a0a00 0%,#1a1a00 40%,#3d3d00 70%,#7a7a00 100%)', label:'Midnight Gold' },
+];
+
+function StepDots({ current }) {
+  return (
+    <div className="step-dots">
+      {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+        <div key={i} className={`step-dot ${i+1 === current ? 'active' : i+1 < current ? 'done' : ''}`} />
+      ))}
+    </div>
+  );
+}
+
+function TierBadge({ tier }) {
+  const config = {
+    'starter': { label:'Starter', color:'var(--muted)', dot:'#555' },
+    'verified': { label:'Verified', color:'var(--cyan)', dot:'var(--cyan)' },
+    'fully-verified': { label:'Fully Verified', color:'var(--lime)', dot:'var(--lime)' },
+  }[tier] || { label:'Starter', color:'var(--muted)', dot:'#555' };
+  return (
+    <span className="tier-badge" style={{ color: config.color }}>
+      <span style={{ width:6, height:6, borderRadius:'50%', background:config.dot, display:'inline-block' }} />
+      {config.label}
+    </span>
+  );
+}
+
+// ── Step 1: Welcome ───────────────────────────────────────────────────────────
+function Step1({ onNext }) {
+  return (
+    <div className="onboarding-screen">
+      <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 50% 0%,rgba(210,255,1,0.05) 0%,transparent 65%)', pointerEvents:'none' }} />
+      <div className="onboarding-box" style={{ position:'relative', zIndex:1 }}>
+        <div style={{ padding:'44px 36px', textAlign:'center', borderBottom:'1px solid var(--border)' }}>
+          <div className="bb" style={{ fontSize:52, letterSpacing:'0.05em', marginBottom:8 }}>mayo<span style={{ color:'var(--lime)' }}>.</span></div>
+          <div style={{ fontSize:13, color:'var(--muted)', marginBottom:28 }}>The community partnerships platform</div>
+          <div className="bb" style={{ fontSize:28, marginBottom:10 }}>Your community.<br/>Your terms.</div>
+          <p style={{ fontSize:13, color:'var(--muted)', lineHeight:1.7, maxWidth:360, margin:'0 auto' }}>
+            Mayo connects communities like yours with brands that want to add real value — not just buy your audience.
+            Set up your profile in 5 minutes and start receiving partnership proposals that fit your world.
+          </p>
+        </div>
+        <div className="onboarding-body" style={{ textAlign:'center' }}>
+          <button className="btn btn-lime btn-lg" style={{ width:'100%', marginBottom:14 }} onClick={onNext}>
+            Set Up My Community →
+          </button>
+          <div style={{ fontSize:12, color:'var(--muted)' }}>Takes about 5 minutes. No card required.</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 2: Basic Info ────────────────────────────────────────────────────────
+function Step2({ onNext, onBack, form, setForm }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const canContinue = form.name.trim() && form.tagline.trim() && form.description.trim();
+
+  async function handleSubmit() {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/community', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          tagline: form.tagline,
+          location: form.location,
+          description: form.description,
+          tags: form.tags,
+          website: form.website,
+          cover_option: form.coverOption,
+        }),
+      });
+      const data = await res.json();
+      setForm(f => ({ ...f, communityId: data.id }));
+      onNext();
+    } catch (e) {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const toggleTag = (tag) => setForm(f => ({
+    ...f,
+    tags: f.tags.includes(tag) ? f.tags.filter(t => t !== tag) : [...f.tags, tag],
+  }));
+
+  return (
+    <div className="onboarding-screen">
+      <div className="onboarding-box">
+        <div className="onboarding-header">
+          <StepDots current={2} />
+          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Tell us about your community</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>This is what brands see when they find you. Make it count.</div>
+        </div>
+        <div className="onboarding-body" style={{ maxHeight:'60vh', overflowY:'auto' }}>
+          <div className="form-group">
+            <label className="label">Community Name *</label>
+            <input className="input" placeholder="e.g. Southbound 400" value={form.name} onChange={e => setForm(f=>({...f,name:e.target.value}))} />
+          </div>
+          <div className="form-group">
+            <label className="label">One-line tagline *</label>
+            <input className="input" placeholder="e.g. 400 miles. 3 stages. 5 teams." value={form.tagline} onChange={e => setForm(f=>({...f,tagline:e.target.value}))} />
+          </div>
+          <div className="form-group">
+            <label className="label">Location</label>
+            <input className="input" placeholder="e.g. New York, USA or Online / Global" value={form.location} onChange={e => setForm(f=>({...f,location:e.target.value}))} />
+          </div>
+          <div className="form-group">
+            <label className="label">Website <span style={{ color:'var(--muted)', fontWeight:400, textTransform:'none', fontSize:11 }}>— optional</span></label>
+            <input className="input" placeholder="https://yourcommunity.com" value={form.website} onChange={e => setForm(f=>({...f,website:e.target.value}))} />
+          </div>
+          <div className="form-group">
+            <label className="label">Active Members <span style={{ color:'var(--muted)', fontWeight:400, textTransform:'none', fontSize:11 }}>— people who regularly attend events or activities</span></label>
+            <input className="input" type="number" placeholder="e.g. 120" value={form.activeMembers} onChange={e => setForm(f=>({...f,activeMembers:e.target.value}))} />
+          </div>
+          <div className="form-group">
+            <label className="label">What's your community about? *</label>
+            <textarea className="input" rows={4} placeholder="Describe your community in your own words — who you are, what you do, and what makes your members special." value={form.description} onChange={e => setForm(f=>({...f,description:e.target.value.slice(0,300)}))} />
+            <div className="char-count">{form.description.length}/300</div>
+          </div>
+          <div className="form-group" style={{ marginBottom:0 }}>
+            <label className="label">What does your community care about? <span style={{ color:'var(--muted)', fontWeight:400, textTransform:'none', fontSize:11 }}>Pick all that apply</span></label>
+            <div className="tag-grid">
+              {INTEREST_TAGS.map(tag => (
+                <button key={tag} className={`tag-item ${form.tags.includes(tag) ? 'selected' : ''}`} onClick={() => toggleTag(tag)}>{tag}</button>
+              ))}
+            </div>
+          </div>
+          {error && <div style={{ color:'#ff6b6b', fontSize:12, marginTop:12 }}>{error}</div>}
+        </div>
+        <div className="onboarding-footer">
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back</button>
+          <button className="btn btn-lime" disabled={!canContinue || loading} onClick={handleSubmit}>
+            {loading ? 'Saving…' : 'Continue →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 3: Connect Channels ──────────────────────────────────────────────────
+function Step3({ onNext, onBack, form, setForm }) {
+  const [substackInput, setSubstackInput] = useState(form.substackUrl || '');
+  const [savingSubstack, setSavingSubstack] = useState(false);
+
+  const igConnected = form.instagramConnected;
+  const substackConnected = !!form.substackUrl;
+  const connectedCount = [igConnected, substackConnected].filter(Boolean).length;
+  const tier = connectedCount >= 2 ? 'fully-verified' : connectedCount >= 1 ? 'verified' : 'starter';
+
+  const tierMsg = {
+    starter: { text: 'Connect at least one channel to unlock Verified status and get better matches.', color: 'var(--muted)' },
+    verified: { text: 'Connect one more channel to unlock Fully Verified status.', color: 'var(--cyan)' },
+    'fully-verified': { text: "You're Fully Verified — brands can see the full picture.", color: 'var(--lime)' },
+  }[tier];
+
+  function connectInstagram() {
+    window.location.href = `/login?community_id=${form.communityId}`;
+  }
+
+  async function saveSubstack() {
+    if (!substackInput.trim()) return;
+    setSavingSubstack(true);
+    await fetch(`/api/community/${form.communityId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ substack_url: substackInput.trim() }),
+    });
+    setForm(f => ({ ...f, substackUrl: substackInput.trim() }));
+    setSavingSubstack(false);
+  }
+
+  const channels = [
+    { id: 'instagram', name: 'Instagram', icon: '📸', color: '#e1306c', action: 'oauth' },
+    { id: 'substack', name: 'Substack', icon: '📧', color: '#ff6719', action: 'url' },
+    { id: 'tiktok', name: 'TikTok', icon: '🎵', color: '#69c9d0', action: 'soon' },
+    { id: 'youtube', name: 'YouTube', icon: '▶', color: '#ff0000', action: 'soon' },
+    { id: 'discord', name: 'Discord', icon: '💬', color: '#5865f2', action: 'soon' },
+    { id: 'x', name: 'X / Twitter', icon: '✕', color: '#aaa', action: 'soon' },
+  ];
+
+  return (
+    <div className="onboarding-screen">
+      <div className="onboarding-box">
+        <div className="onboarding-header">
+          <StepDots current={3} />
+          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Connect your channels</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>Connected channels power your match score and show brands the real data behind your community.</div>
+        </div>
+        <div className="onboarding-body" style={{ maxHeight:'60vh', overflowY:'auto' }}>
+
+          {/* Tier bar */}
+          <div style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, padding:'12px 14px', marginBottom:20 }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:8 }}>
+              <TierBadge tier={tier} />
+              <div style={{ display:'flex', gap:5 }}>
+                {['starter','verified','fully-verified'].map((t,i) => (
+                  <div key={t} style={{ width:32, height:4, borderRadius:2, background:['starter','verified','fully-verified'].indexOf(tier)>=i?'var(--lime)':'var(--surface3)' }} />
+                ))}
+              </div>
+            </div>
+            <div style={{ fontSize:12, color:tierMsg.color }}>{tierMsg.text}</div>
+          </div>
+
+          {channels.map(ch => {
+            const isIg = ch.id === 'instagram';
+            const isSub = ch.id === 'substack';
+            const connected = (isIg && igConnected) || (isSub && substackConnected);
+
+            return (
+              <div key={ch.id} className={`channel-card ${connected ? 'connected' : ''}`}>
+                <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                  <div style={{ width:36, height:36, borderRadius:8, background:ch.color+'22', color:ch.color, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16, flexShrink:0 }}>{ch.icon}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:600 }}>{ch.name}</div>
+                    {connected && <div style={{ fontSize:11, color:'var(--lime)', marginTop:2 }}>✓ Connected</div>}
+                    {ch.action === 'soon' && <div style={{ fontSize:11, color:'var(--muted)', marginTop:2 }}>Coming soon</div>}
+                  </div>
+                  {!connected && ch.action === 'oauth' && (
+                    <button className="btn btn-lime btn-sm" onClick={connectInstagram}>Connect</button>
+                  )}
+                  {connected && <span style={{ color:'var(--lime)', fontSize:16 }}>✓</span>}
+                  {ch.action === 'soon' && (
+                    <span style={{ fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', color:'var(--muted)', textTransform:'uppercase', border:'1px solid var(--border)', borderRadius:4, padding:'3px 8px' }}>Soon</span>
+                  )}
+                </div>
+
+                {/* Substack URL input */}
+                {isSub && !substackConnected && (
+                  <div style={{ marginTop:12, paddingTop:12, borderTop:'1px solid var(--border)', display:'flex', gap:8 }}>
+                    <input className="input" placeholder="https://yourpublication.substack.com" value={substackInput} onChange={e=>setSubstackInput(e.target.value)} style={{ flex:1 }} />
+                    <button className="btn btn-ghost btn-sm" onClick={saveSubstack} disabled={!substackInput.trim()||savingSubstack}>
+                      {savingSubstack ? '…' : 'Save'}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          <div style={{ marginTop:12, padding:'10px 14px', background:'rgba(177,236,240,0.06)', border:'1px solid rgba(177,236,240,0.15)', borderRadius:8 }}>
+            <div style={{ fontSize:12, color:'var(--cyan)', lineHeight:1.6 }}>
+              💡 <strong>Not ready to connect yet?</strong> You can connect channels any time from your profile settings.
+            </div>
+          </div>
+        </div>
+        <div className="onboarding-footer">
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back</button>
+          <button className="btn btn-lime" onClick={onNext}>Continue →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 4: Preview ───────────────────────────────────────────────────────────
+function Step4({ onNext, onBack, form, setForm }) {
+  const cover = COVER_OPTIONS.find(o => o.id === form.coverOption) || COVER_OPTIONS[0];
+  const igConnected = form.instagramConnected;
+  const substackConnected = !!form.substackUrl;
+  const connectedCount = [igConnected, substackConnected].filter(Boolean).length;
+  const tier = connectedCount >= 2 ? 'fully-verified' : connectedCount >= 1 ? 'verified' : 'starter';
+
+  async function saveCover(id) {
+    setForm(f => ({ ...f, coverOption: id }));
+    await fetch(`/api/community/${form.communityId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cover_option: id }),
+    });
+  }
+
+  return (
+    <div className="onboarding-screen">
+      <div className="onboarding-box" style={{ maxWidth:560 }}>
+        <div className="onboarding-header">
+          <StepDots current={4} />
+          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Make it yours</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>Choose a cover and preview how your community will look to brands.</div>
+        </div>
+        <div className="onboarding-body">
+
+          {/* Face card preview */}
+          <div style={{ maxWidth:220, margin:'0 auto 24px', borderRadius:10, overflow:'hidden', border:'1px solid var(--border)' }}>
+            <div style={{ aspectRatio:'3/4', position:'relative', background:cover.gradient }}>
+              <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom,rgba(0,0,0,0.05),rgba(0,0,0,0.78))' }} />
+              <div style={{ position:'absolute', top:10, left:10 }}>
+                <span style={{ background:'var(--pink)', color:'#000', borderRadius:4, padding:'3px 8px', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>● Evangelists</span>
+              </div>
+              <div style={{ position:'absolute', top:10, right:10, background:'var(--yellow)', color:'#000', borderRadius:6, padding:'3px 8px', textAlign:'center' }}>
+                <div className="bb" style={{ fontSize:18, lineHeight:1 }}>—</div>
+                <div style={{ fontSize:9, fontWeight:700, fontFamily:'Barlow Condensed', letterSpacing:'0.08em' }}>MATCH</div>
+              </div>
+              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'28px 10px 10px', background:'linear-gradient(to top,rgba(0,0,0,0.92),rgba(0,0,0,0.7) 50%,transparent)' }}>
+                <div className="bb" style={{ fontSize:18, color:'#fff', lineHeight:1, marginBottom:2 }}>{form.name || 'Your Community'}</div>
+                <div style={{ fontSize:10, color:'rgba(255,255,255,0.75)', marginBottom:5 }}>{form.tagline || 'Your tagline'}</div>
+                <div style={{ display:'flex', gap:3, flexWrap:'wrap', marginBottom:6 }}>
+                  {form.tags.slice(0,3).map(t => (
+                    <span key={t} style={{ border:'1px solid rgba(255,255,255,0.3)', color:'rgba(255,255,255,0.85)', borderRadius:3, padding:'1px 5px', fontFamily:'Barlow Condensed', fontSize:9, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>{t}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div style={{ padding:'8px 10px', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--surface)' }}>
+              <TierBadge tier={tier} />
+              <span style={{ fontSize:10, color:'var(--muted)', fontFamily:'Barlow Condensed', fontWeight:600 }}>View Profile →</span>
+            </div>
+          </div>
+
+          {/* Cover picker */}
+          <div style={{ marginBottom:4, fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)' }}>Choose your cover</div>
+          <div className="cover-grid" style={{ marginBottom:20 }}>
+            {COVER_OPTIONS.map(opt => (
+              <div
+                key={opt.id}
+                className={`cover-opt ${form.coverOption === opt.id ? 'selected' : ''}`}
+                style={{ background: opt.gradient }}
+                onClick={() => saveCover(opt.id)}
+                title={opt.label}
+              />
+            ))}
+          </div>
+
+          {/* Tier status */}
+          <div style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, padding:'14px 16px' }}>
+            <div style={{ fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:12 }}>Profile Status</div>
+            {[
+              { tier:'starter', label:'Starter', desc:'Profile visible in discovery with self-reported data', done: true },
+              { tier:'verified', label:'Verified', desc:'One channel connected — real data backs your match score', done: tier==='verified'||tier==='fully-verified' },
+              { tier:'fully-verified', label:'Fully Verified', desc:'Two or more channels — best matches, most brand confidence', done: tier==='fully-verified' },
+            ].map((t, i) => (
+              <div key={t.tier} style={{ display:'flex', alignItems:'flex-start', gap:10, marginBottom: i<2?12:0 }}>
+                <div style={{ width:20, height:20, borderRadius:'50%', background:t.done?'var(--lime)':'var(--surface3)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, color:t.done?'#000':'var(--muted)', flexShrink:0, marginTop:1 }}>{t.done?'✓':''}</div>
+                <div>
+                  <div style={{ fontSize:13, fontWeight:600, color:t.done?'var(--white)':'var(--muted)' }}>{t.label}</div>
+                  <div style={{ fontSize:11, color:'var(--muted)' }}>{t.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="onboarding-footer">
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back</button>
+          <button className="btn btn-lime" onClick={onNext}>Looks good →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 5: Done ──────────────────────────────────────────────────────────────
+function Step5({ form }) {
+  const igConnected = form.instagramConnected;
+  const substackConnected = !!form.substackUrl;
+  const connectedCount = [igConnected, substackConnected].filter(Boolean).length;
+  const tier = connectedCount >= 2 ? 'fully-verified' : connectedCount >= 1 ? 'verified' : 'starter';
+
+  return (
+    <div className="onboarding-screen">
+      <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 50% 30%,rgba(210,255,1,0.07) 0%,transparent 65%)', pointerEvents:'none' }} />
+      <div className="onboarding-box" style={{ position:'relative', zIndex:1 }}>
+        <div style={{ padding:'48px 36px', textAlign:'center' }}>
+          <div className="bb" style={{ fontSize:64, color:'var(--lime)', lineHeight:1, marginBottom:8 }}>✓</div>
+          <div className="bb" style={{ fontSize:36, marginBottom:10 }}>You're in.</div>
+          <p style={{ fontSize:13, color:'var(--muted)', lineHeight:1.7, marginBottom:28, maxWidth:340, margin:'0 auto 28px' }}>
+            Your community profile is live. Brands can now discover you and send partnership proposals.
+            We'll let you know when something worth looking at comes in.
+          </p>
+          <div style={{ background:'var(--surface2)', border:'1px solid var(--border)', borderRadius:8, padding:14, textAlign:'left' }}>
+            <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:4 }}>
+              <div style={{ fontFamily:'Barlow Condensed', fontSize:16, fontWeight:800, textTransform:'uppercase' }}>{form.name}</div>
+              <TierBadge tier={tier} />
+            </div>
+            <div style={{ fontSize:12, color:'var(--muted)', marginBottom: tier!=='fully-verified'?10:0 }}>{form.tagline}</div>
+            {tier !== 'fully-verified' && (
+              <div style={{ paddingTop:10, borderTop:'1px solid var(--border)', fontSize:12, color:'var(--cyan)' }}>
+                {tier === 'starter'
+                  ? '→ Connect a channel to unlock Verified status'
+                  : '→ Connect one more channel to unlock Fully Verified'}
+              </div>
+            )}
+          </div>
+          {igConnected && (
+            <div style={{ marginTop:16, padding:'12px 14px', background:'rgba(210,255,1,0.06)', border:'1px solid rgba(210,255,1,0.2)', borderRadius:8, fontSize:12, color:'var(--lime)', textAlign:'left' }}>
+              ✓ Instagram connected — your analytics are being collected in the background.
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── App ───────────────────────────────────────────────────────────────────────
+function App() {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({
+    communityId: null,
+    name: '',
+    tagline: '',
+    location: '',
+    description: '',
+    tags: [],
+    website: '',
+    activeMembers: '',
+    substackUrl: '',
+    coverOption: 1,
+    instagramConnected: false,
+  });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const cid = params.get('community_id');
+    const igConnected = params.get('instagram_connected') === 'true';
+    const s = parseInt(params.get('step') || '0');
+
+    if (cid) {
+      // Restore community data from DB
+      fetch(`/api/community/${cid}`)
+        .then(r => r.json())
+        .then(data => {
+          setForm(f => ({
+            ...f,
+            communityId: cid,
+            name: data.name || '',
+            tagline: data.tagline || '',
+            location: data.location || '',
+            description: data.description || '',
+            tags: data.tags || [],
+            website: data.website || '',
+            activeMembers: data.active_members || '',
+            substackUrl: data.substack_url || '',
+            coverOption: data.cover_option || 1,
+            instagramConnected: igConnected || !!data.instagram_token,
+          }));
+          if (s) setStep(s);
+        });
+      window.history.replaceState({}, '', '/');
+    }
+  }, []);
+
+  return (
+    <>
+      {step === 1 && <Step1 onNext={() => setStep(2)} />}
+      {step === 2 && <Step2 onNext={() => setStep(3)} onBack={() => setStep(1)} form={form} setForm={setForm} />}
+      {step === 3 && <Step3 onNext={() => setStep(4)} onBack={() => setStep(2)} form={form} setForm={setForm} />}
+      {step === 4 && <Step4 onNext={() => setStep(5)} onBack={() => setStep(3)} form={form} setForm={setForm} />}
+      {step === 5 && <Step5 form={form} />}
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

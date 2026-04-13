@@ -82,7 +82,7 @@ def get_media(user_id: str) -> list[dict]:
     data = _get(
         f"/{user_id}/media",
         {
-            "fields": "id,caption,like_count,comments_count,timestamp,media_type",
+            "fields": "id,caption,like_count,comments_count,saved_count,timestamp,media_type",
             "limit": 20,
         },
     )
@@ -140,22 +140,57 @@ def get_insights(user_id: str) -> dict:
     }
 
 
-def get_engagement_rate(media: list[dict], followers: int) -> float:
+def get_media_shares(media: list[dict]) -> dict:
     """
-    Calculate engagement rate as (avg likes + avg comments) / followers * 100.
+    Fetch share counts for each post via the media insights endpoint.
+    Requires instagram_business_manage_insights permission.
+
+    Args:
+        media: List of post dicts from get_media.
+
+    Returns:
+        Dict mapping media_id -> share_count.
+    """
+    shares = {}
+    for post in media:
+        media_id = post.get("id")
+        try:
+            data = _get(f"/{media_id}/insights", {"metric": "shares"})
+            for item in data.get("data", []):
+                if item.get("name") == "shares":
+                    shares[media_id] = item.get("values", [{}])[0].get("value", 0)
+        except requests.exceptions.HTTPError:
+            shares[media_id] = 0
+    return shares
+
+
+def get_engagement_rate(media: list[dict], followers: int, shares: dict = None) -> float:
+    """
+    Calculate weighted engagement rate using Mayo formula:
+    (Likes×1 + Comments×2 + Saves×3 + Shares×4) ÷ Followers × 100
+
+    Shares are not available as a direct media field via the Instagram Graph API
+    and default to 0. Saves require saved_count field on media objects.
 
     Args:
         media: List of post dicts from get_media.
         followers: Follower count from get_profile.
 
     Returns:
-        Engagement rate as a percentage (e.g. 3.4 means 3.4%).
+        Weighted engagement rate as a percentage (e.g. 3.4 means 3.4%).
     """
     if not media or followers == 0:
         return 0.0
-    avg_likes = sum(p.get("like_count", 0) for p in media) / len(media)
-    avg_comments = sum(p.get("comments_count", 0) for p in media) / len(media)
-    return round((avg_likes + avg_comments) / followers * 100, 2)
+    shares = shares or {}
+    total = sum(
+        p.get("like_count", 0) * 1
+        + p.get("comments_count", 0) * 2
+        + p.get("saved_count", 0) * 3
+        + shares.get(p.get("id"), 0) * 4
+        for p in media
+    )
+    avg = total / len(media)
+    return round(avg / followers * 100, 2)
 
 
 # ── Pipeline ──────────────────────────────────────────────────────────────────
@@ -176,12 +211,14 @@ def collect(account_name: str = None) -> dict:
     name = account_name or profile.get("name", user_id)
 
     media = get_media(user_id)
+    shares = get_media_shares(media)
     insights = get_insights(user_id)
-    engagement_rate = get_engagement_rate(media, profile["followers_count"])
+    engagement_rate = get_engagement_rate(media, profile["followers_count"], shares)
 
     raw = {
         "profile": profile,
         "media": media,
+        "shares": shares,
         "insights": insights,
         "engagement_rate": engagement_rate,
     }

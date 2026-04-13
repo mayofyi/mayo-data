@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mayo Admin — Communities</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --lime: #d2ff01; --black: #080808; --surface: #111; --surface2: #1a1a1a;
+  --surface3: #222; --white: #f0f0f0; --muted: #888;
+  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
+  --cyan: #b1ecf0; --pink: #ff6ef2; --green: #b3ff9e; --red: #ff6b6b;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--black); color:var(--white); font-family:'Barlow',sans-serif; font-size:14px; min-height:100vh; }
+.bb { font-family:'Bebas Neue',sans-serif; letter-spacing:0.03em; }
+.bc { font-family:'Barlow Condensed',sans-serif; }
+::-webkit-scrollbar { width:3px; height:3px; } ::-webkit-scrollbar-thumb { background:var(--surface3); }
+
+header { padding:20px 32px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.logo { font-family:'Bebas Neue'; font-size:28px; letter-spacing:0.05em; }
+.logo span { color:var(--lime); }
+.badge { display:inline-block; padding:3px 9px; border-radius:3px; font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
+.badge-lime { background:var(--lime); color:#000; }
+.badge-cyan { background:var(--cyan); color:#000; }
+.badge-muted { background:var(--surface3); color:var(--muted); border:1px solid var(--border); }
+.badge-green { background:var(--green); color:#000; }
+.badge-red { color:var(--red); font-family:'Barlow Condensed'; font-size:12px; font-weight:700; }
+
+main { padding:32px; }
+.page-title { font-family:'Bebas Neue'; font-size:36px; letter-spacing:0.03em; margin-bottom:6px; }
+.page-sub { font-size:13px; color:var(--muted); margin-bottom:28px; }
+
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 20px; }
+.stat-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.stat-value { font-family:'Bebas Neue'; font-size:36px; line-height:1; }
+
+table { width:100%; border-collapse:collapse; }
+thead th { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); padding:10px 14px; text-align:left; border-bottom:1px solid var(--border); }
+tbody tr { border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s; }
+tbody tr:hover { background:var(--surface2); }
+tbody td { padding:14px; vertical-align:top; font-size:13px; }
+.community-name { font-weight:600; font-size:14px; margin-bottom:2px; }
+.community-sub { font-size:11px; color:var(--muted); }
+.tags-list { display:flex; flex-wrap:wrap; gap:4px; }
+.tag { display:inline-block; padding:2px 6px; border-radius:3px; font-family:'Barlow Condensed'; font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; border:1px solid var(--border2); color:var(--muted); }
+.metric { font-family:'Barlow Condensed'; font-size:16px; font-weight:700; }
+.metric-label { font-size:10px; color:var(--muted); font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:0.05em; }
+
+.detail-panel { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:20px; margin-top:8px; display:none; }
+.detail-panel.open { display:block; }
+.detail-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
+.detail-item label { font-family:'Barlow Condensed'; font-size:10px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:4px; }
+.detail-item span { font-size:13px; }
+
+.empty { text-align:center; padding:60px 20px; color:var(--muted); }
+.loading { text-align:center; padding:60px; color:var(--muted); font-family:'Barlow Condensed'; font-size:16px; letter-spacing:0.06em; text-transform:uppercase; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">mayo<span>.</span></div>
+  <div style="font-family:'Barlow Condensed';font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Admin Panel</div>
+</header>
+
+<main>
+  <div class="page-title">Communities</div>
+  <div class="page-sub" id="last-updated">Loading…</div>
+
+  <div class="stats-row" id="stats-row">
+    <div class="stat-card"><div class="stat-label">Total Profiles</div><div class="stat-value" id="stat-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">Instagram Connected</div><div class="stat-value" id="stat-ig">—</div></div>
+    <div class="stat-card"><div class="stat-label">Fully Verified</div><div class="stat-value" id="stat-fv">—</div></div>
+    <div class="stat-card"><div class="stat-label">Avg. Weighted ER</div><div class="stat-value" id="stat-er">—</div></div>
+  </div>
+
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+    <div id="table-container" class="loading">Loading communities…</div>
+  </div>
+</main>
+
+<script>
+const ADMIN_TOKEN = '{{ admin_token }}';
+
+function formatDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+function getER(community) {
+  return community.instagram_data?.engagement_rate ?? null;
+}
+
+function getFollowers(community) {
+  return community.instagram_data?.profile?.followers_count ?? null;
+}
+
+function getTier(community) {
+  const channels = [!!community.instagram_token, !!community.substack_url].filter(Boolean).length;
+  if (channels >= 2) return 'fully-verified';
+  if (channels >= 1) return 'verified';
+  return 'starter';
+}
+
+function tierBadge(tier) {
+  if (tier === 'fully-verified') return '<span class="badge badge-lime">Fully Verified</span>';
+  if (tier === 'verified') return '<span class="badge badge-cyan">Verified</span>';
+  return '<span class="badge badge-muted">Starter</span>';
+}
+
+function igStatus(community) {
+  if (community.instagram_data) return '<span class="badge badge-green">✓ Data collected</span>';
+  if (community.instagram_token) return '<span style="color:var(--lime);font-family:Barlow Condensed;font-size:12px;font-weight:700">✓ Connected — collecting…</span>';
+  return '<span class="badge-red">Not connected</span>';
+}
+
+let communities = [];
+let openRows = new Set();
+
+function renderTable() {
+  if (!communities.length) {
+    document.getElementById('table-container').innerHTML = '<div class="empty">No communities yet. Share the onboarding link to get started.</div>';
+    return;
+  }
+
+  // Stats
+  const igConnected = communities.filter(c => c.instagram_token).length;
+  const fullyVerified = communities.filter(c => getTier(c) === 'fully-verified').length;
+  const ers = communities.map(c => getER(c)).filter(v => v !== null);
+  const avgER = ers.length ? (ers.reduce((a,b)=>a+b,0)/ers.length).toFixed(1) : '—';
+
+  document.getElementById('stat-total').textContent = communities.length;
+  document.getElementById('stat-ig').textContent = igConnected;
+  document.getElementById('stat-fv').textContent = fullyVerified;
+  document.getElementById('stat-er').textContent = avgER + (ers.length ? '%' : '');
+  document.getElementById('last-updated').textContent = `Last refreshed ${new Date().toLocaleTimeString()}`;
+
+  const html = `
+    <table>
+      <thead>
+        <tr>
+          <th>Community</th>
+          <th>Tier</th>
+          <th>Instagram</th>
+          <th>Followers</th>
+          <th>Weighted ER</th>
+          <th>Tags</th>
+          <th>Joined</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${communities.map((c, i) => {
+          const er = getER(c);
+          const followers = getFollowers(c);
+          const tier = getTier(c);
+          const isOpen = openRows.has(c.id);
+
+          const profile = c.instagram_data?.profile || {};
+          const insights = c.instagram_data?.insights || {};
+
+          return `
+            <tr onclick="toggleRow('${c.id}')">
+              <td>
+                <div class="community-name">${c.name}</div>
+                <div class="community-sub">${c.location || '—'}</div>
+                ${c.tagline ? `<div class="community-sub" style="margin-top:2px;font-style:italic">${c.tagline}</div>` : ''}
+              </td>
+              <td>${tierBadge(tier)}</td>
+              <td>${igStatus(c)}</td>
+              <td>
+                ${followers !== null ? `<div class="metric">${followers.toLocaleString()}</div><div class="metric-label">followers</div>` : '<span style="color:var(--muted)">—</span>'}
+              </td>
+              <td>
+                ${er !== null ? `<div class="metric">${er}%</div><div class="metric-label">weighted ER</div>` : '<span style="color:var(--muted)">—</span>'}
+              </td>
+              <td>
+                <div class="tags-list">
+                  ${(c.tags || []).slice(0,4).map(t => `<span class="tag">${t}</span>`).join('')}
+                  ${(c.tags || []).length > 4 ? `<span class="tag">+${c.tags.length-4}</span>` : ''}
+                </div>
+              </td>
+              <td style="color:var(--muted);font-size:12px">${formatDate(c.created_at)}</td>
+            </tr>
+            <tr id="detail-${c.id}" style="display:${isOpen?'table-row':'none'}">
+              <td colspan="7" style="padding:0 14px 14px">
+                <div class="detail-panel open">
+                  <div class="detail-grid">
+                    <div class="detail-item"><label>Active Members</label><span>${c.active_members ?? '—'} <span style="color:var(--muted);font-size:11px">(community-reported)</span></span></div>
+                    <div class="detail-item"><label>Website</label><span>${c.website ? `<a href="${c.website}" target="_blank" style="color:var(--cyan)">${c.website}</a>` : '—'}</span></div>
+                    <div class="detail-item"><label>Substack</label><span>${c.substack_url ? `<a href="${c.substack_url}" target="_blank" style="color:var(--cyan)">${c.substack_url}</a>` : '—'}</span></div>
+                    <div class="detail-item"><label>Reach</label><span>${insights.reach ? insights.reach.toLocaleString() : 'Blocked (needs insights permission)'}</span></div>
+                    <div class="detail-item"><label>Profile Views</label><span>${insights.profile_views ? insights.profile_views.toLocaleString() : '—'}</span></div>
+                    <div class="detail-item"><label>Instagram Connected</label><span>${c.instagram_connected_at ? formatDate(c.instagram_connected_at) : '—'}</span></div>
+                    <div class="detail-item"><label>Bio</label><span style="color:var(--muted)">${profile.biography || '—'}</span></div>
+                    <div class="detail-item"><label>Description</label><span style="color:var(--muted)">${c.description || '—'}</span></div>
+                    <div class="detail-item"><label>Community ID</label><span style="color:var(--muted);font-size:11px">${c.id}</span></div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+
+  document.getElementById('table-container').innerHTML = html;
+}
+
+function toggleRow(id) {
+  if (openRows.has(id)) {
+    openRows.delete(id);
+  } else {
+    openRows.add(id);
+  }
+  renderTable();
+}
+
+async function load() {
+  try {
+    const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
+    communities = await res.json();
+    renderTable();
+  } catch (e) {
+    document.getElementById('table-container').innerHTML = '<div class="empty">Failed to load communities.</div>';
+  }
+}
+
+load();
+// Auto-refresh every 30 seconds
+setInterval(load, 30000);
+</script>
+</body>
+</html>
