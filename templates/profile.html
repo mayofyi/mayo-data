@@ -29,7 +29,7 @@
 html, body { min-height:100%; background: var(--black); color: var(--white); font-family: 'Barlow', sans-serif; font-size: 14px; line-height: 1.5; }
 .bb { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.03em; }
 .bc { font-family: 'Barlow Condensed', sans-serif; }
-::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: var(--surface3); }
+::-webkit-scrollbar { width: 3px; height: 3px; } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; } ::-webkit-scrollbar-track { background: transparent; }
 .tier-badge { display:inline-flex; align-items:center; gap:5px; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
 a { color: inherit; }
 </style>
@@ -147,7 +147,7 @@ function PostCarousel({ igPosts, substackPosts }) {
           {sub.length>0 && <SubstackIcon size={12} color="var(--muted)" />}
         </div>
       </div>
-      <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:8, scrollSnapType:'x mandatory', WebkitOverflowScrolling:'touch', msOverflowStyle:'none', scrollbarWidth:'none' }}>
+      <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:10, scrollSnapType:'x mandatory', WebkitOverflowScrolling:'touch' }}>
         {all.map((post, i) => (
           post._type === 'ig' ? (
             <a key={i} href={post.permalink||'#'} target="_blank" rel="noopener noreferrer"

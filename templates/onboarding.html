@@ -29,7 +29,7 @@
 html, body { height:100%; background: var(--black); color: var(--white); font-family: 'Barlow', sans-serif; font-size: 14px; line-height: 1.5; }
 .bb { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.03em; }
 .bc { font-family: 'Barlow Condensed', sans-serif; }
-::-webkit-scrollbar { width: 3px; } ::-webkit-scrollbar-thumb { background: var(--surface3); }
+::-webkit-scrollbar { width: 3px; height: 3px; } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; } ::-webkit-scrollbar-track { background: transparent; }
 
 .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:9px 18px; border-radius:6px; border:none; cursor:pointer; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.06em; text-transform:uppercase; transition:all 0.15s; white-space:nowrap; }
 .btn-lime { background:var(--lime); color:var(--black); }
@@ -202,7 +202,7 @@ function PostCarousel({ igPosts, substackPosts }) {
           {sub.length>0 && <SubstackIcon size={12} color="var(--muted)" />}
         </div>
       </div>
-      <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:8, scrollSnapType:'x mandatory', WebkitOverflowScrolling:'touch', msOverflowStyle:'none', scrollbarWidth:'none' }}>
+      <div style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:10, scrollSnapType:'x mandatory', WebkitOverflowScrolling:'touch' }}>
         {all.map((post, i) => (
           post._type === 'ig' ? (
             <a key={i} href={post.permalink||'#'} target="_blank" rel="noopener noreferrer"
