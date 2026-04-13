@@ -287,13 +287,15 @@ function openCommunity(id) {
       </div>
       <div class="metric-card" style="background:#090005;border-color:#1f0015">
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Network Multiplier</div>
-        <div style="font-family:'Bebas Neue';font-size:20px;color:#444;line-height:1;padding-top:4px">Pending</div>
-        <div style="font-size:10px;color:#444;margin-top:4px">Member verification needed</div>
+        ${c.network_multiplier != null
+          ? `<div style="font-family:'Bebas Neue';font-size:30px;color:#ff6ef2;line-height:1">${c.network_multiplier}×</div><div style="font-size:10px;color:var(--muted);margin-top:4px">bucket-estimated</div>`
+          : `<div style="font-family:'Bebas Neue';font-size:20px;color:#444;line-height:1;padding-top:4px">Pending</div><div style="font-size:10px;color:#444;margin-top:4px">Set member tiers below</div>`}
       </div>
       <div class="metric-card" style="background:#0a0700;border-color:#221a00">
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Cultural Impact</div>
-        <div style="font-family:'Bebas Neue';font-size:20px;color:#444;line-height:1;padding-top:4px">Pending</div>
-        <div style="font-size:10px;color:#444;margin-top:4px">Editorial review required</div>
+        ${(c.cis_stamped != null || c.cis_raw != null)
+          ? (() => { const score = c.cis_stamped != null ? c.cis_stamped : c.cis_raw; const stamped = c.cis_stamped != null; return `<div style="font-family:'Bebas Neue';font-size:30px;color:var(--orange);line-height:1">${score}<span style="font-size:14px">/100</span></div><div style="font-size:10px;color:var(--muted);margin-top:4px">${stamped ? '★ Stamped' : 'Raw — unstamped'}</div>`; })()
+          : `<div style="font-family:'Bebas Neue';font-size:20px;color:#444;line-height:1;padding-top:4px">Pending</div><div style="font-size:10px;color:#444;margin-top:4px">Run analysis below</div>`}
       </div>
     </div>
 
@@ -397,14 +399,21 @@ function openCommunity(id) {
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
           ${notableMembers.map((m, idx) => {
             const col = avatarColor(m.name||'');
+            const tierLabel = {'micro':'Micro (1k–10k)','mid':'Mid (10k–100k)','macro':'Macro (100k+)'}[m.follower_tier] || '';
             return `<div class="member-card" style="border-color:${m.verified?'rgba(210,255,1,0.2)':'var(--border)'}">
               <div style="width:36px;height:36px;border-radius:50%;background:${col.bg};color:${col.text};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:16px;flex-shrink:0">${(m.name||'?')[0].toUpperCase()}</div>
               <div style="flex:1;min-width:0">
                 <div style="font-weight:600;font-size:13px">${m.name||'—'}</div>
                 ${m.ig_handle ? `<div style="font-size:11px;color:var(--muted)">@${m.ig_handle}</div>` : ''}
                 ${m.role ? `<div style="font-size:11px;color:var(--muted)">${m.role}</div>` : ''}
+                ${m.verified ? `<select onchange="setMemberTier('${c.id}',${idx},this.value)" style="margin-top:5px;width:100%;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--white);font-family:'Barlow Condensed';font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
+                  <option value="">— Follower tier —</option>
+                  <option value="micro" ${m.follower_tier==='micro'?'selected':''}>Micro (1k–10k)</option>
+                  <option value="mid"   ${m.follower_tier==='mid'?'selected':''}>Mid (10k–100k)</option>
+                  <option value="macro" ${m.follower_tier==='macro'?'selected':''}>Macro (100k+)</option>
+                </select>` : ''}
               </div>
-              <button onclick="verifyMember('${c.id}',${idx},${!m.verified})" style="background:${m.verified?'transparent':'var(--lime)'};color:${m.verified?'var(--muted)':'#000'};border:1px solid ${m.verified?'var(--border)':'var(--lime)'};border-radius:4px;padding:4px 10px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;flex-shrink:0;white-space:nowrap">${m.verified?'Revoke':'Approve'}</button>
+              <button onclick="verifyMember('${c.id}',${idx},${!m.verified})" style="background:${m.verified?'transparent':'var(--lime)'};color:${m.verified?'var(--muted)':'#000'};border:1px solid ${m.verified?'var(--border)':'var(--lime)'};border-radius:4px;padding:4px 10px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;flex-shrink:0;white-space:nowrap;align-self:flex-start">${m.verified?'Revoke':'Approve'}</button>
             </div>`;
           }).join('')}
         </div>
@@ -442,6 +451,105 @@ function openCommunity(id) {
         </div>
       </div>
     </div>` : ''}
+
+    <!-- Cultural Impact Score -->
+    <div style="padding:12px 28px 0">
+      <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div class="section-label" style="margin-bottom:0">Cultural Impact Score</div>
+          ${c.cis_stamped != null ? '<span style="color:var(--orange);font-family:\'Barlow Condensed\';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em">★ Stamped</span>' : ''}
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Part algorithmic, part editorial. Raw score calculated from MIQ, Growth Velocity, Brand History, and Press Mentions. Admin stamp adjusts within ±15.</div>
+
+        <!-- Sub-score breakdown -->
+        <div id="cis-subscores-${c.id}" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
+          ${(() => {
+            const pressMentions = c.press_mentions || [];
+            const confirmedPMM = pressMentions.filter(m=>m.confirmed===true);
+            const pendingPMM = pressMentions.filter(m=>m.confirmed===null);
+            const subscore = (label, val, desc) => `
+              <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px;text-align:center">
+                <div style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px">${label}</div>
+                <div style="font-family:'Bebas Neue';font-size:24px;color:${val!=null?'var(--orange)':'#444'};line-height:1">${val!=null?val:'—'}</div>
+                <div style="font-size:9px;color:#444;margin-top:3px">${desc}</div>
+              </div>`;
+            const bah = caseStudies.filter(cs=>cs.verified).length;
+            return [
+              subscore('MIQ', c.miq_score != null ? c.miq_score : null, c.miq_score != null ? 'member influence' : 'run analysis'),
+              subscore('GV', null, 'needs 90-day data'),
+              subscore('BAH', bah ? Math.min(100, bah * 12) : null, bah ? `${bah} verified partnership${bah!==1?'s':''}` : 'no verified cases'),
+              subscore('PMM', confirmedPMM.length ? Math.min(100, confirmedPMM.reduce((s,m)=>s+({'national':25,'regional':12,'niche':6,'unknown':3}[m.outlet_tier]||3),0)) : null, confirmedPMM.length ? `${confirmedPMM.length} confirmed${pendingPMM.length?' · '+pendingPMM.length+' pending':''}` : (pendingPMM.length ? pendingPMM.length+' pending review' : 'fetch news below')),
+            ].join('');
+          })()}
+        </div>
+
+        <!-- Raw + Stamp -->
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:16px">
+          <div style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:12px;text-align:center">
+            <div style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px">Raw CIS</div>
+            <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:${c.cis_raw!=null?'var(--orange)':'#444'}">${c.cis_raw != null ? c.cis_raw : '—'}</div>
+          </div>
+          <div style="display:flex;align-items:center;color:var(--muted);font-size:18px;padding-top:18px">→</div>
+          <div style="flex:1;background:${c.cis_stamped!=null?'rgba(255,171,64,0.08)':'var(--surface2)'};border:1px solid ${c.cis_stamped!=null?'rgba(255,171,64,0.3)':'var(--border2)'};border-radius:6px;padding:12px;text-align:center">
+            <div style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px">Stamped CIS</div>
+            <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:${c.cis_stamped!=null?'var(--orange)':'#444'}">${c.cis_stamped != null ? c.cis_stamped : '—'}</div>
+            ${c.cis_stamp_by ? `<div style="font-size:9px;color:var(--muted);margin-top:3px">by ${c.cis_stamp_by}</div>` : ''}
+          </div>
+        </div>
+
+        <!-- MIQ analysis + Stamp controls -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <button id="miq-btn-${c.id}" onclick="analyseMIQ('${c.id}')" style="background:var(--surface2);color:var(--white);border:1px solid var(--border2);border-radius:5px;padding:7px 14px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer">✦ Analyse MIQ</button>
+          ${c.cis_raw != null ? `
+          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:200px">
+            <span style="font-family:'Barlow Condensed';font-size:10px;color:var(--muted);white-space:nowrap">Stamp (±15):</span>
+            <input id="stamp-input-${c.id}" type="number" min="${Math.max(0,c.cis_raw-15)}" max="${Math.min(100,c.cis_raw+15)}" value="${c.cis_stamped != null ? c.cis_stamped : c.cis_raw}" style="width:60px;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:5px 8px;color:var(--white);font-family:'Barlow Condensed';font-size:13px;font-weight:700;text-align:center">
+            <button onclick="applyStamp('${c.id}')" style="background:var(--orange);color:#000;border:none;border-radius:5px;padding:7px 14px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap">Apply Stamp</button>
+            ${c.cis_stamped != null ? `<button onclick="removeStamp('${c.id}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer">Remove</button>` : ''}
+          </div>` : '<span style="font-size:11px;color:var(--muted);padding-top:8px">Run MIQ analysis or confirm press mentions to generate raw CIS</span>'}
+        </div>
+
+        <!-- MIQ result box -->
+        <div id="miq-result-${c.id}" style="display:${c.miq_score!=null?'block':'none'};background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:12px;margin-bottom:14px">
+          <div style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:6px">MIQ Analysis</div>
+          <div id="miq-reasoning-${c.id}" style="font-size:12px;color:rgba(240,240,240,0.7);line-height:1.6">${c.miq_reasoning || ''}</div>
+        </div>
+
+        <!-- Press monitoring -->
+        <div style="border-top:1px solid var(--border);padding-top:14px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Press & Media Mentions</div>
+            <button id="press-btn-${c.id}" onclick="fetchPress('${c.id}')" style="background:var(--surface2);color:var(--white);border:1px solid var(--border2);border-radius:4px;padding:5px 12px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer">↻ Fetch News</button>
+          </div>
+          <div id="press-list-${c.id}">
+            ${(() => {
+              const mentions = c.press_mentions || [];
+              if (!mentions.length) return '<div style="font-size:12px;color:var(--muted)">No mentions yet. Click Fetch News to search Google News.</div>';
+              return mentions.map((m, idx) => `
+                <div style="background:var(--surface2);border:1px solid ${m.confirmed===true?'rgba(210,255,1,0.2)':m.confirmed===false?'var(--border)':'rgba(255,171,64,0.15)'};border-radius:6px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start">
+                  <div style="flex:1;min-width:0">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">
+                      <span style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;background:${{'national':'rgba(210,255,1,0.15)','regional':'rgba(177,236,240,0.15)','niche':'rgba(255,106,242,0.1)'}[m.outlet_tier]||'rgba(255,255,255,0.05)'};color:${{'national':'var(--lime)','regional':'var(--cyan)','niche':'var(--pink)'}[m.outlet_tier]||'var(--muted)'};padding:1px 6px;border-radius:3px">${m.outlet_tier||'unknown'}</span>
+                      <span style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted)">${m.type||'mention'}</span>
+                    </div>
+                    <a href="${m.url}" target="_blank" style="font-size:12px;font-weight:600;color:var(--white);text-decoration:none;display:block;margin-bottom:2px">${m.title}</a>
+                    <div style="font-size:11px;color:var(--muted)">${m.outlet} · ${m.date ? new Date(m.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''}</div>
+                    ${m.ai_reason ? `<div style="font-size:10px;color:#555;margin-top:4px;font-style:italic">${m.ai_reason}</div>` : ''}
+                  </div>
+                  <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+                    ${m.confirmed === true
+                      ? `<span style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--lime)">✓ Confirmed</span>`
+                      : `<button onclick="confirmMention('${c.id}',${idx},true)" style="background:var(--lime);color:#000;border:none;border-radius:4px;padding:4px 8px;font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">Confirm</button>`}
+                    ${m.confirmed !== false
+                      ? `<button onclick="confirmMention('${c.id}',${idx},false)" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">Dismiss</button>`
+                      : `<span style="font-family:'Barlow Condensed';font-size:9px;color:#444;text-transform:uppercase;letter-spacing:0.04em">Dismissed</span>`}
+                  </div>
+                </div>`).join('');
+            })()}
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Admin Info -->
     <div style="padding:12px 28px 0">
@@ -570,6 +678,102 @@ function restoreArchetypeResult(communityId) {
   resultBox.style.display = 'block';
   const btn = document.getElementById(`arch-analyse-${communityId}`);
   if (btn) { btn.textContent = '↺ Re-analyse'; btn.disabled = false; }
+}
+
+async function setMemberTier(communityId, idx, tier) {
+  await fetch(`/api/community/${communityId}/notable-member/${idx}/tier`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ follower_tier: tier || null }),
+  });
+  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
+  communities = await res.json();
+  renderTable();
+  openCommunity(communityId);
+  restoreArchetypeResult(communityId);
+}
+
+async function fetchPress(communityId) {
+  const btn = document.getElementById(`press-btn-${communityId}`);
+  btn.textContent = 'Fetching…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/community/${communityId}/fetch-press`, { method:'POST' });
+    const data = await res.json();
+    const commRes = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
+    communities = await commRes.json();
+    renderTable();
+    openCommunity(communityId);
+    restoreArchetypeResult(communityId);
+    if (data.error) { btn.textContent = 'Error — retry'; btn.disabled = false; return; }
+    if (data.added === 0) { btn.textContent = '↻ Fetch News'; btn.disabled = false; }
+  } catch (e) {
+    btn.textContent = 'Error — retry';
+    btn.disabled = false;
+  }
+}
+
+async function confirmMention(communityId, idx, confirmed) {
+  await fetch(`/api/community/${communityId}/press-mention/${idx}/confirm`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ confirmed }),
+  });
+  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
+  communities = await res.json();
+  renderTable();
+  openCommunity(communityId);
+  restoreArchetypeResult(communityId);
+}
+
+async function analyseMIQ(communityId) {
+  const btn = document.getElementById(`miq-btn-${communityId}`);
+  btn.textContent = 'Analysing…';
+  btn.disabled = true;
+  try {
+    const res = await fetch(`/api/community/${communityId}/analyse-miq`, { method:'POST' });
+    const data = await res.json();
+    if (data.error) { btn.textContent = `Error: ${data.error}`; btn.disabled = false; return; }
+    const commRes = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
+    communities = await commRes.json();
+    renderTable();
+    openCommunity(communityId);
+    restoreArchetypeResult(communityId);
+    // Show MIQ result box (openCommunity renders it from DB data, but reasoning may not auto-show)
+    const box = document.getElementById(`miq-result-${communityId}`);
+    const reasoning = document.getElementById(`miq-reasoning-${communityId}`);
+    if (box && reasoning) { reasoning.textContent = data.reasoning; box.style.display = 'block'; }
+  } catch (e) {
+    btn.textContent = 'Error — retry';
+    btn.disabled = false;
+  }
+}
+
+async function applyStamp(communityId) {
+  const input = document.getElementById(`stamp-input-${communityId}`);
+  const score = parseInt(input.value);
+  if (isNaN(score)) return;
+  const res = await fetch(`/api/community/${communityId}/apply-cis-stamp`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ stamped_score: score, stamped_by: 'admin' }),
+  });
+  const data = await res.json();
+  if (data.error) { alert(data.error); return; }
+  const commRes = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
+  communities = await commRes.json();
+  renderTable();
+  openCommunity(communityId);
+  restoreArchetypeResult(communityId);
+}
+
+async function removeStamp(communityId) {
+  await fetch(`/api/community/${communityId}/apply-cis-stamp`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ stamped_score: null }),
+  });
+  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
+  communities = await res.json();
+  renderTable();
+  openCommunity(communityId);
+  restoreArchetypeResult(communityId);
 }
 
 function closeModal() {

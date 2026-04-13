@@ -4,6 +4,7 @@ Serves the community onboarding flow, handles Instagram OAuth,
 stores community profiles in PostgreSQL, and runs the data pipeline.
 """
 
+import math
 import os
 import threading
 import time
@@ -24,6 +25,88 @@ ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "mayo-admin")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
 STORAGE_BUCKET = "mayo-assets"
+
+# ── Metric calculation utilities ───────────────────────────────────────────────
+
+# Bucket-based follower tiers for NM (Option 3 — no individual API lookups needed)
+TIER_DATA = {
+    "micro": {"followers": 5_500,   "er": 5.0},
+    "mid":   {"followers": 55_000,  "er": 3.0},
+    "macro": {"followers": 300_000, "er": 1.5},
+}
+
+
+def calculate_nm(members, active_members):
+    """Network Multiplier from bucket-tiered member data. Only verified members contribute."""
+    if not active_members:
+        return None
+    eligible = [m for m in (members or []) if m.get("verified") and m.get("follower_tier") in TIER_DATA]
+    if not eligible:
+        return None
+    total = sum(
+        math.log(TIER_DATA[m["follower_tier"]]["followers"] + 1) * TIER_DATA[m["follower_tier"]]["er"]
+        for m in eligible
+    )
+    return round(total / active_members, 2)
+
+
+def calculate_gv(snapshots):
+    """Growth Velocity: follower % change over the most recent ≥90-day window → 0-100."""
+    if not snapshots or len(snapshots) < 2:
+        return None
+    from datetime import datetime
+    sorted_snaps = sorted(snapshots, key=lambda s: s.get("captured_at", ""))
+    latest = sorted_snaps[-1]
+    try:
+        latest_ts = datetime.fromisoformat(latest["captured_at"].replace("Z", "+00:00")).timestamp()
+    except Exception:
+        return None
+    cutoff = latest_ts - 90 * 86400
+    baseline = None
+    for s in sorted_snaps[:-1]:
+        try:
+            ts = datetime.fromisoformat(s["captured_at"].replace("Z", "+00:00")).timestamp()
+            if ts <= cutoff:
+                baseline = s
+        except Exception:
+            continue
+    if not baseline:
+        return None
+    base_f = baseline.get("followers") or 0
+    if not base_f:
+        return None
+    growth_pct = (latest.get("followers", 0) - base_f) / base_f * 100
+    # 0% growth → 30, 10% → ~53, 30%+ → 100, declining → 0–29
+    return min(100, max(0, round(30 + growth_pct * 2.33)))
+
+
+def calculate_bah(case_studies):
+    """Brand Association History score from verified case studies."""
+    TIER_WEIGHTS = {"tier1": 20, "tier2": 12, "tier3": 6}
+    verified = [cs for cs in (case_studies or []) if cs.get("verified")]
+    if not verified:
+        return 0
+    return min(100, sum(TIER_WEIGHTS.get(cs.get("brand_tier", "tier2"), 12) for cs in verified))
+
+
+def calculate_pmm(press_mentions):
+    """Press & Media Mentions score from admin-confirmed articles."""
+    OUTLET_WEIGHTS = {"national": 25, "regional": 12, "niche": 6, "unknown": 3}
+    confirmed = [m for m in (press_mentions or []) if m.get("confirmed") is True]
+    if not confirmed:
+        return 0
+    return min(100, sum(OUTLET_WEIGHTS.get(m.get("outlet_tier", "unknown"), 3) for m in confirmed))
+
+
+def calculate_cis_raw(miq, gv, bah, pmm):
+    """Weighted average of CIS sub-scores. Rebalances automatically when inputs are missing."""
+    inputs = [(miq, 0.25), (gv, 0.25), (bah, 0.25), (pmm, 0.25)]
+    scored = [(score, w) for score, w in inputs if score is not None]
+    if not scored:
+        return None
+    total_weight = sum(w for _, w in scored)
+    return round(sum(score * w for score, w in scored) / total_weight)
+
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 10 * 1024 * 1024  # 10MB upload limit
@@ -84,6 +167,16 @@ def init_db():
                 ("substack_data", "JSONB"),
                 ("archetype", "TEXT"),
                 ("archetype_source", "TEXT"),
+                ("network_multiplier", "FLOAT"),
+                ("cis_raw", "INT"),
+                ("cis_stamped", "INT"),
+                ("cis_stamp_by", "TEXT"),
+                ("cis_stamped_at", "TIMESTAMP"),
+                ("cis_stamp_expires_at", "TIMESTAMP"),
+                ("ig_snapshots", "JSONB DEFAULT '[]'"),
+                ("press_mentions", "JSONB DEFAULT '[]'"),
+                ("miq_score", "INT"),
+                ("miq_reasoning", "TEXT"),
             ]:
                 cur.execute(f"""
                     ALTER TABLE communities ADD COLUMN IF NOT EXISTS {col} {typedef}
@@ -102,15 +195,25 @@ except Exception as e:
 def run_instagram_pipeline(community_id, token):
     try:
         import connectors.instagram as ig
+        from datetime import datetime
         ig.ACCESS_TOKEN = token
         data = ig.collect()
+        snapshot = {
+            "followers": (data.get("profile") or {}).get("followers_count") or 0,
+            "er": data.get("engagement_rate") or 0,
+            "captured_at": datetime.utcnow().isoformat() + "Z",
+        }
         with get_db() as conn:
             with conn.cursor() as cur:
+                cur.execute("SELECT ig_snapshots FROM communities WHERE id = %s", (community_id,))
+                row = cur.fetchone()
+                snapshots = list((row["ig_snapshots"] or []) if row else [])
+                snapshots.append(snapshot)
                 cur.execute("""
                     UPDATE communities
-                    SET instagram_data = %s, updated_at = NOW()
+                    SET instagram_data = %s, ig_snapshots = %s, updated_at = NOW()
                     WHERE id = %s
-                """, (psycopg2.extras.Json(data), community_id))
+                """, (psycopg2.extras.Json(data), psycopg2.extras.Json(snapshots), community_id))
             conn.commit()
         print(f"[pipeline] Completed for community {community_id}")
     except Exception as e:
@@ -318,7 +421,7 @@ def verify_notable_member(community_id, idx):
     verified = (request.json or {}).get("verified", True)
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT notable_members FROM communities WHERE id = %s", (community_id,))
+            cur.execute("SELECT notable_members, active_members FROM communities WHERE id = %s", (community_id,))
             row = cur.fetchone()
             if not row:
                 return jsonify({"error": "Not found"}), 404
@@ -326,9 +429,10 @@ def verify_notable_member(community_id, idx):
             if idx >= len(members):
                 return jsonify({"error": "Index out of range"}), 400
             members[idx]["verified"] = verified
+            nm = calculate_nm(members, row["active_members"])
             cur.execute(
-                "UPDATE communities SET notable_members = %s, updated_at = NOW() WHERE id = %s",
-                (psycopg2.extras.Json(members), community_id),
+                "UPDATE communities SET notable_members = %s, network_multiplier = %s, updated_at = NOW() WHERE id = %s",
+                (psycopg2.extras.Json(members), nm, community_id),
             )
         conn.commit()
     return jsonify({"ok": True})
@@ -460,6 +564,300 @@ def add_notable_member(community_id):
             )
         conn.commit()
     return jsonify({"ok": True})
+
+
+@app.route("/api/community/<community_id>/notable-member/<int:idx>/tier", methods=["PUT"])
+def set_member_tier(community_id, idx):
+    tier = (request.json or {}).get("follower_tier")
+    if tier not in ("micro", "mid", "macro", None):
+        return jsonify({"error": "Invalid tier"}), 400
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT notable_members, active_members FROM communities WHERE id = %s", (community_id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({"error": "Not found"}), 404
+            members = list(row["notable_members"] or [])
+            if idx >= len(members):
+                return jsonify({"error": "Index out of range"}), 400
+            if tier:
+                members[idx]["follower_tier"] = tier
+            else:
+                members[idx].pop("follower_tier", None)
+            nm = calculate_nm(members, row["active_members"])
+            cur.execute(
+                "UPDATE communities SET notable_members = %s, network_multiplier = %s, updated_at = NOW() WHERE id = %s",
+                (psycopg2.extras.Json(members), nm, community_id),
+            )
+        conn.commit()
+    return jsonify({"ok": True, "network_multiplier": nm})
+
+
+@app.route("/api/community/<community_id>/fetch-press", methods=["POST"])
+def fetch_press(community_id):
+    import xml.etree.ElementTree as ET
+    import urllib.parse
+    import json as _json
+    import anthropic
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT name, location, description, tags, instagram_data, press_mentions FROM communities WHERE id = %s", (community_id,))
+            row = cur.fetchone()
+    if not row:
+        return jsonify({"error": "Not found"}), 404
+
+    c = dict(row)
+    ig_handle = ((c.get("instagram_data") or {}).get("profile") or {}).get("username") or ""
+    query_parts = [c["name"]]
+    if c.get("location"):
+        query_parts.append(c["location"])
+    query = " ".join(query_parts)
+
+    feed_url = f"https://news.google.com/rss/search?q={urllib.parse.quote(query)}&hl=en-US&gl=US&ceid=US:en"
+    try:
+        resp = requests.get(feed_url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+        resp.raise_for_status()
+        root = ET.fromstring(resp.content)
+        channel = root.find("channel")
+        items = []
+        for item in (channel.findall("item") if channel is not None else [])[:15]:
+            source_el = item.find("source")
+            items.append({
+                "title":   (item.findtext("title") or "").strip(),
+                "url":     (item.findtext("link") or "").strip(),
+                "date":    (item.findtext("pubDate") or "").strip(),
+                "outlet":  source_el.text.strip() if source_el is not None else "Unknown",
+                "snippet": (item.findtext("description") or "")[:300].strip(),
+            })
+    except Exception as e:
+        return jsonify({"error": f"News fetch failed: {e}"}), 500
+
+    if not items:
+        return jsonify({"added": 0, "mentions": []})
+
+    existing_urls = {m.get("url") for m in (c.get("press_mentions") or [])}
+    new_items = [i for i in items if i["url"] not in existing_urls]
+    if not new_items:
+        return jsonify({"added": 0, "mentions": []})
+
+    articles_text = "\n\n".join(
+        f"[{i+1}] Title: {item['title']}\nOutlet: {item['outlet']}\nDate: {item['date']}\nSnippet: {item['snippet']}"
+        for i, item in enumerate(new_items)
+    )
+
+    prompt = f"""You are evaluating news articles to identify genuine editorial press coverage of a specific community.
+
+COMMUNITY:
+Name: {c['name']}
+Location: {c.get('location') or '—'}
+Description: {(c.get('description') or '')[:300]}
+Instagram: @{ig_handle}
+Tags: {', '.join(c.get('tags') or [])}
+
+ARTICLES:
+{articles_text}
+
+For each article evaluate:
+1. Is it genuinely about THIS specific community — not a coincidental name match or unrelated entity?
+2. Is it editorial (unsolicited)? Exclude press releases, paid placements, and content the community authored itself.
+3. Type: feature = community is primary subject | list = roundup/listicle including the community | mention = referenced in passing
+4. Outlet tier: national = major national publication | regional = city/regional media | niche = topic-specific publication | unknown
+
+Respond with a JSON array, one entry per article in the same order. No preamble:
+[{{"relevant":true/false,"editorial":true/false,"type":"feature|list|mention","outlet_tier":"national|regional|niche|unknown","reason":"one sentence"}}]"""
+
+    try:
+        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=1200,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        evaluations = _json.loads(message.content[0].text.strip())
+    except Exception as e:
+        return jsonify({"error": f"AI evaluation failed: {e}"}), 500
+
+    new_mentions = []
+    for item, ev in zip(new_items, evaluations):
+        if not ev.get("relevant") or not ev.get("editorial"):
+            continue
+        new_mentions.append({
+            **item,
+            "type":        ev.get("type", "mention"),
+            "outlet_tier": ev.get("outlet_tier", "unknown"),
+            "ai_reason":   ev.get("reason", ""),
+            "confirmed":   None,  # pending admin review
+        })
+
+    if new_mentions:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT press_mentions FROM communities WHERE id = %s", (community_id,))
+                existing = list((cur.fetchone()["press_mentions"] or []))
+                cur.execute(
+                    "UPDATE communities SET press_mentions = %s, updated_at = NOW() WHERE id = %s",
+                    (psycopg2.extras.Json(existing + new_mentions), community_id),
+                )
+            conn.commit()
+
+    return jsonify({"added": len(new_mentions), "mentions": new_mentions})
+
+
+@app.route("/api/community/<community_id>/press-mention/<int:idx>/confirm", methods=["PUT"])
+def confirm_press_mention(community_id, idx):
+    confirmed = (request.json or {}).get("confirmed")  # True, False, or None (reset to pending)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT press_mentions, case_studies, miq_score, ig_snapshots FROM communities WHERE id = %s", (community_id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({"error": "Not found"}), 404
+            mentions = list(row["press_mentions"] or [])
+            if idx >= len(mentions):
+                return jsonify({"error": "Index out of range"}), 400
+            mentions[idx]["confirmed"] = confirmed
+            pmm = calculate_pmm(mentions)
+            bah = calculate_bah(row["case_studies"] or [])
+            gv  = calculate_gv(row["ig_snapshots"] or [])
+            cis_raw = calculate_cis_raw(row.get("miq_score"), gv, bah, pmm)
+            cur.execute(
+                "UPDATE communities SET press_mentions = %s, cis_raw = %s, updated_at = NOW() WHERE id = %s",
+                (psycopg2.extras.Json(mentions), cis_raw, community_id),
+            )
+        conn.commit()
+    return jsonify({"ok": True, "cis_raw": cis_raw})
+
+
+@app.route("/api/community/<community_id>/analyse-miq", methods=["POST"])
+def analyse_miq(community_id):
+    import json as _json
+    import anthropic
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT name, description, tags, notable_members, case_studies, ig_snapshots, press_mentions FROM communities WHERE id = %s", (community_id,))
+            row = cur.fetchone()
+    if not row:
+        return jsonify({"error": "Not found"}), 404
+
+    c = dict(row)
+    verified_members = [m for m in (c.get("notable_members") or []) if m.get("verified")]
+    if not verified_members:
+        return jsonify({"error": "No verified members to analyse"}), 400
+
+    member_lines = "\n".join(
+        f"- {m.get('name','—')} | Role: {m.get('role') or 'unspecified'} | @{m.get('ig_handle','')}"
+        for m in verified_members
+    )
+
+    prompt = f"""You are scoring the Member Influence Quality (MIQ) for a community on the Mayo brand partnership platform.
+
+MIQ measures the cultural credibility and brand-relevance of the people in this community — not follower count, but WHO they are. A community of 50 professional athletes or senior journalists scores higher than 500 general consumers.
+
+COMMUNITY:
+Name: {c['name']}
+Description: {(c.get('description') or '')[:300]}
+Tags: {', '.join(c.get('tags') or [])}
+
+VERIFIED NOTABLE MEMBERS:
+{member_lines}
+
+SCORING RUBRIC (0-100):
+80-100: Significant cultural positions — pro athletes, established journalists, senior designers, recognised artists, industry executives
+60-79: Clear professional identity in relevant fields — coaches, niche-authority creators, rising professionals
+40-59: Some professional context but roles are generic or unclear
+20-39: Active community participants without notable professional distinction
+0-19: Insufficient information
+
+Respond with JSON only. No preamble:
+{{"miq_score":0-100,"reasoning":"2-3 sentences citing specific roles and their cultural relevance to brand partnerships"}}"""
+
+    try:
+        client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=300,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        result = _json.loads(message.content[0].text.strip())
+        miq_score    = int(result["miq_score"])
+        miq_reasoning = result.get("reasoning", "")
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            gv  = calculate_gv(c.get("ig_snapshots") or [])
+            bah = calculate_bah(c.get("case_studies") or [])
+            pmm = calculate_pmm(c.get("press_mentions") or [])
+            cis_raw = calculate_cis_raw(miq_score, gv, bah, pmm)
+            cur.execute(
+                "UPDATE communities SET miq_score = %s, miq_reasoning = %s, cis_raw = %s, updated_at = NOW() WHERE id = %s",
+                (miq_score, miq_reasoning, cis_raw, community_id),
+            )
+        conn.commit()
+
+    return jsonify({"miq_score": miq_score, "reasoning": miq_reasoning, "cis_raw": cis_raw})
+
+
+@app.route("/api/community/<community_id>/apply-cis-stamp", methods=["POST"])
+def apply_cis_stamp(community_id):
+    data = request.json or {}
+    stamped_score = data.get("stamped_score")
+    stamped_by    = data.get("stamped_by", "admin")
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT cis_raw FROM communities WHERE id = %s", (community_id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({"error": "Not found"}), 404
+            cis_raw = row["cis_raw"]
+            if stamped_score is None:
+                cur.execute(
+                    "UPDATE communities SET cis_stamped = NULL, cis_stamp_by = NULL, cis_stamped_at = NULL, cis_stamp_expires_at = NULL, updated_at = NOW() WHERE id = %s",
+                    (community_id,),
+                )
+            else:
+                stamped_score = int(stamped_score)
+                if cis_raw is None:
+                    return jsonify({"error": "No raw CIS to stamp yet"}), 400
+                if abs(stamped_score - cis_raw) > 15:
+                    return jsonify({"error": f"Stamp must be within ±15 of raw score ({cis_raw})"}), 400
+                cur.execute(
+                    """UPDATE communities
+                       SET cis_stamped = %s, cis_stamp_by = %s,
+                           cis_stamped_at = NOW(),
+                           cis_stamp_expires_at = NOW() + INTERVAL '90 days',
+                           updated_at = NOW()
+                       WHERE id = %s""",
+                    (stamped_score, stamped_by, community_id),
+                )
+        conn.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/community/<community_id>/recalculate", methods=["POST"])
+def recalculate_metrics(community_id):
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM communities WHERE id = %s", (community_id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({"error": "Not found"}), 404
+            c = dict(row)
+            nm  = calculate_nm(c.get("notable_members"), c.get("active_members"))
+            gv  = calculate_gv(c.get("ig_snapshots") or [])
+            bah = calculate_bah(c.get("case_studies") or [])
+            pmm = calculate_pmm(c.get("press_mentions") or [])
+            cis_raw = calculate_cis_raw(c.get("miq_score"), gv, bah, pmm)
+            cur.execute(
+                "UPDATE communities SET network_multiplier = %s, cis_raw = %s, updated_at = NOW() WHERE id = %s",
+                (nm, cis_raw, community_id),
+            )
+        conn.commit()
+    return jsonify({"network_multiplier": nm, "cis_raw": cis_raw, "gv": gv, "bah": bah, "pmm": pmm, "miq": c.get("miq_score")})
 
 
 # ── Instagram OAuth ────────────────────────────────────────────────────────────
