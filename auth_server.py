@@ -1446,12 +1446,8 @@ def upload_brief_cover(brief_id):
     if file.content_type not in allowed:
         return jsonify({"error": "Invalid file type"}), 400
     ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif"}.get(file.content_type, "jpg")
-    filename = f"brief-{brief_id}-{_uuid.uuid4().hex[:8]}.{ext}"
-    upload_dir = os.path.join(os.path.dirname(__file__), "static", "uploads")
-    os.makedirs(upload_dir, exist_ok=True)
-    filepath = os.path.join(upload_dir, filename)
-    file.save(filepath)
-    url = f"/static/uploads/{filename}"
+    path = f"briefs/{brief_id}/cover.{ext}"
+    url = upload_to_supabase(file.read(), path, file.content_type)
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("UPDATE briefs SET cover_image_url = %s WHERE id = %s", (url, brief_id))

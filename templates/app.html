@@ -738,7 +738,7 @@ function mapBrief(b) {
   const products = Array.isArray(b.products) ? b.products : [];
   const reqs = (b.requirements && typeof b.requirements === 'object') ? b.requirements : {};
   return {
-    id: b.id, brand: b.brand_name || 'Unknown Brand', brandColor,
+    id: b.id, brandId: b.brand_id, brand: b.brand_name || 'Unknown Brand', brandColor,
     brandGradient: b.brand_gradient || ('linear-gradient(135deg, #1a0505 0%, #3d0a0a 40%, #7a1515 70%, ' + brandColor + ' 100%)'),
     brandInitial: b.brand_initial || (b.brand_name || 'B')[0], brandTagline: b.brand_tagline || '',
     brandBio: b.brand_bio || b.brand_desc || '',
@@ -1658,9 +1658,23 @@ function DeliverableCounter({ label, icon, value, onChange }) {
   );
 }
 
-function BriefCreation({ onPublish, onCancel }) {
+function BriefCreation({ onPublish, onCancel, user }) {
   const [step, setStep] = useState(1);
   const TOTAL_STEPS = 5;
+
+  const [coverImageFile, setCoverImageFile] = useState(null);
+  const [coverImagePreview, setCoverImagePreview] = useState(null);
+  const coverInputRef = React.useRef(null);
+
+  const brandData = {
+    name: user?.name || user?.org || 'Your Brand',
+    initial: user?.initial || (user?.name || 'B')[0].toUpperCase(),
+    color: user?.color || '#888',
+    gradient: user?.gradient || 'linear-gradient(135deg,#1a1a1a,#333)',
+    tagline: user?.tagline || '',
+    bio: user?.bio || '',
+    category: user?.category || user?.industry || '',
+  };
 
   // Step 1
   const [selectedGoal, setSelectedGoal] = useState(null);
@@ -1770,13 +1784,13 @@ function BriefCreation({ onPublish, onCancel }) {
         <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10, padding: '18px 20px' }}>
           <div className="section-title mb-12">Your Brand Bio — visible to communities on every brief</div>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 12 }}>
-            <div style={{ width: 44, height: 44, borderRadius: 8, background: BRAND_PROFILE.color, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 22, flexShrink: 0 }}>{BRAND_PROFILE.initial}</div>
+            <div style={{ width: 44, height: 44, borderRadius: 8, background: brandData.color, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 22, flexShrink: 0 }}>{brandData.initial}</div>
             <div>
-              <div style={{ fontFamily: 'Barlow Condensed', fontSize: 16, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{BRAND_PROFILE.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--muted)' }}>{BRAND_PROFILE.tagline} · {BRAND_PROFILE.category}</div>
+              <div style={{ fontFamily: 'Barlow Condensed', fontSize: 16, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{brandData.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)' }}>{brandData.tagline} · {brandData.category}</div>
             </div>
           </div>
-          <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.65 }}>{BRAND_PROFILE.bio}</p>
+          <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.65 }}>{brandData.bio}</p>
           <button className="btn btn-ghost btn-sm" style={{ marginTop: 12 }}>Edit brand bio →</button>
         </div>
       </div>
@@ -2018,12 +2032,12 @@ function BriefCreation({ onPublish, onCancel }) {
   const activeDeliverables = deliverables.filter(d => d.trim().length > 0);
 
   const previewBrief = {
-    brand: BRAND_PROFILE.name,
-    brandColor: BRAND_PROFILE.color,
-    brandGradient: BRAND_PROFILE.gradient,
-    brandInitial: BRAND_PROFILE.initial,
-    brandTagline: BRAND_PROFILE.tagline,
-    brandDesc: BRAND_PROFILE.bio,
+    brand: brandData.name,
+    brandColor: brandData.color,
+    brandGradient: brandData.gradient,
+    brandInitial: brandData.initial,
+    brandTagline: brandData.tagline,
+    brandDesc: brandData.bio,
     partnershipType: partnershipType || 'Sponsorship',
     partnershipTypeColor: 'orange',
     title: `${goal?.label || 'Partnership'} — ${partnershipType || 'Open Brief'}`,
@@ -2040,7 +2054,7 @@ function BriefCreation({ onPublish, onCancel }) {
 
   if (step === 5) return (
     <div className="brief-creation-screen">
-      <Topbar canContinue={true} onContinue={() => onPublish(previewBrief)} continueLabel="Publish Brief →" />
+      <Topbar canContinue={true} onContinue={() => onPublish({ ...previewBrief, coverImageFile })} continueLabel="Publish Brief →" />
       <div className="brief-creation-body">
         <div style={{ marginBottom: 32 }}>
           <div style={{ fontFamily: 'Bebas Neue', fontSize: 42, letterSpacing: '0.03em', marginBottom: 8 }}>Review your brief</div>
@@ -2051,27 +2065,36 @@ function BriefCreation({ onPublish, onCancel }) {
           {/* Left */}
           <div>
             {/* Brief cover image */}
-            <div style={{ height: 200, borderRadius: 10, overflow: 'hidden', position: 'relative', marginBottom: 20, background: BRAND_PROFILE.gradient }}>
+            <div style={{ height: 200, borderRadius: 10, overflow: 'hidden', position: 'relative', marginBottom: 20, background: coverImagePreview ? '#000' : brandData.gradient }}>
+              {coverImagePreview && <img src={coverImagePreview} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', opacity:0.85 }} />}
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6))' }} />
               <div style={{ position: 'absolute', top: 14, left: 14 }}>
                 <span className={`tag tag-orange`}>{partnershipType || 'Partnership'}</span>
               </div>
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'flex-end', padding: '0 20px 20px' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14 }}>
-                  <div style={{ width: 52, height: 52, borderRadius: 9, background: BRAND_PROFILE.color, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 24, flexShrink: 0 }}>{BRAND_PROFILE.initial}</div>
+                  <div style={{ width: 52, height: 52, borderRadius: 9, background: brandData.color, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 24, flexShrink: 0 }}>{brandData.initial}</div>
                   <div>
-                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 32, color: '#fff', lineHeight: 1 }}>{BRAND_PROFILE.name}</div>
+                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 32, color: '#fff', lineHeight: 1 }}>{brandData.name}</div>
                     <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>{goal?.label}</div>
                   </div>
                 </div>
               </div>
-              <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, right: 14 }}>📁 Upload custom image</button>
+              <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, right: 14 }}
+                onClick={() => coverInputRef.current?.click()}>
+                {coverImagePreview ? '🖼 Change image' : '📁 Upload cover image'}
+              </button>
+              <input ref={coverInputRef} type="file" accept="image/*" style={{ display:'none' }}
+                onChange={e => {
+                  const f = e.target.files[0];
+                  if (f) { setCoverImageFile(f); setCoverImagePreview(URL.createObjectURL(f)); }
+                }} />
             </div>
 
             {/* Brand bio */}
             <div className="card p-20 mb-16">
-              <div className="section-title mb-10">About {BRAND_PROFILE.name}</div>
-              <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.65 }}>{BRAND_PROFILE.bio}</p>
+              <div className="section-title mb-10">About {brandData.name}</div>
+              <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.65 }}>{brandData.bio}</p>
             </div>
 
             {/* Partnership Goals */}
@@ -2896,12 +2919,6 @@ function BriefDetailPage({ brief: b, onBack, role, myProfile }) {
                 {/* Partnership type badge */}
                 <span className={`tag tag-${b.partnershipTypeColor}`} style={{ fontSize: 12, padding: '5px 12px', flexShrink: 0, fontFamily: 'Barlow Condensed', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{b.partnershipType}</span>
               </div>
-              {/* Tags */}
-              {b.tags.length > 0 && (
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {b.tags.map(t => <span key={t} className="tag tag-ghost" style={{ fontSize: 10 }}>{t}</span>)}
-                </div>
-              )}
             </div>
           </div>
 
@@ -2993,6 +3010,16 @@ function BriefDetailPage({ brief: b, onBack, role, myProfile }) {
               {b.kpis.map(k => <span key={k} className="tag tag-cyan" style={{ display: 'block', textAlign: 'center', padding: '6px 10px' }}>{k}</span>)}
             </div>
           </div>
+
+          {/* Interest tags */}
+          {b.tags.length > 0 && (
+            <div className="card p-16 mt-14">
+              <div className="section-title mb-10">Community Interests</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {b.tags.map(t => <span key={t} className="tag tag-ghost">{t}</span>)}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -4265,18 +4292,35 @@ function App() {
     try {
       const saved = await apiFetch('/api/briefs', { method: 'POST', body: JSON.stringify({
         title: brief.title || brief.goal,
-        goals: brief.goal,
+        goal: brief.goal,
+        campaign_goal: brief.campaignGoal,
         partnership_type: brief.partnershipType,
-        budget_amount: (brief.budget || '').replace(/[$,]/g, ''),
+        budget: (brief.budget || '').replace(/[$,]/g, ''),
         budget_period: brief.budgetPeriod,
         products: brief.products,
         tags: brief.tags,
-        requirements: brief.requirements,
-        kpis: brief.kpis,
+        requirements: brief.requirements || {},
+        kpis: brief.kpis || [],
         deadline: brief.deadline,
         activation_window: brief.window,
         looking_for: brief.lookingFor,
       }) });
+      // Upload cover image if provided
+      if (brief.coverImageFile) {
+        try {
+          const fd = new FormData();
+          fd.append('file', brief.coverImageFile);
+          const imgResp = await fetch(`/api/briefs/${saved.id}/cover`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${getToken()}` },
+            body: fd,
+          });
+          if (imgResp.ok) {
+            const imgData = await imgResp.json();
+            saved.cover_image_url = imgData.url;
+          }
+        } catch(imgErr) { /* non-fatal */ }
+      }
       const mappedBrief = mapBrief({ ...saved, brand_name: user ? user.name : 'Unknown' });
       setBriefs(prev => [mappedBrief, ...prev]);
       setCreatingBrief(false);
@@ -4303,7 +4347,7 @@ function App() {
   );
 
   if (screen === 'login') return <LoginScreen onLogin={handleLogin} />;
-  if (creatingBrief) return <BriefCreation onPublish={handlePublishBrief} onCancel={() => setCreatingBrief(false)} />;
+  if (creatingBrief) return <BriefCreation onPublish={handlePublishBrief} onCancel={() => setCreatingBrief(false)} user={user} />;
 
   const isBrand = role === 'brand';
 
@@ -4369,7 +4413,7 @@ function App() {
           {isBrand
             ? <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div className="community-grid">
-                  {briefs.map(b => <BriefCard key={b.id} b={b} onClick={setSelectedBrief} />)}
+                  {briefs.filter(b => b.brandId === user?.id).map(b => <BriefCard key={b.id} b={b} onClick={setSelectedBrief} />)}
                 </div>
                 <button className="btn btn-lime" style={{ alignSelf: 'flex-start' }} onClick={() => setCreatingBrief(true)}>+ Create New Brief</button>
               </div>
