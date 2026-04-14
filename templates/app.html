@@ -3256,6 +3256,483 @@ function MeasurePage() {
   );
 }
 
+// ─── MY PROFILE MODULE ───────────────────────────────────────────────────────
+
+function MyProfileModule({ userId, onEdit }) {
+  const [data, setData] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [copied, setCopied] = React.useState(false);
+  const [lightbox, setLightbox] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!userId) { setLoading(false); return; }
+    fetch(`/api/community/${userId}`)
+      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [userId]);
+
+  if (loading) return <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)', fontFamily: 'Barlow Condensed', fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Loading profile…</div>;
+  if (!data) return <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)' }}>Profile not found.</div>;
+
+  const coverOption = data.cover_option || 1;
+  const coverObj = COVER_OPTIONS.find(o => o.id === coverOption) || COVER_OPTIONS[0];
+  const coverBg = data.cover_image_url ? `url(${data.cover_image_url}) center/cover no-repeat` : coverObj.gradient;
+
+  const igData = data.instagram_data || {};
+  const igProfile = igData.profile || {};
+  const igPosts = (igData.media || []).filter(p => p.media_url || p.thumbnail_url);
+  const igFollowers = igProfile.followers_count || 0;
+  const igEr = igData.engagement_rate ? Math.round(igData.engagement_rate * 10) / 10 : null;
+  const igConnected = !!data.instagram_token || !!data.instagram_user_id;
+
+  const connectedCount = [igConnected, !!data.substack_url].filter(Boolean).length;
+  const tier = connectedCount >= 2 ? 'fully-verified' : connectedCount >= 1 ? 'verified' : 'starter';
+
+  const tags = data.tags || [];
+  const capabilities = data.capabilities || [];
+  const partnershipPrefs = data.partnership_preferences || '';
+  const mediaItems = data.media_items || [];
+  const caseStudies = (data.case_studies || []).filter(cs => cs.verified);
+  const notableMembers = (data.notable_members || []).filter(m => m.verified);
+  const archetype = ARCHETYPES ? ARCHETYPES.find(a => a.id === data.archetype) : null;
+
+  function copyLink() {
+    navigator.clipboard.writeText(`${window.location.origin}/profile/${userId}`).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <div>
+      {/* Profile actions bar */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginBottom: 20 }}>
+        <button onClick={copyLink} className="btn btn-ghost btn-sm">
+          {copied ? '✓ Copied Link' : 'Share Profile'}
+        </button>
+        <a href={`/profile/${userId}`} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm" style={{ textDecoration: 'none' }}>Public View ↗</a>
+        <button className="btn btn-lime btn-sm" onClick={onEdit}>Edit Profile</button>
+      </div>
+
+      {/* Face card — 3:4 full width */}
+      <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', marginBottom: 16 }}>
+        <div style={{ aspectRatio: '3/4', maxHeight: 480, position: 'relative', background: coverBg }}>
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 65%, rgba(0,0,0,0.88) 100%)' }} />
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '44px 28px 24px' }}>
+            <div className="bb" style={{ fontSize: 40, color: '#fff', lineHeight: 1, marginBottom: 6 }}>{data.name}</div>
+            {data.tagline && <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', marginBottom: 12 }}>{data.tagline}</div>}
+            {tags.length > 0 && (
+              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 14 }}>
+                {tags.slice(0, 5).map(t => (
+                  <span key={t} style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.85)', borderRadius: 3, padding: '2px 8px', fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t}</span>
+                ))}
+              </div>
+            )}
+            <TierBadge tier={tier} />
+          </div>
+        </div>
+      </div>
+
+      {/* Key stats row */}
+      {(data.active_members || igFollowers > 0 || igEr) && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
+          <div className="metric-card dark">
+            <div className="metric-label">Active Members</div>
+            <div className="metric-value sm" style={{ color: 'var(--cyan)' }}>{data.active_members ? Number(data.active_members).toLocaleString() : '—'}</div>
+          </div>
+          <div className="metric-card dark">
+            <div className="metric-label">Instagram Followers</div>
+            <div className="metric-value sm" style={{ color: igFollowers ? 'var(--lime)' : 'var(--muted)' }}>{igFollowers > 0 ? (igFollowers >= 1000 ? (igFollowers / 1000).toFixed(1) + 'K' : igFollowers) : '—'}</div>
+          </div>
+          <div className="metric-card dark">
+            <div className="metric-label">Engagement Rate</div>
+            <div className="metric-value sm" style={{ color: igEr ? 'var(--lime)' : 'var(--muted)' }}>{igEr ? igEr + '%' : '—'}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Info card */}
+      <div className="card p-20 mb-14">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 28px' }}>
+          {data.location && (
+            <div>
+              <div className="text-muted text-xs mb-4">Location</div>
+              <div style={{ fontSize: 13 }}>{data.location}</div>
+            </div>
+          )}
+          {data.website && (
+            <div>
+              <div className="text-muted text-xs mb-4">Website</div>
+              <a href={data.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--cyan)', textDecoration: 'none' }}>{data.website.replace(/^https?:\/\//, '')}</a>
+            </div>
+          )}
+          {igConnected && (
+            <div>
+              <div className="text-muted text-xs mb-4">Instagram</div>
+              {igProfile.username
+                ? <a href={`https://instagram.com/${igProfile.username}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#e1306c', textDecoration: 'none' }}>@{igProfile.username}</a>
+                : <span style={{ fontSize: 13, color: 'var(--muted)' }}>Connected — syncing…</span>
+              }
+            </div>
+          )}
+          {data.substack_url && (
+            <div>
+              <div className="text-muted text-xs mb-4">Substack</div>
+              <a href={data.substack_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#ff6719', textDecoration: 'none' }}>{data.substack_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}</a>
+            </div>
+          )}
+        </div>
+        {data.description && (
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)', fontSize: 13, color: 'var(--muted)', lineHeight: 1.7 }}>{data.description}</div>
+        )}
+      </div>
+
+      {/* Instagram bio */}
+      {igProfile.biography && (
+        <div className="card p-20 mb-14">
+          <div className="text-muted text-xs mb-6">Instagram Bio</div>
+          <div style={{ fontSize: 13, lineHeight: 1.6 }}>{igProfile.biography}</div>
+        </div>
+      )}
+
+      {/* Capabilities */}
+      {capabilities.length > 0 && (
+        <div className="card p-20 mb-14">
+          <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 12 }}>What We Offer</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+            {capabilities.map(cap => <span key={cap} className="tag tag-ghost">{cap}</span>)}
+          </div>
+        </div>
+      )}
+
+      {/* Partnership prefs */}
+      {partnershipPrefs && (
+        <div className="card p-20 mb-14">
+          <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10 }}>What We Look For</div>
+          <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.75, fontStyle: 'italic', borderLeft: '2px solid var(--lime)', paddingLeft: 14 }}>"{partnershipPrefs}"</div>
+        </div>
+      )}
+
+      {/* Instagram posts */}
+      {igPosts.length > 0 && (
+        <div className="card p-20 mb-14">
+          <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 12 }}>Latest Posts</div>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
+            {igPosts.slice(0, 12).map((post, i) => (
+              <a key={i} href={post.permalink || `https://instagram.com/${igProfile.username}`} target="_blank" rel="noopener noreferrer"
+                style={{ flexShrink: 0, width: 110, height: 110, borderRadius: 8, overflow: 'hidden', display: 'block', textDecoration: 'none', background: 'var(--surface2)' }}>
+                <img src={post.media_url || post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              </a>
+            ))}
+          </div>
+          {!igProfile.username && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Instagram data syncing — username not yet available.</div>}
+        </div>
+      )}
+
+      {/* Photos & Events */}
+      {mediaItems.length > 0 && (
+        <div className="card p-20 mb-14">
+          <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 12 }}>Photos &amp; Events</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+            {mediaItems.map((item, i) => (
+              <div key={i} onClick={() => setLightbox({ items: mediaItems.map(m => ({ url: m.url, caption: m.caption || undefined })), index: i })} style={{ cursor: 'pointer', aspectRatio: '1', borderRadius: 8, overflow: 'hidden', background: 'var(--surface2)', border: '1px solid var(--border)', position: 'relative' }}>
+                <img src={item.url} alt={item.caption || ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                {item.caption && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '12px 8px 6px', background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', fontSize: 10, color: '#fff', lineHeight: 1.35 }}>{item.caption}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Notable Members */}
+      {notableMembers.length > 0 && (
+        <div className="card p-20 mb-14">
+          <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 12 }}>Notable Members</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+            {notableMembers.map((m, i) => {
+              const ac = avatarColor(m.name);
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: '50%', background: ac.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Barlow Condensed', fontSize: 15, fontWeight: 700, color: ac.text, flexShrink: 0 }}>{(m.name || '?')[0].toUpperCase()}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600 }}>{m.name}</div>
+                    {m.role && <div style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'Barlow Condensed', fontWeight: 600, textTransform: 'uppercase' }}>{m.role}</div>}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Past Partnerships */}
+      {caseStudies.length > 0 && (
+        <div className="card p-20 mb-14">
+          <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 12 }}>Past Partnerships</div>
+          {caseStudies.map((cs, i) => (
+            <div key={i} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 16px', marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: cs.description ? 5 : 0 }}>
+                <div className="bc" style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase' }}>{cs.brand}</div>
+                {cs.year && <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'Barlow Condensed', fontWeight: 600 }}>{cs.year}</div>}
+              </div>
+              {cs.description && <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>{cs.description}</div>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {lightbox && <Lightbox items={lightbox.items} startIndex={lightbox.index} onClose={() => setLightbox(null)} />}
+    </div>
+  );
+}
+
+// ─── EDIT PROFILE MODULE ─────────────────────────────────────────────────────
+
+function EditProfileModule({ userId, onDone }) {
+  const [data, setData] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+  const [saved, setSaved] = React.useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = React.useState(false);
+  const [photoCaption, setPhotoCaption] = React.useState('');
+  const photoInputRef = React.useRef(null);
+  const coverInputRef = React.useRef(null);
+
+  // Editable fields
+  const [name, setName] = React.useState('');
+  const [tagline, setTagline] = React.useState('');
+  const [location, setLocation] = React.useState('');
+  const [description, setDescription] = React.useState('');
+  const [activeMembers, setActiveMembers] = React.useState('');
+  const [website, setWebsite] = React.useState('');
+  const [substackUrl, setSubstackUrl] = React.useState('');
+  const [partnershipPrefs, setPartnershipPrefs] = React.useState('');
+  const [tagsStr, setTagsStr] = React.useState('');
+  const [capabilitiesStr, setCapabilitiesStr] = React.useState('');
+  const [selectedCover, setSelectedCover] = React.useState(1);
+  const [mediaItems, setMediaItems] = React.useState([]);
+
+  React.useEffect(() => {
+    if (!userId) { setLoading(false); return; }
+    fetch(`/api/community/${userId}`)
+      .then(r => r.json())
+      .then(d => {
+        setData(d);
+        setName(d.name || '');
+        setTagline(d.tagline || '');
+        setLocation(d.location || '');
+        setDescription(d.description || '');
+        setActiveMembers(d.active_members ? String(d.active_members) : '');
+        setWebsite(d.website || '');
+        setSubstackUrl(d.substack_url || '');
+        setPartnershipPrefs(d.partnership_preferences || '');
+        setTagsStr((d.tags || []).join(', '));
+        setCapabilitiesStr((d.capabilities || []).join(', '));
+        setSelectedCover(d.cover_option || 1);
+        setMediaItems(d.media_items || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [userId]);
+
+  async function handleSave() {
+    setSaving(true);
+    try {
+      const token = getToken();
+      await fetch(`/api/community/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': 'Bearer ' + token } : {}) },
+        body: JSON.stringify({
+          name, tagline, location, description,
+          active_members: activeMembers ? parseInt(activeMembers) : null,
+          website, substack_url: substackUrl,
+          partnership_preferences: partnershipPrefs,
+          tags: tagsStr ? tagsStr.split(',').map(s => s.trim()).filter(Boolean) : [],
+          capabilities: capabilitiesStr ? capabilitiesStr.split(',').map(s => s.trim()).filter(Boolean) : [],
+          cover_option: selectedCover,
+        }),
+      });
+      setSaved(true);
+      setTimeout(() => { setSaved(false); onDone(); }, 1200);
+    } catch(e) {
+      alert('Failed to save. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handlePhotoUpload(file) {
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const token = getToken();
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('caption', photoCaption);
+      const res = await fetch(`/api/community/${userId}/media`, {
+        method: 'POST',
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+        body: fd,
+      });
+      const result = await res.json();
+      setMediaItems(prev => [...prev, { url: result.url, caption: result.caption }]);
+      setPhotoCaption('');
+    } catch(e) {
+      alert('Failed to upload photo.');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  }
+
+  async function handleCoverUpload(file) {
+    if (!file) return;
+    try {
+      const token = getToken();
+      const fd = new FormData();
+      fd.append('file', file);
+      await fetch(`/api/community/${userId}/cover`, {
+        method: 'POST',
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+        body: fd,
+      });
+      alert('Cover photo updated! Reload to see changes.');
+    } catch(e) {
+      alert('Failed to upload cover photo.');
+    }
+  }
+
+  if (loading) return <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)' }}>Loading…</div>;
+
+  const labelStyle = { fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 6, display: 'block' };
+  const inputStyle = { width: '100%', background: 'var(--surface2)', border: '1px solid var(--border2)', borderRadius: 6, padding: '9px 12px', fontSize: 13, color: 'var(--white)', fontFamily: 'Barlow, sans-serif', outline: 'none' };
+  const textareaStyle = { ...inputStyle, resize: 'vertical', minHeight: 80 };
+
+  return (
+    <div style={{ maxWidth: 680 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+        <div>
+          <div className="bb" style={{ fontSize: 28, marginBottom: 4 }}>Edit Your Profile</div>
+          <div style={{ fontSize: 13, color: 'var(--muted)' }}>Changes save immediately and appear on your public profile.</div>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button className="btn btn-ghost" onClick={onDone}>Cancel</button>
+          <button className="btn btn-lime" onClick={handleSave} disabled={saving || saved}>
+            {saved ? '✓ Saved!' : saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+
+      {/* Basic info */}
+      <div className="card p-20 mb-14">
+        <div className="bc" style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', marginBottom: 16 }}>Basic Info</div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div>
+            <label style={labelStyle}>Community Name</label>
+            <input style={inputStyle} value={name} onChange={e => setName(e.target.value)} placeholder="Your community name" />
+          </div>
+          <div>
+            <label style={labelStyle}>Location</label>
+            <input style={inputStyle} value={location} onChange={e => setLocation(e.target.value)} placeholder="e.g. Los Angeles, CA" />
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={labelStyle}>Tagline</label>
+            <input style={inputStyle} value={tagline} onChange={e => setTagline(e.target.value)} placeholder="One-line description of your community" />
+          </div>
+          <div style={{ gridColumn: '1 / -1' }}>
+            <label style={labelStyle}>Description</label>
+            <textarea style={textareaStyle} value={description} onChange={e => setDescription(e.target.value)} placeholder="Tell brands about your community…" />
+          </div>
+          <div>
+            <label style={labelStyle}>Active Members</label>
+            <input style={inputStyle} type="number" value={activeMembers} onChange={e => setActiveMembers(e.target.value)} placeholder="e.g. 500" />
+          </div>
+          <div>
+            <label style={labelStyle}>Website</label>
+            <input style={inputStyle} value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://yoursite.com" />
+          </div>
+          <div>
+            <label style={labelStyle}>Substack URL</label>
+            <input style={inputStyle} value={substackUrl} onChange={e => setSubstackUrl(e.target.value)} placeholder="https://yourname.substack.com" />
+          </div>
+        </div>
+      </div>
+
+      {/* Tags & capabilities */}
+      <div className="card p-20 mb-14">
+        <div className="bc" style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', marginBottom: 16 }}>Tags &amp; Capabilities</div>
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Interest Tags <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(comma-separated)</span></label>
+          <input style={inputStyle} value={tagsStr} onChange={e => setTagsStr(e.target.value)} placeholder="Running, Fitness, Community, LA" />
+        </div>
+        <div>
+          <label style={labelStyle}>Capabilities <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(comma-separated)</span></label>
+          <input style={inputStyle} value={capabilitiesStr} onChange={e => setCapabilitiesStr(e.target.value)} placeholder="Event Activation, Social Content, Email Blast" />
+        </div>
+      </div>
+
+      {/* Partnership prefs */}
+      <div className="card p-20 mb-14">
+        <div className="bc" style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', marginBottom: 12 }}>Partnership Preferences</div>
+        <textarea style={textareaStyle} value={partnershipPrefs} onChange={e => setPartnershipPrefs(e.target.value)} placeholder="What kinds of brands and partnerships are you looking for?" />
+      </div>
+
+      {/* Cover */}
+      <div className="card p-20 mb-14">
+        <div className="bc" style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', marginBottom: 14 }}>Profile Cover</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8, marginBottom: 14 }}>
+          {COVER_OPTIONS.map(opt => (
+            <div key={opt.id} onClick={() => setSelectedCover(opt.id)}
+              style={{ aspectRatio: '3/4', borderRadius: 8, background: opt.gradient, cursor: 'pointer', border: selectedCover === opt.id ? '2px solid var(--lime)' : '2px solid transparent', position: 'relative', overflow: 'hidden' }}>
+              {selectedCover === opt.id && <div style={{ position: 'absolute', top: 6, right: 6, width: 16, height: 16, borderRadius: '50%', background: 'var(--lime)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, color: '#000', fontWeight: 700 }}>✓</div>}
+              <div style={{ position: 'absolute', bottom: 4, left: 0, right: 0, textAlign: 'center', fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)' }}>{opt.label}</div>
+            </div>
+          ))}
+        </div>
+        <div>
+          <label style={labelStyle}>Or upload a photo</label>
+          <input ref={coverInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handleCoverUpload(e.target.files[0])} />
+          <button className="btn btn-ghost btn-sm" onClick={() => coverInputRef.current.click()}>Upload Cover Photo</button>
+        </div>
+      </div>
+
+      {/* Photos & Events */}
+      <div className="card p-20 mb-14">
+        <div className="bc" style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase', marginBottom: 14 }}>Photos &amp; Events</div>
+        {mediaItems.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 14 }}>
+            {mediaItems.map((item, i) => (
+              <div key={i} style={{ aspectRatio: '1', borderRadius: 8, overflow: 'hidden', position: 'relative', background: 'var(--surface2)' }}>
+                <img src={item.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                {item.caption && <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '10px 6px 5px', background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)', fontSize: 9, color: '#fff', lineHeight: 1.3 }}>{item.caption}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end' }}>
+          <div style={{ flex: 1 }}>
+            <label style={labelStyle}>Caption (optional)</label>
+            <input style={inputStyle} value={photoCaption} onChange={e => setPhotoCaption(e.target.value)} placeholder="Add a caption for this photo" />
+          </div>
+          <div>
+            <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => handlePhotoUpload(e.target.files[0])} />
+            <button className="btn btn-ghost btn-sm" onClick={() => photoInputRef.current.click()} disabled={uploadingPhoto}>
+              {uploadingPhoto ? 'Uploading…' : '+ Add Photo'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
+        <button className="btn btn-ghost" onClick={onDone}>Cancel</button>
+        <button className="btn btn-lime" onClick={handleSave} disabled={saving || saved}>
+          {saved ? '✓ Saved!' : saving ? 'Saving…' : 'Save Changes'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIEFS = [], onNavigate }) {
   const isBrand = role === 'brand';
   const firstName = user ? user.name.split(' ')[0] : 'there';
@@ -3270,14 +3747,13 @@ function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIE
     { label: 'Open Briefs', val: String(BRIEFS.length), color: BRIEFS.length ? 'cyan' : 'dark' },
     { label: 'Active Projects', val: '0', color: 'dark' },
     { label: 'My Proposals', val: '0', color: 'dark' },
-    { label: 'Total Earned', val: '$0', color: 'dark' },
   ];
 
   return (
     <div>
       <div className="display mb-20" style={{ fontSize: 36 }}>{"Good morning, " + firstName + "."}</div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${summaryCards.length}, 1fr)`, gap: 14, marginBottom: 28 }}>
         {summaryCards.map(c => (
           <div key={c.label} className={"metric-card " + c.color}>
             <div className="metric-label">{c.label}</div>
@@ -3285,6 +3761,17 @@ function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIE
           </div>
         ))}
       </div>
+
+      {/* Discover CTA for community users */}
+      {!isBrand && BRIEFS.length > 0 && (
+        <div style={{ marginBottom: 20, padding: '20px 24px', background: 'rgba(210,255,1,0.05)', border: '1px solid rgba(210,255,1,0.2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 3 }}>{BRIEFS.length} Open Brief{BRIEFS.length !== 1 ? 's' : ''} Available</div>
+            <div style={{ fontSize: 13, color: 'var(--muted)' }}>Brands are looking for community partners like yours.</div>
+          </div>
+          <button className="btn btn-lime" onClick={() => onNavigate('discover')}>Browse Briefs →</button>
+        </div>
+      )}
 
       {/* Community profile snapshot */}
       {!isBrand && myCommunity && (
@@ -3299,7 +3786,7 @@ function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIE
                   {myCommunity.tags.slice(0, 2).map(t => <span key={t} className="tag tag-ghost" style={{ fontSize: 10 }}>{t}</span>)}
                 </div>
               </div>
-              <a href={`/profile/${user && user.id}`} className="btn btn-ghost btn-sm" style={{ textDecoration:'none' }}>View My Profile →</a>
+              <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('profile')}>View My Profile →</button>
             </div>
           </div>
           <div style={{ padding: '14px 20px' }}>
@@ -3330,7 +3817,7 @@ function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIE
         <div className="card mb-20 p-20" style={{ borderColor: 'rgba(210,255,1,0.15)', background: 'rgba(210,255,1,0.03)' }}>
           <div className="bc" style={{ fontSize: 16, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>Welcome to Mayo.</div>
           <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6, marginBottom: 16 }}>Your profile is live. Brands will be able to discover your community and send partnership proposals here.</p>
-          <a href={`/profile/${user && user.id}`} className="btn btn-lime btn-sm" style={{ textDecoration:'none' }}>View My Profile →</a>
+          <button className="btn btn-lime btn-sm" onClick={() => onNavigate('profile')}>View My Profile →</button>
         </div>
       )}
 
@@ -3463,9 +3950,9 @@ function App() {
 
   const navBrand = [
     { id: 'home', label: 'Home', icon: '⊞' },
-    { id: 'discover', label: 'Discover', icon: '◎', badge: isBrand ? null : '4' },
+    { id: 'discover', label: 'Discover', icon: '◎', badge: !isBrand && briefs.length > 0 ? briefs.length : null },
     { id: 'briefs', label: isBrand ? 'My Briefs' : 'My Proposals', icon: '◫' },
-    { id: 'project', label: 'Projects', icon: '◷', badge: '1' },
+    { id: 'project', label: 'Projects', icon: '◷' },
     { id: 'measure', label: 'Reporting', icon: '◈' },
   ];
   const navBottom = [
@@ -3500,8 +3987,7 @@ function App() {
       );
       case 'profile': {
         if (!isBrand && user) {
-          window.location.href = `/profile/${user.id}`;
-          return <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Redirecting to your profile…</div>;
+          return <MyProfileModule userId={user.id} onEdit={() => navigate('edit-profile')} />;
         }
         return (
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
@@ -3510,6 +3996,12 @@ function App() {
             <div style={{ fontSize: 13 }}>Brand profile management coming soon.</div>
           </div>
         );
+      }
+      case 'edit-profile': {
+        if (!isBrand && user) {
+          return <EditProfileModule userId={user.id} onDone={() => navigate('profile')} />;
+        }
+        return null;
       }
       case 'briefs': return (
         <div>
@@ -3547,6 +4039,7 @@ function App() {
     project: 'Active Projects',
     measure: 'Reporting',
     profile: 'My Profile',
+    'edit-profile': 'Edit Profile',
     settings: 'Settings',
   };
 
@@ -3584,24 +4077,12 @@ function App() {
         </div>
 
         <div className="sidenav-bottom">
-          {navBottom.map(n => {
-            if (n.id === 'profile' && !isBrand && user) {
-              return (
-                <a key={n.id} href={`/profile/${user.id}`} style={{ textDecoration:'none' }}>
-                  <div className="nav-item">
-                    <span className="nav-icon">{n.icon}</span>
-                    {n.label}
-                  </div>
-                </a>
-              );
-            }
-            return (
-              <button key={n.id} className={"nav-item " + (activePage === n.id ? 'active' : '')} onClick={() => navigate(n.id)}>
-                <span className="nav-icon">{n.icon}</span>
-                {n.label}
-              </button>
-            );
-          })}
+          {navBottom.map(n => (
+            <button key={n.id} className={"nav-item " + (activePage === n.id ? 'active' : '')} onClick={() => navigate(n.id)}>
+              <span className="nav-icon">{n.icon}</span>
+              {n.label}
+            </button>
+          ))}
           <button className="nav-item" onClick={handleLogout} style={{ color: 'var(--muted)' }}>
             <span className="nav-icon">⇥</span> Sign Out
           </button>
