@@ -322,6 +322,16 @@ def init_db():
                 """)
             # Brands table migrations
             cur.execute("ALTER TABLE brands ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT FALSE")
+            for col, typedef in [
+                ("leader_name", "TEXT"),
+                ("leader_role", "TEXT"),
+                ("values", "TEXT"),
+                ("looking_for", "TEXT"),
+                ("social_links", "JSONB DEFAULT '{}'"),
+                ("profile_image_url", "TEXT"),
+                ("header_image_url", "TEXT"),
+            ]:
+                cur.execute(f"ALTER TABLE brands ADD COLUMN IF NOT EXISTS {col} {typedef}")
             # Briefs table migrations
             cur.execute("ALTER TABLE briefs ADD COLUMN IF NOT EXISTS cover_image_url TEXT")
         conn.commit()
@@ -1231,16 +1241,22 @@ def register_brand():
     brand_id = str(uuid.uuid4())
     pw_hash = hash_password(password)
     initial = name[0].upper()
+    social_links = data.get("social_links") or {}
     try:
         with get_db() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO brands (id, name, email, password_hash, tagline, bio, website, category, color, gradient, initial, verified)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO brands (id, name, email, password_hash, tagline, bio, website, category,
+                                        color, gradient, initial, verified, leader_name, leader_role,
+                                        values, looking_for, social_links)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (brand_id, name, email, pw_hash,
                       data.get("tagline"), data.get("bio"), website,
-                      data.get("category"), data.get("color", "#888"),
-                      data.get("gradient"), initial, False))
+                      data.get("industry") or data.get("category"), data.get("color", "#888"),
+                      data.get("gradient"), initial, False,
+                      data.get("leader_name"), data.get("leader_role"),
+                      data.get("values"), data.get("looking_for"),
+                      _json_stdlib.dumps(social_links)))
             conn.commit()
     except psycopg2.errors.UniqueViolation:
         return jsonify({"error": "An account with that email already exists"}), 409
@@ -1441,6 +1457,42 @@ def upload_brief_cover(brief_id):
             cur.execute("UPDATE briefs SET cover_image_url = %s WHERE id = %s", (url, brief_id))
         conn.commit()
     return jsonify({"ok": True, "url": url})
+
+
+@app.route("/api/brand/<brand_id>/header", methods=["POST"])
+def upload_brand_header(brand_id):
+    auth = require_auth(request)
+    if not auth or (auth.get("id") != brand_id and auth.get("role") != "admin"):
+        return jsonify({"error": "Unauthorized"}), 403
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "No file"}), 400
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
+    path = f"brands/{brand_id}/header.{ext}"
+    url = upload_to_supabase(file.read(), path, file.content_type or "image/jpeg")
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE brands SET header_image_url = %s WHERE id = %s", (url, brand_id))
+        conn.commit()
+    return jsonify({"url": url})
+
+
+@app.route("/api/brand/<brand_id>/profile-image", methods=["POST"])
+def upload_brand_profile_image(brand_id):
+    auth = require_auth(request)
+    if not auth or (auth.get("id") != brand_id and auth.get("role") != "admin"):
+        return jsonify({"error": "Unauthorized"}), 403
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "No file"}), 400
+    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
+    path = f"brands/{brand_id}/profile.{ext}"
+    url = upload_to_supabase(file.read(), path, file.content_type or "image/jpeg")
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE brands SET profile_image_url = %s WHERE id = %s", (url, brand_id))
+        conn.commit()
+    return jsonify({"url": url})
 
 
 @app.route("/api/admin/briefs/<brief_id>", methods=["DELETE"])
