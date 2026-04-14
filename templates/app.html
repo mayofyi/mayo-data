@@ -701,7 +701,7 @@ function mapCommunity(c) {
     tier, archetype: c.archetype || 'evangelical', archetypeLabel: ({ evangelical: 'Evangelists', loyalists: 'Loyalists', buyers: 'Buyers', early: 'Early Adopters', cultural: 'Culturally Impactful' }[c.archetype] || 'Evangelists'),
     matchScore: '—', engagement: er ? Math.round(er * 10) / 10 : '—',
     activeMembers: c.active_members || 0, members: c.active_members || 0,
-    networkMultiplier: '—', reach: followers || null,
+    networkMultiplier: c.network_multiplier != null ? c.network_multiplier : '—', reach: followers || null,
     cis: c.cis_stamped || c.cis_raw || null,
     tags, cover: c.cover_image_url || null,
     coverGradient: coverOpt ? coverOpt.gradient : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #533483 100%)',
@@ -2541,7 +2541,7 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
           <div className="metric-value sm">{(c.reach || c.members).toLocaleString()}</div>
           <div className="metric-sub" style={{ fontSize: 10 }}>social channels</div>
         </div>
-        <div className="metric-card dark"><div className="metric-label">Network Multiplier</div><div className="metric-value sm">{c.networkMultiplier}x</div></div>
+        <div className="metric-card dark"><div className="metric-label">Network Multiplier</div><div className="metric-value sm">{c.networkMultiplier !== '—' ? c.networkMultiplier + 'x' : '—'}</div></div>
         <div className="metric-card orange">
           <div className="metric-label">Cultural Impact</div>
           <div className="metric-value sm">{c.cis || '—'}<span style={{ fontSize: 16 }}>/100</span></div>

@@ -352,8 +352,11 @@ function openCommunity(id) {
         <div class="tip">Organic reach per active member. Σ(log(followers) × ER) ÷ members. Set tiers on verified members below.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Network Multiplier</div>
         ${c.network_multiplier != null
-          ? `<div style="font-family:'Bebas Neue';font-size:30px;color:#ff6ef2;line-height:1">${c.network_multiplier}×</div><div style="font-size:10px;color:var(--muted);margin-top:4px">bucket-estimated</div>`
-          : `<div style="font-family:'Bebas Neue';font-size:20px;color:#444;line-height:1;padding-top:4px">Pending</div><div style="font-size:10px;color:#444;margin-top:4px">Set member tiers below</div>`}
+          ? (() => {
+              const hasActual = (c.notable_members||[]).some(m => m.verified && m.ig_followers);
+              return `<div style="font-family:'Bebas Neue';font-size:30px;color:#ff6ef2;line-height:1">${c.network_multiplier}×</div><div style="font-size:10px;color:${hasActual?'var(--lime)':'var(--muted)'};margin-top:4px">${hasActual?'mayo-verified':'tier-estimated'}</div>`;
+            })()
+          : `<div style="font-family:'Bebas Neue';font-size:20px;color:#444;line-height:1;padding-top:4px">Pending</div><div style="font-size:10px;color:#444;margin-top:4px">Enter follower counts below</div>`}
       </div>
       <div class="metric-card" style="background:#0a0700;border-color:#221a00">
         <div class="tip">MIQ + GV + BAH + PMM weighted average. Admin stamp ±15 pts. See CIS section below.</div>
@@ -473,19 +476,32 @@ function openCommunity(id) {
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
           ${notableMembers.map((m, idx) => {
             const col = avatarColor(m.name||'');
-            const tierLabel = {'micro':'Micro (1k–10k)','mid':'Mid (10k–100k)','macro':'Macro (100k+)'}[m.follower_tier] || '';
+            const hasActual = !!m.ig_followers;
             return `<div class="member-card" style="border-color:${m.verified?'rgba(210,255,1,0.2)':'var(--border)'}">
               <div style="width:36px;height:36px;border-radius:50%;background:${col.bg};color:${col.text};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:16px;flex-shrink:0">${(m.name||'?')[0].toUpperCase()}</div>
               <div style="flex:1;min-width:0">
                 <div style="font-weight:600;font-size:13px">${m.name||'—'}</div>
                 ${m.ig_handle ? `<div style="font-size:11px;color:var(--muted)">@${m.ig_handle}</div>` : ''}
                 ${m.role ? `<div style="font-size:11px;color:var(--muted)">${m.role}</div>` : ''}
-                ${m.verified ? `<select onchange="setMemberTier('${c.id}',${idx},this.value)" style="margin-top:5px;width:100%;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--white);font-family:'Barlow Condensed';font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
-                  <option value="">— Follower tier —</option>
-                  <option value="micro" ${m.follower_tier==='micro'?'selected':''}>Micro (1k–10k)</option>
-                  <option value="mid"   ${m.follower_tier==='mid'?'selected':''}>Mid (10k–100k)</option>
-                  <option value="macro" ${m.follower_tier==='macro'?'selected':''}>Macro (100k+)</option>
-                </select>` : ''}
+                ${m.verified ? `
+                  <div style="margin-top:6px;display:flex;gap:4px;align-items:center">
+                    <input type="number" id="followers-${c.id}-${idx}" placeholder="Followers" value="${m.ig_followers||''}"
+                      style="flex:1;min-width:0;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--white);font-size:10px;font-family:'Barlow Condensed'" />
+                    <input type="number" id="er-${c.id}-${idx}" placeholder="ER%" value="${m.ig_er||''}" step="0.1" min="0" max="100"
+                      style="width:44px;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:3px 5px;color:var(--white);font-size:10px;font-family:'Barlow Condensed'" />
+                    <button onclick="setMemberFollowers('${c.id}',${idx})"
+                      style="background:var(--surface2);color:var(--white);border:1px solid var(--border2);border-radius:4px;padding:3px 7px;font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;white-space:nowrap">Set</button>
+                  </div>
+                  ${hasActual
+                    ? `<div style="font-size:9px;color:var(--lime);margin-top:3px;font-family:'Barlow Condensed';font-weight:700;text-transform:uppercase;letter-spacing:0.05em">✓ ${m.ig_followers.toLocaleString()} followers${m.ig_er ? ' · '+m.ig_er+'% ER' : ''}</div>`
+                    : `<select onchange="setMemberTier('${c.id}',${idx},this.value)" style="margin-top:4px;width:100%;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--white);font-family:'Barlow Condensed';font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
+                        <option value="">— Fallback tier —</option>
+                        <option value="micro" ${m.follower_tier==='micro'?'selected':''}>Micro (1k–10k)</option>
+                        <option value="mid"   ${m.follower_tier==='mid'?'selected':''}>Mid (10k–100k)</option>
+                        <option value="macro" ${m.follower_tier==='macro'?'selected':''}>Macro (100k+)</option>
+                      </select>`
+                  }
+                ` : ''}
               </div>
               <button onclick="verifyMember('${c.id}',${idx},${!m.verified})" style="background:${m.verified?'transparent':'var(--lime)'};color:${m.verified?'var(--muted)':'#000'};border:1px solid ${m.verified?'var(--border)':'var(--lime)'};border-radius:4px;padding:4px 10px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;flex-shrink:0;white-space:nowrap;align-self:flex-start">${m.verified?'Revoke':'Approve'}</button>
             </div>`;
@@ -753,6 +769,27 @@ function restoreArchetypeResult(communityId) {
   resultBox.style.display = 'block';
   const btn = document.getElementById(`arch-analyse-${communityId}`);
   if (btn) { btn.textContent = '↺ Re-analyse'; btn.disabled = false; }
+}
+
+async function setMemberFollowers(communityId, idx) {
+  const followerInput = document.getElementById(`followers-${communityId}-${idx}`);
+  const erInput = document.getElementById(`er-${communityId}-${idx}`);
+  const followers = parseInt(followerInput.value);
+  const er = erInput.value !== '' ? parseFloat(erInput.value) : null;
+  if (isNaN(followers) || followers < 0) {
+    followerInput.style.borderColor = 'var(--red)';
+    return;
+  }
+  followerInput.style.borderColor = 'var(--border2)';
+  await fetch(`/api/community/${communityId}/notable-member/${idx}/followers`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ig_followers: followers, ig_er: er }),
+  });
+  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
+  communities = await res.json();
+  renderTable();
+  openCommunity(communityId);
+  restoreArchetypeResult(communityId);
 }
 
 async function setMemberTier(communityId, idx, tier) {

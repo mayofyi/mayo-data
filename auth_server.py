@@ -86,16 +86,22 @@ TIER_DATA = {
 
 
 def calculate_nm(members, active_members):
-    """Network Multiplier from bucket-tiered member data. Only verified members contribute."""
+    """Network Multiplier. Prefers actual ig_followers/ig_er over tier midpoints.
+    Only Mayo-verified members contribute."""
     if not active_members:
         return None
-    eligible = [m for m in (members or []) if m.get("verified") and m.get("follower_tier") in TIER_DATA]
+    eligible = [
+        m for m in (members or [])
+        if m.get("verified") and (m.get("ig_followers") or m.get("follower_tier") in TIER_DATA)
+    ]
     if not eligible:
         return None
-    total = sum(
-        math.log(TIER_DATA[m["follower_tier"]]["followers"] + 1) * TIER_DATA[m["follower_tier"]]["er"]
-        for m in eligible
-    )
+    total = 0.0
+    for m in eligible:
+        followers = m.get("ig_followers") or TIER_DATA.get(m.get("follower_tier", ""), {}).get("followers", 0)
+        er = m.get("ig_er") or TIER_DATA.get(m.get("follower_tier", ""), {}).get("er", 3.0)
+        if followers:
+            total += math.log(followers + 1) * er
     return round(total / active_members, 2)
 
 
@@ -728,6 +734,48 @@ def set_member_tier(community_id, idx):
                 members[idx]["follower_tier"] = tier
             else:
                 members[idx].pop("follower_tier", None)
+            nm = calculate_nm(members, row["active_members"])
+            cur.execute(
+                "UPDATE communities SET notable_members = %s, network_multiplier = %s, updated_at = NOW() WHERE id = %s",
+                (psycopg2.extras.Json(members), nm, community_id),
+            )
+        conn.commit()
+    return jsonify({"ok": True, "network_multiplier": nm})
+
+
+@app.route("/api/community/<community_id>/notable-member/<int:idx>/followers", methods=["PUT"])
+def set_member_followers(community_id, idx):
+    """Save actual follower count (and optional ER) for a verified member. Recalculates NM."""
+    data = request.json or {}
+    ig_followers = data.get("ig_followers")
+    ig_er = data.get("ig_er")
+    if ig_followers is not None:
+        try:
+            ig_followers = int(ig_followers)
+        except (ValueError, TypeError):
+            return jsonify({"error": "ig_followers must be an integer"}), 400
+    if ig_er is not None:
+        try:
+            ig_er = float(ig_er)
+        except (ValueError, TypeError):
+            return jsonify({"error": "ig_er must be a number"}), 400
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT notable_members, active_members FROM communities WHERE id = %s", (community_id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({"error": "Not found"}), 404
+            members = list(row["notable_members"] or [])
+            if idx >= len(members):
+                return jsonify({"error": "Index out of range"}), 400
+            if ig_followers is not None:
+                members[idx]["ig_followers"] = ig_followers
+            else:
+                members[idx].pop("ig_followers", None)
+            if ig_er is not None:
+                members[idx]["ig_er"] = ig_er
+            else:
+                members[idx].pop("ig_er", None)
             nm = calculate_nm(members, row["active_members"])
             cur.execute(
                 "UPDATE communities SET notable_members = %s, network_multiplier = %s, updated_at = NOW() WHERE id = %s",
