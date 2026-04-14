@@ -718,6 +718,7 @@ function mapCommunity(c) {
     campaignType: 'Brand Awareness', primaryKPI: 'Post Rate',
     matchRationale: 'Match rationale is calculated relative to an active brief.',
     igUsername, igFollowers: followers, igBio: igProfile.biography || '',
+    email: c.email || null, leaderName: c.leader_name || null,
     partnershipPreferences: c.partnership_preferences || {},
   };
 }
@@ -2650,6 +2651,13 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.7) 65%, rgba(0,0,0,0.92) 100%)' }} />
         {onBack && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, left: 14, zIndex: 2 }} onClick={onBack}>← Back</button>}
         {isOwnProfile && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, right: 14, zIndex: 2 }}>Edit Profile</button>}
+        {!isOwnProfile && (role === 'brand' || role === 'admin') && c.email && (
+          <a href={`mailto:${c.email}?subject=Partnership enquiry — ${encodeURIComponent(c.name)}`}
+            className="btn btn-lime btn-sm"
+            style={{ position: 'absolute', top: 14, right: 14, zIndex: 2, textDecoration: 'none' }}>
+            Reach Out →
+          </a>
+        )}
         {/* Community info at bottom */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 20px', zIndex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginBottom: 10 }}>
