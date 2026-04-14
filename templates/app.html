@@ -673,33 +673,44 @@ async function apiFetch(path, opts = {}) {
 
 // ─── SHAPE MAPPERS ───────────────────────────────────────────────────────────
 function mapCommunity(c) {
-  const ig = (c.instagram_data && typeof c.instagram_data === 'object' ? c.instagram_data : {});
-  const followers = ig.followers_count || 0;
-  const er = ig.engagement_rate || 0;
+  // instagram_data is { profile: {...}, media: [...], engagement_rate: N }
+  const igData = (c.instagram_data && typeof c.instagram_data === 'object' ? c.instagram_data : {});
+  const igProfile = igData.profile || {};
+  const followers = igProfile.followers_count || 0;
+  const er = igData.engagement_rate || 0;
+  const igUsername = igProfile.username || null;
   const hasIg = !!c.instagram_token;
   const tier = (hasIg && followers > 0) ? 'fully-verified' : (c.active_members ? 'verified' : 'starter');
   const tags = Array.isArray(c.tags) ? c.tags : [];
   const channels = [];
-  if (hasIg) channels.push({ name: 'Instagram', color: '#e1306c', reach: followers, engagement: Math.round(er * 10) / 10, vsAvg: null, engagementChannel: true });
+  if (hasIg) channels.push({
+    name: 'Instagram', color: '#e1306c', reach: followers,
+    engagement: er ? Math.round(er * 10) / 10 : null, vsAvg: null, engagementChannel: true,
+    url: igUsername ? 'https://instagram.com/' + igUsername : null, username: igUsername,
+  });
   const sub = c.substack_data && typeof c.substack_data === 'object' ? c.substack_data : null;
   if (sub && sub.url) channels.push({ name: 'Substack', color: '#ff6719', reach: null, engagement: null, vsAvg: null, engagementChannel: true, url: sub.url });
-  if (ig.website) channels.push({ name: 'Website', color: '#7eb8ff', reach: null, engagement: null, vsAvg: null, engagementChannel: false, url: ig.website });
+  const igWebsite = igProfile.website || null;
+  if (igWebsite) channels.push({ name: 'Website', color: '#7eb8ff', reach: null, engagement: null, vsAvg: null, engagementChannel: false, url: igWebsite });
   const csParsed = Array.isArray(c.case_studies) ? c.case_studies : [];
+  // Derive coverGradient from cover_option using the COVER_OPTIONS constant
+  const coverOpt = (typeof COVER_OPTIONS !== 'undefined' ? COVER_OPTIONS : []).find(o => o.id === (c.cover_option || 1));
   return {
     id: c.id, name: c.name, tagline: c.tagline || '', description: c.description || '',
-    bio: ig.biography || c.description || '', location: c.location || '',
-    tier, archetype: c.archetype_type || 'evangelical', archetypeLabel: c.archetype_label || 'Evangelists',
+    bio: igProfile.biography || c.description || '', location: c.location || '',
+    tier, archetype: c.archetype || 'evangelical', archetypeLabel: ({ evangelical: 'Evangelists', loyalists: 'Loyalists', buyers: 'Buyers', early: 'Early Adopters', cultural: 'Culturally Impactful' }[c.archetype] || 'Evangelists'),
     matchScore: '—', engagement: er ? Math.round(er * 10) / 10 : '—',
     activeMembers: c.active_members || 0, members: c.active_members || 0,
-    networkMultiplier: '—', reach: followers || null, cis: c.cis || null,
-    tags, cover: c.cover_url || null,
-    coverGradient: c.cover_gradient || 'linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #533483 100%)',
+    networkMultiplier: '—', reach: followers || null,
+    cis: c.cis_stamped || c.cis_raw || null,
+    tags, cover: c.cover_image_url || null,
+    coverGradient: coverOpt ? coverOpt.gradient : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 40%, #0f3460 70%, #533483 100%)',
     channels, notableMembers: Array.isArray(c.notable_members) ? c.notable_members : [],
     partnerships: csParsed.filter(cs => cs.mayo_verified || cs.verified),
     casestudies: csParsed,
     campaignType: 'Brand Awareness', primaryKPI: 'Post Rate',
     matchRationale: 'Match rationale is calculated relative to an active brief.',
-    igUsername: c.instagram_username || null,
+    igUsername, igFollowers: followers, igBio: igProfile.biography || '',
     partnershipPreferences: c.partnership_preferences || {},
   };
 }
@@ -2083,8 +2094,8 @@ function DiscoverPage({ role, communities: COMMUNITIES = [], briefs: BRIEFS = []
             {isBrand
               ? activeBriefFilter
                 ? `Sorted by match score · ${activeBriefFilter.partnershipType || 'Brief'}`
-                : `${COMMUNITIES.length} verified communities · Updated today`
-              : `${BRIEFS.length} open briefs matching your profile`}
+                : (COMMUNITIES.length > 0 ? `${COMMUNITIES.length} communities on Mayo` : 'No communities yet')
+              : (BRIEFS.length > 0 ? `${BRIEFS.length} open brief${BRIEFS.length === 1 ? '' : 's'} matching your profile` : 'No open briefs yet')}
           </div>
         </div>
       </div>
@@ -2133,13 +2144,21 @@ function DiscoverPage({ role, communities: COMMUNITIES = [], briefs: BRIEFS = []
       </div>
 
       {isBrand ? (
-        <div className="community-grid">
-          {sorted.map(c => <CommunityCard key={c.id} c={c} onClick={onViewCommunity} />)}
-        </div>
+        sorted.length > 0
+          ? <div className="community-grid">{sorted.map(c => <CommunityCard key={c.id} c={c} onClick={onViewCommunity} />)}</div>
+          : <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)' }}>
+              <div style={{ fontSize: 42, marginBottom: 12 }}>◎</div>
+              <div className="bc" style={{ fontSize: 18, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>No communities yet</div>
+              <div style={{ fontSize: 13 }}>Communities are joining — check back soon.</div>
+            </div>
       ) : (
-        <div className="community-grid">
-          {BRIEFS.map(b => <BriefCard key={b.id} b={b} onClick={onViewBrief} showMatch={true} />)}
-        </div>
+        BRIEFS.length > 0
+          ? <div className="community-grid">{BRIEFS.map(b => <BriefCard key={b.id} b={b} onClick={onViewBrief} showMatch={true} />)}</div>
+          : <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)' }}>
+              <div style={{ fontSize: 42, marginBottom: 12 }}>◫</div>
+              <div className="bc" style={{ fontSize: 18, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>No open briefs yet</div>
+              <div style={{ fontSize: 13 }}>When brands post partnership opportunities, they'll appear here. We'll notify you when something matches your community.</div>
+            </div>
       )}
     </div>
   );
@@ -2481,7 +2500,11 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
       <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, border: '1px solid var(--border)' }}>
         <div className="flex items-center gap-10">
           <TierBadge tier={c.tier || 'starter'} />
-          <div className="text-muted text-xs">{c.engagement}% CCE · {(c.activeMembers || c.members).toLocaleString()} active members · {(c.reach || c.members).toLocaleString()} reach</div>
+          <div className="text-muted text-xs">
+            {c.engagement !== '—' ? c.engagement + '% ER · ' : ''}
+            {(c.activeMembers || 0).toLocaleString()} active members
+            {c.reach ? ' · ' + c.reach.toLocaleString() + ' reach' : ''}
+          </div>
         </div>
         {role === 'brand' && !isOwnProfile && <button className="btn btn-lime btn-sm" onClick={onRequestPartnership}>Request Partnership →</button>}
         {isOwnProfile && <div className="flex gap-8"><span className="text-muted text-xs" style={{ alignSelf: 'center' }}>{c.partnerships.length} past partnerships</span></div>}
@@ -2520,17 +2543,21 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
               <div className="channel-info">
                 <div className="channel-name">{ch.name}</div>
                 {ch.engagementChannel
-                  ? <div className="channel-stats">{ch.reach ? ch.reach.toLocaleString() + ' reach' : ''} · {ch.engagement}% CCE · {ch.vsAvg}x avg</div>
-                  : <div className="channel-stats" style={{ color: 'var(--muted)', fontStyle: 'italic' }}>Reference only — visit <a href={ch.url} style={{ color: 'var(--cyan)', textDecoration: 'none' }} target="_blank" rel="noopener noreferrer">{ch.url}</a></div>
+                  ? <div className="channel-stats">
+                      {ch.reach ? ch.reach.toLocaleString() + ' followers' : '—'}
+                      {ch.engagement ? ' · ' + ch.engagement + '% ER' : ''}
+                      {ch.url && ch.username && <span> · <a href={ch.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)', textDecoration: 'none' }}>@{ch.username}</a></span>}
+                    </div>
+                  : <div className="channel-stats" style={{ color: 'var(--muted)', fontStyle: 'italic' }}>Reference only — <a href={ch.url} style={{ color: 'var(--cyan)', textDecoration: 'none' }} target="_blank" rel="noopener noreferrer">{ch.url}</a></div>
                 }
               </div>
-              {ch.engagementChannel && (
-                <div className="channel-bar-track"><div className="channel-bar-fill" style={{ background: ch.color, width: `${Math.min(ch.vsAvg / 5 * 100, 100)}%` }} /></div>
+              {ch.engagementChannel && ch.engagement !== null && (
+                <div className="channel-bar-track"><div className="channel-bar-fill" style={{ background: ch.color, width: Math.min((ch.engagement || 0) / 15 * 100, 100) + '%' }} /></div>
               )}
             </div>
           ))}
         </div>
-        <div className={`metric-card ${c.archetype === 'evangelical' ? 'pink' : c.archetype === 'loyalists' ? 'cyan' : c.archetype === 'early' ? 'green' : 'orange'}`}>
+        <div className={"metric-card " + (c.archetype === 'evangelical' ? 'pink' : c.archetype === 'loyalists' ? 'cyan' : c.archetype === 'early' ? 'green' : 'orange')}>
           <div className="metric-label">Community Type</div>
           <div style={{ fontFamily: 'Bebas Neue', fontSize: 32, marginBottom: 6 }}>{c.archetypeLabel}</div>
           <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>High Advocacy Behaviour</div>
@@ -3231,90 +3258,95 @@ function MeasurePage() {
 
 function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIEFS = [], onNavigate }) {
   const isBrand = role === 'brand';
-  const firstName = user ? user.name.split(' ')[0] : (isBrand ? 'Katie' : 'there');
+  const firstName = user ? user.name.split(' ')[0] : 'there';
+  const myCommunity = !isBrand && user ? COMMUNITIES.find(c => c.id === user.id) : null;
+
+  const summaryCards = isBrand ? [
+    { label: 'Communities on Mayo', val: String(COMMUNITIES.length), color: COMMUNITIES.length ? 'lime' : 'dark' },
+    { label: 'Open Briefs', val: String(BRIEFS.length), color: BRIEFS.length ? 'cyan' : 'dark' },
+    { label: 'Active Partnerships', val: '0', color: 'dark' },
+    { label: 'Total Spend', val: '$0', color: 'dark' },
+  ] : [
+    { label: 'Open Briefs', val: String(BRIEFS.length), color: BRIEFS.length ? 'cyan' : 'dark' },
+    { label: 'Active Projects', val: '0', color: 'dark' },
+    { label: 'My Proposals', val: '0', color: 'dark' },
+    { label: 'Total Earned', val: '$0', color: 'dark' },
+  ];
+
   return (
     <div>
-      <div className="display mb-20" style={{ fontSize: 36 }}>
-        {"Good morning, " + firstName + "."}
-      </div>
+      <div className="display mb-20" style={{ fontSize: 36 }}>{"Good morning, " + firstName + "."}</div>
 
-      {/* Summary cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 28 }}>
-        {(isBrand ? [
-          { label: 'Active Partnerships', val: '2', color: 'lime' },
-          { label: 'Open Briefs', val: '1', color: 'cyan' },
-          { label: 'Pending Proposals', val: '3', color: 'pink' },
-          { label: 'Total Spend', val: '$30K', color: 'dark' },
-        ] : [
-          { label: 'Active Projects', val: '1', color: 'lime' },
-          { label: 'Open Briefs', val: '4', color: 'cyan' },
-          { label: 'My Proposals', val: '2', color: 'yellow' },
-          { label: 'Total Earned', val: '$15K', color: 'green' },
-        ]).map(c => (
-          <div key={c.label} className={`metric-card ${c.color}`}>
+        {summaryCards.map(c => (
+          <div key={c.label} className={"metric-card " + c.color}>
             <div className="metric-label">{c.label}</div>
             <div className="metric-value sm">{c.val}</div>
           </div>
         ))}
       </div>
 
-      {/* Active project snapshot */}
-      <div className="card mb-16" style={{ overflow: 'hidden' }}>
-        <div style={{ height: 80, position: 'relative', background: 'var(--surface3)' }}>
-          <img src="https://picsum.photos/seed/southbound/1200/400" alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }} onError={e => e.target.style.display='none'} />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(8,8,8,0.9), rgba(8,8,8,0.3))' }} />
-          <div style={{ position: 'absolute', inset: 0, padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div className="bc" style={{ fontSize: 20, fontWeight: 800, textTransform: 'uppercase' }}>Hyperice × Southbound 400</div>
-              <div className="flex items-center gap-8 mt-4">
-                <span className="tag tag-orange">Sponsorship</span>
-                <span style={{ background: 'var(--green)', color: 'var(--black)', borderRadius: 4, padding: '2px 8px', fontSize: 11, fontFamily: 'Barlow Condensed', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>On Schedule</span>
+      {/* Community profile snapshot */}
+      {!isBrand && myCommunity && (
+        <div className="card mb-20" style={{ overflow: 'hidden' }}>
+          <div style={{ height: 80, position: 'relative', background: myCommunity.coverGradient || 'var(--surface3)' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(8,8,8,0.85), rgba(8,8,8,0.2))' }} />
+            <div style={{ position: 'absolute', inset: 0, padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div className="bc" style={{ fontSize: 20, fontWeight: 800, textTransform: 'uppercase' }}>{myCommunity.name}</div>
+                <div className="flex items-center gap-8 mt-4">
+                  <TierBadge tier={myCommunity.tier} />
+                  {myCommunity.tags.slice(0, 2).map(t => <span key={t} className="tag tag-ghost" style={{ fontSize: 10 }}>{t}</span>)}
+                </div>
+              </div>
+              <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('profile')}>View My Profile →</button>
+            </div>
+          </div>
+          <div style={{ padding: '14px 20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }}>
+              <div>
+                <div className="text-muted text-xs mb-4">Active Members</div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{(myCommunity.activeMembers || 0).toLocaleString()}</div>
+              </div>
+              <div>
+                <div className="text-muted text-xs mb-4">Instagram Followers</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: myCommunity.reach ? 'var(--white)' : 'var(--muted)' }}>
+                  {myCommunity.reach ? myCommunity.reach.toLocaleString() : '—'}
+                </div>
+              </div>
+              <div>
+                <div className="text-muted text-xs mb-4">Engagement Rate</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: myCommunity.engagement !== '—' ? 'var(--lime)' : 'var(--muted)' }}>
+                  {myCommunity.engagement !== '—' ? myCommunity.engagement + '%' : '—'}
+                </div>
               </div>
             </div>
-            <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('project')}>View Project →</button>
           </div>
         </div>
-        <div style={{ padding: '14px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-            {ACTIVE_PROJECT.stages.map((s, i) => (
-              <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{
-                  width: 26, height: 26, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: s.status === 'done' ? 'var(--green)' : s.status === 'active' ? 'var(--lime)' : 'var(--surface3)',
-                  color: s.status === 'locked' ? 'var(--muted)' : 'var(--black)',
-                  fontSize: 10, fontFamily: 'Barlow Condensed', fontWeight: 700, flexShrink: 0,
-                }}>
-                  {s.status === 'done' ? '✓' : i + 1}
-                </div>
-                <span style={{ fontSize: 11, fontFamily: 'Barlow Condensed', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: s.status === 'active' ? 'var(--white)' : 'var(--muted)', whiteSpace: 'nowrap' }}>{s.name}</span>
-                {i < ACTIVE_PROJECT.stages.length - 1 && (
-                  <div style={{ width: 14, height: 2, background: s.status === 'done' ? 'var(--green)' : 'var(--surface3)', margin: '0 2px' }} />
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center gap-20" style={{ borderTop: '1px solid var(--border)', paddingTop: 12 }}>
-            <div><div className="text-muted text-xs mb-4">Next Milestone</div><div style={{ fontSize: 13, fontWeight: 600 }}>Activation · Mar 12–16</div></div>
-            <div><div className="text-muted text-xs mb-4">Budget</div><div style={{ fontSize: 13, fontWeight: 600 }}>$15,000 · 75% Paid</div></div>
-            <div><div className="text-muted text-xs mb-4">Product Status</div><div style={{ fontSize: 13, fontWeight: 600, color: 'var(--cyan)' }}>Shipped · Out for Delivery Feb 16</div></div>
-          </div>
-        </div>
-      </div>
+      )}
 
-      {/* Recommended */}
+      {/* Welcome card for new users whose community hasn't loaded yet */}
+      {!isBrand && !myCommunity && (
+        <div className="card mb-20 p-20" style={{ borderColor: 'rgba(210,255,1,0.15)', background: 'rgba(210,255,1,0.03)' }}>
+          <div className="bc" style={{ fontSize: 16, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>Welcome to Mayo.</div>
+          <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6, marginBottom: 16 }}>Your profile is live. Brands will be able to discover your community and send partnership proposals here.</p>
+          <button className="btn btn-lime btn-sm" onClick={() => onNavigate('profile')}>View My Profile →</button>
+        </div>
+      )}
+
       <div>
         <div className="section-header mb-14">
-          <span className="section-title">{isBrand ? "Recommended Communities" : "New Briefs for You"}</span>
+          <span className="section-title">{isBrand ? "Communities on Mayo" : "Open Briefs"}</span>
           <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('discover')}>See All →</button>
         </div>
         {isBrand ? (
-          <div className="community-grid">
-            {COMMUNITIES.slice(0, 2).map(c => <CommunityCard key={c.id} c={c} onClick={() => onNavigate('discover')} />)}
-          </div>
+          COMMUNITIES.length > 0
+            ? <div className="community-grid">{COMMUNITIES.slice(0, 2).map(c => <CommunityCard key={c.id} c={c} onClick={() => onNavigate('discover')} />)}</div>
+            : <div style={{ padding: '28px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Communities joining Mayo will appear here.</div>
         ) : (
-          <div className="community-grid">
-            {BRIEFS.map(b => <BriefCard key={b.id} b={b} onClick={() => onNavigate('discover')} showMatch={true} />)}
-          </div>
+          BRIEFS.length > 0
+            ? <div className="community-grid">{BRIEFS.slice(0, 2).map(b => <BriefCard key={b.id} b={b} onClick={() => onNavigate('discover')} showMatch={true} />)}</div>
+            : <div style={{ padding: '28px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>No open briefs yet. We'll notify you when brands post opportunities that match your community.</div>
         )}
       </div>
     </div>
@@ -3328,7 +3360,7 @@ function App() {
   const [role, setRole] = useState(null);
   const [user, setUser] = useState(null);
   const [communities, setCommunities] = useState([]);
-  const [briefs, setBriefs] = useState(BRIEFS); // fallback to hardcoded
+  const [briefs, setBriefs] = useState([]);
   const [activePage, setActivePage] = useState('home');
   const [selectedCommunity, setSelectedCommunity] = useState(null);
   const [selectedBrief, setSelectedBrief] = useState(null);
@@ -3451,13 +3483,39 @@ function App() {
     switch (activePage) {
       case 'home': return <DashboardHome role={role} user={user} communities={communities} briefs={briefs} onNavigate={navigate} />;
       case 'discover': return <DiscoverPage role={role} communities={communities} briefs={briefs} onViewCommunity={setSelectedCommunity} onViewBrief={setSelectedBrief} activeBriefFilter={activeBriefFilter} onClearBriefFilter={() => setActiveBriefFilter(null)} onSetBriefFilter={handleSetBriefFilter} />;
-      case 'project': return <ProjectPage project={ACTIVE_PROJECT} />;
-      case 'measure': return <MeasurePage />;
+      case 'project': return (
+        <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>◷</div>
+          <div className="bc" style={{ fontSize: 18, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>No active projects</div>
+          <div style={{ fontSize: 13, marginBottom: 20 }}>Once you partner with a brand, your project will appear here.</div>
+          <button className="btn btn-lime" onClick={() => navigate('discover')}>Browse Opportunities →</button>
+        </div>
+      );
+      case 'measure': return (
+        <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>◈</div>
+          <div className="bc" style={{ fontSize: 18, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>No reports yet</div>
+          <div style={{ fontSize: 13 }}>Campaign reports will appear here once a project is complete.</div>
+        </div>
+      );
       case 'profile': {
-        const profileCommunity = isBrand
-          ? communities[0] || null
-          : communities.find(c => user && (c.name === user.name || c.id === user.id)) || communities[0] || null;
-        if (!profileCommunity) return <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}><div style={{ fontSize: 48, marginBottom: 12 }}>◯</div><div className="bc" style={{ fontSize: 18, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>Profile loading...</div></div>;
+        if (isBrand) {
+          return (
+            <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>🏷</div>
+              <div className="bc" style={{ fontSize: 18, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>Brand Profile</div>
+              <div style={{ fontSize: 13 }}>Brand profile management coming soon.</div>
+            </div>
+          );
+        }
+        const profileCommunity = user ? communities.find(c => String(c.id) === String(user.id)) : null;
+        if (!profileCommunity) return (
+          <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>◯</div>
+            <div className="bc" style={{ fontSize: 18, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>Loading your profile...</div>
+            <div style={{ fontSize: 13 }}>If this persists, try signing out and back in.</div>
+          </div>
+        );
         return <CommunityProfilePage community={profileCommunity} onBack={null} role={role} isOwnProfile={true} />;
       }
       case 'briefs': return (
