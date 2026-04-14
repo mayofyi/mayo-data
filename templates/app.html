@@ -746,6 +746,88 @@ function mapBrief(b) {
     posted: b.created_at ? new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '—',
     deadline: b.deadline || '—', window: b.activation_window || '—',
     lookingFor: b.looking_for || '', responseCount: b.response_count || 0,
+    campaignGoal: b.campaign_goal || '',
+  };
+}
+
+function calcMatchScore(brief, community) {
+  if (!community) return null;
+  const reqs = brief.requirements || {};
+
+  // Hard filter: minimum active members
+  const minMembers = parseInt(reqs.min_active_members) || 0;
+  if (minMembers > 0 && (community.activeMembers || 0) < minMembers) {
+    return { score: null, hardFail: `Needs ${minMembers.toLocaleString()}+ active members` };
+  }
+
+  const combined = ((brief.campaignGoal || '') + ' ' + (brief.partnershipType || '')).toLowerCase();
+
+  // Archetype fit (0–100)
+  const archetypeFit = (() => {
+    const arch = community.archetype || 'evangelical';
+    const kw = {
+      evangelical: ['awareness', 'brand', 'cultural', 'association', 'sponsorship'],
+      early:       ['product launch', 'launch', 'seeding', 'new product'],
+      loyalists:   ['long-term', 'ongoing', 'season', 'sponsorship', 'renewable'],
+      buyers:      ['product', 'seeding', 'direct', 'purchase'],
+      cultural:    ['content', 'ambassador', 'ugc', 'social'],
+    }[arch] || [];
+    const hits = kw.filter(k => combined.includes(k)).length;
+    return hits >= 2 ? 95 : hits === 1 ? 68 : 30;
+  })();
+
+  // ER score (0–100), null if no data
+  const erScore = (() => {
+    const er = parseFloat(community.engagement);
+    if (!er || isNaN(er)) return null;
+    if (er >= 8) return 100;
+    if (er >= 4) return Math.round(70 + ((er - 4) / 4) * 25);
+    if (er >= 2) return Math.round(40 + ((er - 2) / 2) * 30);
+    return Math.max(10, Math.round(er / 2 * 40));
+  })();
+
+  // CIS score (already 0–100), null if not set
+  const cisScore = community.cis != null ? Math.min(100, Math.round(community.cis)) : null;
+
+  // NM score (0–100), null if not available
+  const nmScore = (() => {
+    const nm = parseFloat(community.networkMultiplier);
+    if (!nm || isNaN(nm)) return null;
+    if (nm >= 5) return 100;
+    if (nm >= 3) return Math.round(75 + ((nm - 3) / 2) * 20);
+    if (nm >= 2) return Math.round(55 + ((nm - 2) / 1) * 20);
+    if (nm >= 1) return Math.round(30 + ((nm - 1) / 1) * 25);
+    return 15;
+  })();
+
+  // Weights by campaign objective
+  let w = { archetype: 0.30, er: 0.25, cis: 0.25, nm: 0.20 };
+  if (combined.includes('awareness') || combined.includes('sponsorship')) {
+    w = { archetype: 0.35, er: 0.20, cis: 0.30, nm: 0.15 };
+  } else if (combined.includes('product launch') || combined.includes('seeding')) {
+    w = { archetype: 0.25, er: 0.35, cis: 0.20, nm: 0.20 };
+  } else if (combined.includes('content') || combined.includes('ambassador')) {
+    w = { archetype: 0.30, er: 0.30, cis: 0.25, nm: 0.15 };
+  } else if (combined.includes('event')) {
+    w = { archetype: 0.25, er: 0.20, cis: 0.20, nm: 0.35 };
+  }
+
+  const factors = [
+    { val: archetypeFit, weight: w.archetype },
+    { val: erScore,      weight: w.er },
+    { val: cisScore,     weight: w.cis },
+    { val: nmScore,      weight: w.nm },
+  ].filter(f => f.val !== null);
+
+  if (factors.length === 0) return { score: null, hardFail: null, breakdown: {} };
+
+  const totalW = factors.reduce((s, f) => s + f.weight, 0);
+  const score = Math.round(factors.reduce((s, f) => s + f.val * f.weight, 0) / totalW);
+
+  return {
+    score,
+    hardFail: null,
+    breakdown: { archetype: archetypeFit, er: erScore, cis: cisScore, nm: nmScore, factors: factors.length },
   };
 }
 
@@ -990,7 +1072,7 @@ function CommunityCard({ c, onClick }) {
   );
 }
 
-function BriefCard({ b, onClick, showMatch }) {
+function BriefCard({ b, onClick, showMatch, matchScore }) {
   return (
     <div className="community-card" onClick={() => onClick(b)}>
       {/* 3:4 block — gradient cover + overlaid info + metrics */}
@@ -1005,11 +1087,13 @@ function BriefCard({ b, onClick, showMatch }) {
           <span className={`tag tag-${b.partnershipTypeColor}`}>{b.partnershipType}</span>
         </div>
 
-        {/* Top-right: match score */}
-        <div style={{ position: 'absolute', top: 12, right: 12, background: 'var(--yellow)', color: '#000', borderRadius: 6, padding: '3px 9px', textAlign: 'center' }}>
-          <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, lineHeight: 1 }}>79</div>
-          <div style={{ fontSize: 9, fontWeight: 700, fontFamily: 'Barlow Condensed', letterSpacing: '0.06em' }}>MATCH</div>
-        </div>
+        {/* Top-right: match score — only show when calculated */}
+        {matchScore != null && (
+          <div style={{ position: 'absolute', top: 12, right: 12, background: matchScore >= 70 ? 'var(--yellow)' : matchScore >= 50 ? 'rgba(255,234,18,0.7)' : 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)', color: matchScore >= 50 ? '#000' : '#fff', borderRadius: 6, padding: '3px 9px', textAlign: 'center' }}>
+            <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, lineHeight: 1 }}>{matchScore}</div>
+            <div style={{ fontSize: 9, fontWeight: 700, fontFamily: 'Barlow Condensed', letterSpacing: '0.06em' }}>MATCH</div>
+          </div>
+        )}
 
         {/* Bottom: brand name, title, tags + metrics */}
         <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.7) 50%, transparent 100%)', padding: '40px 14px 14px' }}>
@@ -2077,11 +2161,20 @@ function LoginScreen({ onLogin }) {
 }
 
 
-function DiscoverPage({ role, communities: COMMUNITIES = [], briefs: BRIEFS = [], onViewCommunity, onViewBrief, activeBriefFilter, onClearBriefFilter, onSetBriefFilter }) {
+function DiscoverPage({ role, communities: COMMUNITIES = [], briefs: BRIEFS = [], onViewCommunity, onViewBrief, activeBriefFilter, onClearBriefFilter, onSetBriefFilter, myProfile }) {
   const [filter, setFilter] = useState("All");
   const [search, setSearch] = useState("");
   const filters = ["All", "Running", "Fitness", "Wellness", "Culture", "Lifestyle"];
   const isBrand = role === 'brand';
+
+  // Scored + sorted briefs for community users
+  const scoredBriefs = React.useMemo(() => {
+    if (isBrand || !myProfile) return BRIEFS.map(b => ({ ...b, _matchScore: null }));
+    return BRIEFS.map(b => {
+      const result = calcMatchScore(b, myProfile);
+      return { ...b, _matchScore: result?.score ?? null, _hardFail: result?.hardFail ?? null };
+    }).sort((a, b) => (b._matchScore || 0) - (a._matchScore || 0));
+  }, [BRIEFS, myProfile, isBrand]);
 
   const filtered = COMMUNITIES.filter(c => {
     const matchSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.tagline.toLowerCase().includes(search.toLowerCase());
@@ -2106,7 +2199,7 @@ function DiscoverPage({ role, communities: COMMUNITIES = [], briefs: BRIEFS = []
               ? activeBriefFilter
                 ? `Sorted by match score · ${activeBriefFilter.partnershipType || 'Brief'}`
                 : (COMMUNITIES.length > 0 ? `${COMMUNITIES.length} communities on Mayo` : 'No communities yet')
-              : (BRIEFS.length > 0 ? `${BRIEFS.length} open brief${BRIEFS.length === 1 ? '' : 's'} matching your profile` : 'No open briefs yet')}
+              : (scoredBriefs.length > 0 ? `${scoredBriefs.length} open brief${scoredBriefs.length === 1 ? '' : 's'} · sorted by match` : 'No open briefs yet')}
           </div>
         </div>
       </div>
@@ -2163,8 +2256,8 @@ function DiscoverPage({ role, communities: COMMUNITIES = [], briefs: BRIEFS = []
               <div style={{ fontSize: 13 }}>Communities are joining — check back soon.</div>
             </div>
       ) : (
-        BRIEFS.length > 0
-          ? <div className="community-grid">{BRIEFS.map(b => <BriefCard key={b.id} b={b} onClick={onViewBrief} showMatch={true} />)}</div>
+        scoredBriefs.length > 0
+          ? <div className="community-grid">{scoredBriefs.map(b => <BriefCard key={b.id} b={b} onClick={onViewBrief} showMatch={true} matchScore={b._matchScore} />)}</div>
           : <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--muted)' }}>
               <div style={{ fontSize: 42, marginBottom: 12 }}>◫</div>
               <div className="bc" style={{ fontSize: 18, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>No open briefs yet</div>
@@ -2699,7 +2792,11 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
 }
 
 
-function BriefDetailPage({ brief: b, onBack, role }) {
+function BriefDetailPage({ brief: b, onBack, role, myProfile }) {
+  const matchResult = myProfile ? calcMatchScore(b, myProfile) : null;
+  const matchScore = matchResult?.score ?? null;
+  const breakdown = matchResult?.breakdown || {};
+  const hardFail = matchResult?.hardFail || null;
   return (
     <div>
       <button className="btn btn-ghost btn-sm" style={{ marginBottom: 16 }} onClick={onBack}>← Back to Discover</button>
@@ -2769,6 +2866,47 @@ function BriefDetailPage({ brief: b, onBack, role }) {
 
         {/* Right col */}
         <div>
+          {/* Match score — community view only */}
+          {role === 'community' && myProfile && (
+            <div className="card p-16 mb-14" style={{ borderColor: hardFail ? 'rgba(255,80,80,0.3)' : matchScore != null ? 'rgba(255,234,18,0.3)' : 'var(--border)', background: hardFail ? 'rgba(255,80,80,0.04)' : matchScore != null ? 'rgba(255,234,18,0.04)' : 'var(--surface2)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>Your Match Score</div>
+                <div style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--muted)', opacity: 0.6 }}>Estimated</div>
+              </div>
+              {hardFail ? (
+                <div>
+                  <div style={{ fontFamily: 'Bebas Neue', fontSize: 32, color: 'rgba(255,80,80,0.7)', lineHeight: 1, marginBottom: 4 }}>—</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,80,80,0.8)', lineHeight: 1.5 }}>{hardFail}</div>
+                </div>
+              ) : matchScore != null ? (
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 8 }}>
+                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 48, color: matchScore >= 70 ? 'var(--yellow)' : matchScore >= 50 ? 'rgba(255,234,18,0.7)' : 'var(--muted)', lineHeight: 1 }}>{matchScore}</div>
+                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--muted)' }}>/100</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                    {[
+                      { label: 'Archetype fit', val: breakdown.archetype },
+                      { label: 'Engagement rate', val: breakdown.er },
+                      { label: 'Cultural impact', val: breakdown.cis },
+                      { label: 'Network multiplier', val: breakdown.nm },
+                    ].map(({ label, val }) => val != null && (
+                      <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <div style={{ fontSize: 10, color: 'var(--muted)', width: 110, flexShrink: 0 }}>{label}</div>
+                        <div style={{ flex: 1, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
+                          <div style={{ width: val + '%', height: '100%', background: val >= 70 ? 'var(--yellow)' : val >= 40 ? 'var(--cyan)' : 'var(--muted)', borderRadius: 2 }} />
+                        </div>
+                        <div style={{ fontSize: 10, color: 'var(--muted)', width: 24, textAlign: 'right' }}>{val}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ fontSize: 12, color: 'var(--muted)' }}>Connect Instagram to see your match score.</div>
+              )}
+            </div>
+          )}
+
           {/* Budget */}
           <div className="metric-card lime mb-14">
             <div className="metric-label">Activation Budget</div>
@@ -3893,10 +4031,10 @@ function EditProfileModule({ userId, onDone }) {
   );
 }
 
-function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIEFS = [], onNavigate }) {
+function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIEFS = [], onNavigate, myProfile }) {
   const isBrand = role === 'brand';
   const firstName = user ? user.name.split(' ')[0] : 'there';
-  const myCommunity = !isBrand && user ? COMMUNITIES.find(c => c.id === user.id) : null;
+  const myCommunity = myProfile || (!isBrand && user ? COMMUNITIES.find(c => c.id === user.id) : null);
 
   const summaryCards = isBrand ? [
     { label: 'Communities on Mayo', val: String(COMMUNITIES.length), color: COMMUNITIES.length ? 'lime' : 'dark' },
@@ -3996,7 +4134,7 @@ function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIE
             : <div style={{ padding: '28px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Communities joining Mayo will appear here.</div>
         ) : (
           BRIEFS.length > 0
-            ? <div className="community-grid">{BRIEFS.slice(0, 2).map(b => <BriefCard key={b.id} b={b} onClick={() => onNavigate('discover')} showMatch={true} />)}</div>
+            ? <div className="community-grid">{BRIEFS.slice(0, 2).map(b => { const ms = myProfile ? (calcMatchScore(b, myProfile)?.score ?? null) : null; return <BriefCard key={b.id} b={b} onClick={() => onNavigate('discover')} showMatch={true} matchScore={ms} />; })}</div>
             : <div style={{ padding: '28px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>No open briefs yet. We'll notify you when brands post opportunities that match your community.</div>
         )}
       </div>
@@ -4128,12 +4266,13 @@ function App() {
     if (selectedCommunity) {
       return <CommunityProfilePage community={selectedCommunity} onBack={() => setSelectedCommunity(null)} role={role} onRequestPartnership={() => navigate('project')} />;
     }
+    const myProfile = role === 'community' && user ? communities.find(c => c.id === user.id) || null : null;
     if (selectedBrief) {
-      return <BriefDetailPage brief={selectedBrief} onBack={() => setSelectedBrief(null)} role={role} />;
+      return <BriefDetailPage brief={selectedBrief} onBack={() => setSelectedBrief(null)} role={role} myProfile={myProfile} />;
     }
     switch (activePage) {
-      case 'home': return <DashboardHome role={role} user={user} communities={communities} briefs={briefs} onNavigate={navigate} />;
-      case 'discover': return <DiscoverPage role={role} communities={communities} briefs={briefs} onViewCommunity={setSelectedCommunity} onViewBrief={setSelectedBrief} activeBriefFilter={activeBriefFilter} onClearBriefFilter={() => setActiveBriefFilter(null)} onSetBriefFilter={handleSetBriefFilter} />;
+      case 'home': return <DashboardHome role={role} user={user} communities={communities} briefs={briefs} onNavigate={navigate} myProfile={myProfile} />;
+      case 'discover': return <DiscoverPage role={role} communities={communities} briefs={briefs} onViewCommunity={setSelectedCommunity} onViewBrief={setSelectedBrief} activeBriefFilter={activeBriefFilter} onClearBriefFilter={() => setActiveBriefFilter(null)} onSetBriefFilter={handleSetBriefFilter} myProfile={myProfile} />;
       case 'project': return (
         <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>◷</div>
