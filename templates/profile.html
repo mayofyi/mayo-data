@@ -326,23 +326,26 @@ function ProfilePage() {
       {/* Single-column layout */}
       <div style={{ width:'100%', maxWidth:660, margin:'0 auto', paddingBottom:80 }}>
 
-        {/* Face card — full width, 3:4 */}
+        {/* Face card — full width, 16:9, image + info overlaid at bottom */}
         <div style={{ margin:'0 24px 0' }}>
-          <div style={{ borderRadius:12, overflow:'hidden', border:'1px solid var(--border)' }}>
-            <div style={{ aspectRatio:'3/4', position:'relative', background:coverBg }}>
-              <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.6) 70%, rgba(0,0,0,0.88) 100%)' }} />
-              <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'44px 22px 22px' }}>
-                <div className="bb" style={{ fontSize:36, color:'#fff', lineHeight:1, marginBottom:6 }}>{data.name}</div>
-                {data.tagline && <div style={{ fontSize:13, color:'rgba(255,255,255,0.75)', marginBottom:12 }}>{data.tagline}</div>}
-                {tags.length > 0 && (
-                  <div style={{ display:'flex', gap:4, flexWrap:'wrap', marginBottom:12 }}>
-                    {tags.slice(0,5).map(t => (
-                      <span key={t} style={{ border:'1px solid rgba(255,255,255,0.3)', color:'rgba(255,255,255,0.85)', borderRadius:3, padding:'2px 7px', fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>{t}</span>
-                    ))}
-                  </div>
-                )}
+          <div style={{ borderRadius:12, overflow:'hidden', position:'relative', background:coverBg, aspectRatio:'16/9' }}>
+            {data.cover_image_url && <img src={data.cover_image_url} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', opacity:0.5, mixBlendMode:'luminosity' }} onError={e => e.target.style.display='none'} />}
+            <div style={{ position:'absolute', inset:0, background:'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.7) 65%, rgba(0,0,0,0.92) 100%)' }} />
+            <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'0 22px 20px' }}>
+              <div style={{ display:'flex', alignItems:'flex-end', gap:14, marginBottom:10 }}>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div className="bb" style={{ fontSize:36, color:'#fff', lineHeight:1, textShadow:'0 1px 6px rgba(0,0,0,0.5)', marginBottom:3 }}>{data.name}</div>
+                  {data.tagline && <div style={{ fontSize:12, color:'rgba(255,255,255,0.65)' }}>{data.tagline}</div>}
+                </div>
                 <TierBadge tier={tier} />
               </div>
+              {tags.length > 0 && (
+                <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
+                  {tags.slice(0,6).map(t => (
+                    <span key={t} style={{ border:'1px solid rgba(255,255,255,0.25)', color:'rgba(255,255,255,0.8)', borderRadius:3, padding:'2px 7px', fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>{t}</span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

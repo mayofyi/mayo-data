@@ -2489,22 +2489,26 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
   }
   return (
     <div>
-      <div style={{ height: 200, borderRadius: 10, overflow: 'hidden', position: 'relative', marginBottom: 16 }}>
-        <div style={{ width: '100%', height: '100%', background: c.coverGradient || 'var(--surface3)' }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.65))' }} />
-        {onBack && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, left: 14 }} onClick={onBack}>← Back</button>}
-        {isOwnProfile && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, right: 14 }}>Edit Profile</button>}
-        {/* Archetype badge top-left (below back button if present) */}
-        <div style={{ position: 'absolute', top: onBack ? 48 : 14, left: 14 }}>
-          <ArchetypeBadge type={c.archetype} label={c.archetypeLabel} />
-        </div>
-        {/* Name, tagline, tags — bottom left */}
-        <div style={{ position: 'absolute', bottom: 16, left: 18, right: 18 }}>
-          <div style={{ fontFamily: 'Bebas Neue', fontSize: 40, color: 'var(--white)', lineHeight: 1, marginBottom: 4 }}>{c.name}</div>
-          <div style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, marginBottom: 8 }}>{c.tagline}</div>
-          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-            {c.tags.map(t => <span key={t} className="tag tag-ghost" style={{ fontSize: 10 }}>{t}</span>)}
+      {/* Facecard — cover image + community info overlaid at bottom */}
+      <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 16, background: c.coverGradient || 'var(--surface3)', aspectRatio: '16/9' }}>
+        {c.cover && <img src={c.cover} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5, mixBlendMode: 'luminosity' }} onError={e => e.target.style.display='none'} />}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.7) 65%, rgba(0,0,0,0.92) 100%)' }} />
+        {onBack && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, left: 14, zIndex: 2 }} onClick={onBack}>← Back</button>}
+        {isOwnProfile && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, right: 14, zIndex: 2 }}>Edit Profile</button>}
+        {/* Community info at bottom */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 20px', zIndex: 1 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginBottom: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: 'Bebas Neue', fontSize: 38, color: '#fff', lineHeight: 1, textShadow: '0 1px 6px rgba(0,0,0,0.5)', marginBottom: 3 }}>{c.name}</div>
+              {c.tagline && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 2 }}>{c.tagline}</div>}
+            </div>
+            <ArchetypeBadge type={c.archetype} label={c.archetypeLabel} />
           </div>
+          {c.tags.length > 0 && (
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {c.tags.map(t => <span key={t} className="tag tag-ghost" style={{ fontSize: 10 }}>{t}</span>)}
+            </div>
+          )}
         </div>
       </div>
 
@@ -2700,66 +2704,67 @@ function BriefDetailPage({ brief: b, onBack, role }) {
     <div>
       <button className="btn btn-ghost btn-sm" style={{ marginBottom: 16 }} onClick={onBack}>← Back to Discover</button>
 
-      {/* Hero cover */}
-      <div style={{ height: 160, borderRadius: 10, overflow: 'hidden', position: 'relative', marginBottom: 20, background: 'var(--surface3)' }}>
-        <img src={b.heroImage} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5 }} onError={e => e.target.style.display='none'} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(120deg, rgba(255,107,107,0.3), rgba(0,0,0,0.7))' }} />
-        <div style={{ position: 'absolute', inset: 0, padding: '20px 24px', display: 'flex', alignItems: 'flex-end', gap: 16 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 10, flexShrink: 0,
-            background: b.brandColor, color: '#000',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'Bebas Neue', fontSize: 26, border: '2px solid rgba(255,255,255,0.2)',
-          }}>{b.brandInitial}</div>
-          <div>
-            <div style={{ fontFamily: 'Barlow Condensed', fontSize: 26, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em', color: '#fff' }}>{b.brand}</div>
-            <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{b.title}</div>
-          </div>
-          <div style={{ marginLeft: 'auto' }}>
-            <span className={`tag tag-${b.partnershipTypeColor}`} style={{ fontSize: 13, padding: '5px 12px' }}>{b.partnershipType}</span>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 20, alignItems: 'start' }}>
         {/* Left col */}
         <div>
-          {/* Brand header */}
-          <div className="card p-20 mb-16">
-            <div className="flex items-center gap-16 mb-16">
-              <div className="brief-brand-logo" style={{ background: b.brandColor + '22', color: b.brandColor, width: 60, height: 60, fontSize: 24, borderRadius: 10 }}>
-                {b.brandInitial}
-              </div>
-              <div>
-                <div className="bc" style={{ fontSize: 22, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{b.brand}</div>
-                <div className="text-muted text-sm">{b.brandTagline}</div>
-                <div className="flex gap-8 mt-8">
-                  {b.tags.map(t => <span key={t} className="tag tag-outline">{t}</span>)}
+          {/* Hero facecard — image + brand info overlaid at bottom */}
+          <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 14, background: 'var(--surface3)', aspectRatio: '16/9' }}>
+            {/* Brand gradient base */}
+            <div style={{ position: 'absolute', inset: 0, background: b.brandGradient }} />
+            {/* Photo */}
+            <img src={b.heroImage} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.55, mixBlendMode: 'luminosity' }} onError={e => e.target.style.display='none'} />
+            {/* Bottom gradient */}
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0) 35%, rgba(0,0,0,0.7) 70%, rgba(0,0,0,0.92) 100%)' }} />
+            {/* Brand info overlay */}
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 20px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginBottom: 12 }}>
+                {/* Avatar */}
+                <div style={{
+                  width: 52, height: 52, borderRadius: 10, flexShrink: 0,
+                  background: b.brandColor, color: '#000',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'Bebas Neue', fontSize: 24, border: '2px solid rgba(255,255,255,0.15)',
+                }}>{b.brandInitial}</div>
+                {/* Name + tagline */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'Bebas Neue', fontSize: 34, letterSpacing: '0.03em', color: '#fff', lineHeight: 1, textShadow: '0 1px 6px rgba(0,0,0,0.5)' }}>{b.brand}</div>
+                  {b.brandTagline && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 2 }}>{b.brandTagline}</div>}
                 </div>
+                {/* Partnership type badge */}
+                <span className={`tag tag-${b.partnershipTypeColor}`} style={{ fontSize: 12, padding: '5px 12px', flexShrink: 0, fontFamily: 'Barlow Condensed', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{b.partnershipType}</span>
               </div>
-              <div style={{ marginLeft: 'auto' }}>
-                <span className={`tag tag-${b.partnershipTypeColor}`} style={{ fontSize: 13, padding: '5px 12px' }}>{b.partnershipType}</span>
-              </div>
+              {/* Tags */}
+              {b.tags.length > 0 && (
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {b.tags.map(t => <span key={t} className="tag tag-ghost" style={{ fontSize: 10 }}>{t}</span>)}
+                </div>
+              )}
             </div>
-            {b.brandBio && <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>{b.brandBio}</p>}
           </div>
 
+          {/* Brand bio */}
+          {b.brandBio && (
+            <div className="card p-20 mb-14">
+              <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.7 }}>{b.brandBio}</p>
+            </div>
+          )}
+
           {/* Partnership goals */}
-          <div className="card p-20 mb-16" style={{ borderColor: 'rgba(255,235,100,0.2)', background: 'rgba(255,234,18,0.04)' }}>
+          <div className="card p-20 mb-14" style={{ borderColor: 'rgba(255,235,100,0.2)', background: 'rgba(255,234,18,0.04)' }}>
             <div className="section-title mb-8">Partnership Goals</div>
             <p style={{ fontSize: 13, lineHeight: 1.7 }}>{b.goal}</p>
           </div>
 
           {/* What we're looking for */}
-          <div className="card p-20 mb-16">
+          <div className="card p-20 mb-14">
             <div className="section-title mb-8">What We're Looking For</div>
-            <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6 }}>{b.lookingFor}</p>
+            <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.7 }}>{b.lookingFor}</p>
           </div>
 
           {role === 'community' && (
             <div style={{ display: 'flex', gap: 10 }}>
-              <button className="btn btn-lime btn-lg" style={{ flex: 1 }}>Respond to Brief →</button>
-              <button className="btn btn-ghost">Save for Later</button>
+              <button className="btn btn-lime btn-lg" style={{ flex: 1, fontFamily: 'Barlow Condensed', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Respond to Brief →</button>
+              <button className="btn btn-ghost" style={{ fontFamily: 'Barlow Condensed', fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase' }}>Save for Later</button>
             </div>
           )}
         </div>
@@ -2777,9 +2782,9 @@ function BriefDetailPage({ brief: b, onBack, role }) {
           <div className="card p-16 mb-14">
             <div className="section-title mb-10">What's on Offer</div>
             {b.products.map((p, i) => (
-              <div key={i} style={{ padding: '8px 0', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{typeof p === 'object' ? p.name : p}</div>
-                {typeof p === 'object' && p.description && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 2 }}>{p.description}</div>}
+              <div key={i} style={{ padding: '10px 0', borderBottom: i < b.products.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                <div style={{ fontSize: 13, fontWeight: 700 }}>{typeof p === 'object' ? p.name : p}</div>
+                {typeof p === 'object' && p.description && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3, lineHeight: 1.5 }}>{p.description}</div>}
               </div>
             ))}
           </div>
@@ -2799,7 +2804,7 @@ function BriefDetailPage({ brief: b, onBack, role }) {
               ? Object.entries(b.requirements).map(([k, v]) => (
                   <div key={k} className="stat-row">
                     <span className="text-muted text-xs">{k.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
-                    <span style={{ fontSize: 13 }}>{String(v)}</span>
+                    <span style={{ fontSize: 13, textAlign: 'right', maxWidth: '60%' }}>{String(v)}</span>
                   </div>
                 ))
               : <span className="text-muted text-xs">No specific requirements listed.</span>
@@ -2809,8 +2814,8 @@ function BriefDetailPage({ brief: b, onBack, role }) {
           {/* KPIs */}
           <div className="card p-16">
             <div className="section-title mb-10">KPIs</div>
-            <div className="flex gap-8 flex-wrap">
-              {b.kpis.map(k => <span key={k} className="tag tag-cyan">{k}</span>)}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {b.kpis.map(k => <span key={k} className="tag tag-cyan" style={{ display: 'block', textAlign: 'center', padding: '6px 10px' }}>{k}</span>)}
             </div>
           </div>
         </div>
@@ -3409,22 +3414,23 @@ function MyProfileModule({ userId, onEdit }) {
         </div>
       </div>
 
-      {/* Face card — 3:4 full width */}
-      <div style={{ borderRadius: 12, overflow: 'hidden', border: '1px solid var(--border)', marginBottom: 16 }}>
-        <div style={{ aspectRatio: '3/4', maxHeight: 480, position: 'relative', background: coverBg }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 65%, rgba(0,0,0,0.88) 100%)' }} />
-          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '44px 28px 24px' }}>
-            <div className="bb" style={{ fontSize: 40, color: '#fff', lineHeight: 1, marginBottom: 6 }}>{data.name}</div>
-            {data.tagline && <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', marginBottom: 12 }}>{data.tagline}</div>}
-            {tags.length > 0 && (
-              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 14 }}>
-                {tags.slice(0, 5).map(t => (
-                  <span key={t} style={{ border: '1px solid rgba(255,255,255,0.3)', color: 'rgba(255,255,255,0.85)', borderRadius: 3, padding: '2px 8px', fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t}</span>
-                ))}
-              </div>
-            )}
+      {/* Face card — 16:9, cover image + info overlaid at bottom */}
+      <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 16, background: coverBg, aspectRatio: '16/9' }}>
+        {data.cover_image_url && <img src={data.cover_image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5, mixBlendMode: 'luminosity' }} onError={e => e.target.style.display='none'} />}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.7) 65%, rgba(0,0,0,0.92) 100%)' }} />
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginBottom: 10 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div className="bb" style={{ fontSize: 38, color: '#fff', lineHeight: 1, textShadow: '0 1px 6px rgba(0,0,0,0.5)', marginBottom: 3 }}>{data.name}</div>
+              {data.tagline && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>{data.tagline}</div>}
+            </div>
             <TierBadge tier={tier} />
           </div>
+          {tags.length > 0 && (
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {tags.slice(0, 6).map(t => <span key={t} className="tag tag-ghost" style={{ fontSize: 10 }}>{t}</span>)}
+            </div>
+          )}
         </div>
       </div>
 
