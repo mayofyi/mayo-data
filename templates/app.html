@@ -730,7 +730,7 @@ function mapBrief(b) {
     partnershipType: b.partnership_type || 'Sponsorship',
     partnershipTypeColor: typeColorMap[b.partnership_type] || 'orange',
     title: b.title || '', goal: b.goals || '',
-    budget: b.budget_amount ? ('$' + parseInt(b.budget_amount).toLocaleString()) : '—',
+    budget: (b.budget_amount || b.budget) ? ('$' + parseInt(b.budget_amount || b.budget).toLocaleString()) : '—',
     budgetPeriod: b.budget_period || 'Quarterly',
     products, tags, requirements: reqs, kpis,
     posted: b.created_at ? new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '—',
