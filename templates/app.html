@@ -1117,8 +1117,13 @@ function CommunityCard({ c, onClick }) {
 }
 
 function BriefCard({ b, onClick, showMatch, matchScore }) {
+  const cardStyle = matchScore >= 70
+    ? { border: '1.5px solid rgba(210,255,1,0.6)', boxShadow: '0 0 18px rgba(210,255,1,0.18), 0 0 6px rgba(210,255,1,0.1)' }
+    : matchScore >= 50
+    ? { border: '1.5px solid rgba(177,236,240,0.4)', boxShadow: '0 0 12px rgba(177,236,240,0.1)' }
+    : {};
   return (
-    <div className="community-card" onClick={() => onClick(b)}>
+    <div className="community-card" style={cardStyle} onClick={() => onClick(b)}>
       {/* 3:4 block — gradient cover + overlaid info + metrics */}
       <div className="community-card-3x4">
         {/* Background image */}
