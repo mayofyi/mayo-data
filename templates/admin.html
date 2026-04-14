@@ -57,7 +57,10 @@ tbody td { padding:14px; vertical-align:top; font-size:13px; }
 .back-btn { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); color:var(--white); font-family:'Barlow Condensed'; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:7px 14px; border-radius:5px; cursor:pointer; transition:background 0.15s; }
 .back-btn:hover { background:rgba(255,255,255,0.18); }
 .section-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
-.metric-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px 16px; }
+.metric-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px 16px; position:relative; }
+.metric-card .tip { display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#1c1c1c; border:1px solid var(--border2); border-radius:7px; padding:10px 12px; width:220px; font-size:11px; color:rgba(240,240,240,0.75); line-height:1.55; z-index:100; pointer-events:none; white-space:normal; }
+.metric-card .tip::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:6px solid transparent; border-top-color:#1c1c1c; }
+.metric-card:hover .tip { display:block; }
 .chip { display:inline-block; padding:4px 10px; border-radius:4px; font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; background:var(--surface3); border:1px solid var(--border2); color:var(--white); margin:2px; }
 .member-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
 .cs-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; overflow:hidden; min-width:200px; max-width:220px; flex-shrink:0; }
@@ -266,32 +269,38 @@ function openCommunity(id) {
     <!-- Metric cards -->
     <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:20px 28px 0">
       <div class="metric-card" style="background:#0f0f00;border-color:#2a2800">
+        <div class="tip">Always relative to a specific brand brief. Hard filter on requirements, then scored on CCE, Network Multiplier, Archetype Fit, and CIS — weighted by campaign objective. No active brief = no score.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Match Score</div>
         <div style="font-family:'Bebas Neue';font-size:30px;color:#555;line-height:1">—</div>
         <div style="font-size:10px;color:#444;margin-top:4px">No active brief</div>
       </div>
       <div class="metric-card">
+        <div class="tip">Industry standard formula: avg(likes + comments) per post ÷ followers × 100. Recalculated live from the last ${(c.instagram_data?.media||[]).length || 0} posts — not the stored value.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Engagement Rate</div>
         <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${er !== null ? `${er}%` : '—'}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:4px">${er !== null ? (igUsername ? `@${igUsername}` : 'Instagram') : 'No IG data'}</div>
       </div>
       <div class="metric-card">
+        <div class="tip">Self-reported by community leader at onboarding. Editable from their profile. Always Verified tier at best — this is a declaration, not a platform-confirmed figure.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Active Members</div>
         <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${c.active_members ? Number(c.active_members).toLocaleString() : '—'}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:4px">${c.active_members ? 'community-reported' : 'Not set'}</div>
       </div>
       <div class="metric-card">
+        <div class="tip">Total followers across connected engagement channels. Instagram only until additional channels are connected. Fully Verified — pulled directly from the Graph API.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Total Reach</div>
         <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${followers !== null ? followers.toLocaleString() : '—'}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:4px">${followers !== null ? 'Instagram' : 'Not connected'}</div>
       </div>
       <div class="metric-card" style="background:#090005;border-color:#1f0015">
+        <div class="tip">Σ(log(member followers + 1) × member ER) ÷ active members. For every 1 community member, how many people outside it are reachable? Bucket-estimated — set follower tiers on verified members below.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Network Multiplier</div>
         ${c.network_multiplier != null
           ? `<div style="font-family:'Bebas Neue';font-size:30px;color:#ff6ef2;line-height:1">${c.network_multiplier}×</div><div style="font-size:10px;color:var(--muted);margin-top:4px">bucket-estimated</div>`
           : `<div style="font-family:'Bebas Neue';font-size:20px;color:#444;line-height:1;padding-top:4px">Pending</div><div style="font-size:10px;color:#444;margin-top:4px">Set member tiers below</div>`}
       </div>
       <div class="metric-card" style="background:#0a0700;border-color:#221a00">
+        <div class="tip">Weighted average of MIQ (member influence quality), GV (growth velocity over 90 days), BAH (verified brand partnerships), and PMM (confirmed press mentions). Admin stamp adjusts within ±15 points.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Cultural Impact</div>
         ${(c.cis_stamped != null || c.cis_raw != null)
           ? (() => { const score = c.cis_stamped != null ? c.cis_stamped : c.cis_raw; const stamped = c.cis_stamped != null; return `<div style="font-family:'Bebas Neue';font-size:30px;color:var(--orange);line-height:1">${score}<span style="font-size:14px">/100</span></div><div style="font-size:10px;color:var(--muted);margin-top:4px">${stamped ? '★ Stamped' : 'Raw — unstamped'}</div>`; })()
@@ -347,6 +356,11 @@ function openCommunity(id) {
           <div class="section-label">What we offer</div>
           <div>${capabilities.map(cap=>`<span class="chip">${cap}</span>`).join('')}</div>
         </div>` : ''}
+        ${c.description ? `
+        <div class="panel">
+          <div class="section-label">About</div>
+          <p style="font-size:13px;color:rgba(240,240,240,0.75);line-height:1.65">${c.description}</p>
+        </div>` : ''}
         ${c.partnership_preferences ? `
         <div class="panel">
           <div class="section-label">Looking for</div>
@@ -364,7 +378,7 @@ function openCommunity(id) {
           <div class="section-label" style="margin-bottom:0">Community Archetype</div>
           ${c.archetype ? '<span style="color:var(--lime);font-family:\'Barlow Condensed\';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em">★ Mayo assigned</span>' : ''}
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Assigned by Mayo based on posting behaviour, purchase signals, and member interaction patterns — not self-reported.</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Platform-assigned based on posting behaviour, purchase signals, and member interaction patterns — never self-selected. Use ✦ Analyse to get an AI-powered recommendation, then assign manually.<br><br><span style="color:#555">Evangelists</span> → brand awareness &amp; cultural association<br><span style="color:#555">Early Adopters</span> → product launches &amp; first-mover campaigns<br><span style="color:#555">Loyalists</span> → long-term sponsorship &amp; repeat events<br><span style="color:#555">Buyers</span> → direct response &amp; product seeding</div>
         ${c.archetype ? (() => { const a = ARCHETYPES.find(x=>x.id===c.archetype); return a ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-family:'Bebas Neue';font-size:22px;color:${a.color}">${a.label}</span><span style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:3px">${a.best}</span></div>` : ''; })() : '<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Not yet assigned</div>'}
 
         <!-- AI analysis result -->
@@ -580,11 +594,6 @@ function openCommunity(id) {
             <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Community ID</div>
             <div style="font-size:10px;color:#555;word-break:break-all;font-family:'Barlow Condensed'">${c.id}</div>
           </div>
-          ${c.description ? `
-          <div style="grid-column:1/-1">
-            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Description</div>
-            <div style="font-size:13px;color:rgba(240,240,240,0.7);line-height:1.65">${c.description}</div>
-          </div>` : ''}
         </div>
       </div>
     </div>

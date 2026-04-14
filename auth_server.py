@@ -98,6 +98,23 @@ def calculate_pmm(press_mentions):
     return min(100, sum(OUTLET_WEIGHTS.get(m.get("outlet_tier", "unknown"), 3) for m in confirmed))
 
 
+def parse_claude_json(text):
+    """Parse JSON from a Claude response, stripping markdown code fences if present."""
+    import json as _json
+    text = (text or "").strip()
+    if not text:
+        raise ValueError("Empty response from AI")
+    # Strip ```json ... ``` or ``` ... ``` wrappers
+    if text.startswith("```"):
+        lines = text.splitlines()
+        # Drop first line (```json or ```) and last line if it's ```
+        inner = lines[1:]
+        if inner and inner[-1].strip() == "```":
+            inner = inner[:-1]
+        text = "\n".join(inner).strip()
+    return _json.loads(text)
+
+
 def calculate_cis_raw(miq, gv, bah, pmm):
     """Weighted average of CIS sub-scores. Rebalances automatically when inputs are missing."""
     inputs = [(miq, 0.25), (gv, 0.25), (bah, 0.25), (pmm, 0.25)]
@@ -475,6 +492,13 @@ def suggest_archetype(community_id):
     ig = c.get("instagram_data") or {}
     ig_profile = ig.get("profile") or {}
     media = ig.get("media") or []
+    # Recalculate ER using industry standard formula (not stored value)
+    _followers = ig_profile.get("followers_count") or 0
+    if media and _followers:
+        _total = sum(p.get("like_count", 0) + p.get("comments_count", 0) for p in media)
+        ig_er = round(_total / len(media) / _followers * 100, 2)
+    else:
+        ig_er = None
 
     captions = []
     for post in media[:12]:
@@ -510,7 +534,7 @@ Partnership preferences: {c.get('partnership_preferences') or '—'}
 Instagram handle: @{ig_profile.get('username') or '—'}
 Instagram followers: {ig_profile.get('followers_count') or '—'}
 Instagram bio: {ig_profile.get('biography') or '—'}
-Engagement rate: {ig.get('engagement_rate') or '—'}%
+Engagement rate: {f'{ig_er}%' if ig_er is not None else '—'} (industry standard: avg likes+comments / followers)
 
 Recent captions:
 {chr(10).join(captions) if captions else '— none available —'}
@@ -532,7 +556,7 @@ Respond with JSON only. No preamble, no markdown, no explanation outside the JSO
             max_tokens=400,
             messages=[{"role": "user", "content": prompt}],
         )
-        result = _json.loads(message.content[0].text.strip())
+        result = parse_claude_json(message.content[0].text)
         # Validate archetype value
         valid = {"evangelists", "early_adopters", "loyalists", "buyers"}
         if result.get("archetype") not in valid:
@@ -674,7 +698,7 @@ Respond with a JSON array, one entry per article in the same order. No preamble:
             max_tokens=1200,
             messages=[{"role": "user", "content": prompt}],
         )
-        evaluations = _json.loads(message.content[0].text.strip())
+        evaluations = parse_claude_json(message.content[0].text)
     except Exception as e:
         return jsonify({"error": f"AI evaluation failed: {e}"}), 500
 
@@ -780,7 +804,7 @@ Respond with JSON only. No preamble:
             max_tokens=300,
             messages=[{"role": "user", "content": prompt}],
         )
-        result = _json.loads(message.content[0].text.strip())
+        result = parse_claude_json(message.content[0].text)
         miq_score    = int(result["miq_score"])
         miq_reasoning = result.get("reasoning", "")
     except Exception as e:
