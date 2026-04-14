@@ -58,9 +58,10 @@ tbody td { padding:14px; vertical-align:top; font-size:13px; }
 .back-btn:hover { background:rgba(255,255,255,0.18); }
 .section-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
 .metric-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px 16px; position:relative; }
-.metric-card .tip { display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#1c1c1c; border:1px solid var(--border2); border-radius:7px; padding:10px 12px; width:220px; font-size:11px; color:rgba(240,240,240,0.75); line-height:1.55; z-index:100; pointer-events:none; white-space:normal; }
-.metric-card .tip::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:6px solid transparent; border-top-color:#1c1c1c; }
-.metric-card:hover .tip { display:block; }
+.metric-card .tip, .subscore .tip { display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#1c1c1c; border:1px solid var(--border2); border-radius:7px; padding:10px 12px; width:200px; font-size:11px; color:rgba(240,240,240,0.75); line-height:1.55; z-index:100; pointer-events:none; white-space:normal; }
+.metric-card .tip::after, .subscore .tip::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:6px solid transparent; border-top-color:#1c1c1c; }
+.metric-card:hover .tip, .subscore:hover .tip { display:block; }
+.subscore { position:relative; background:var(--surface2); border:1px solid var(--border2); border-radius:6px; padding:10px; text-align:center; cursor:default; }
 .chip { display:inline-block; padding:4px 10px; border-radius:4px; font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; background:var(--surface3); border:1px solid var(--border2); color:var(--white); margin:2px; }
 .member-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
 .cs-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; overflow:hidden; min-width:200px; max-width:220px; flex-shrink:0; }
@@ -253,54 +254,49 @@ function openCommunity(id) {
       <div style="position:absolute;top:20px;right:24px;z-index:1">
         <a href="/profile/${c.id}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);color:#fff;font-family:'Barlow Condensed';font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:7px 14px;border-radius:5px;text-decoration:none">↗ Public Profile</a>
       </div>
-      <div style="position:relative;z-index:1;padding:24px 28px 22px">
+      <div style="position:relative;z-index:1;padding:24px 28px 24px">
         <div class="bb" style="font-size:44px;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,0.6)">${c.name}</div>
         ${c.tagline || c.location ? `<div style="font-size:14px;color:rgba(255,255,255,0.7);margin-top:5px">${[c.tagline, c.location].filter(Boolean).join(' · ')}</div>` : ''}
         ${(c.tags||[]).length ? `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">${(c.tags||[]).map(t=>`<span style="padding:3px 10px;border-radius:4px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase">${t}</span>`).join('')}</div>` : ''}
+        <div style="margin-top:12px">${tierBadge(tier)}</div>
       </div>
-    </div>
-
-    <!-- Verification strip -->
-    <div style="background:#0d0d0d;border-bottom:1px solid var(--border);padding:10px 28px;display:flex;align-items:center;gap:14px">
-      ${tierBadge(tier)}
-      <span style="color:var(--muted);font-size:13px">${statItems || 'No data collected yet'}</span>
     </div>
 
     <!-- Metric cards -->
     <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:20px 28px 0">
       <div class="metric-card" style="background:#0f0f00;border-color:#2a2800">
-        <div class="tip">Always relative to a specific brand brief. Hard filter on requirements, then scored on CCE, Network Multiplier, Archetype Fit, and CIS — weighted by campaign objective. No active brief = no score.</div>
+        <div class="tip">Scored relative to a specific brand brief only. No brief = no score.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Match Score</div>
         <div style="font-family:'Bebas Neue';font-size:30px;color:#555;line-height:1">—</div>
         <div style="font-size:10px;color:#444;margin-top:4px">No active brief</div>
       </div>
       <div class="metric-card">
-        <div class="tip">Industry standard formula: avg(likes + comments) per post ÷ followers × 100. Recalculated live from the last ${(c.instagram_data?.media||[]).length || 0} posts — not the stored value.</div>
+        <div class="tip">avg(likes + comments) ÷ followers × 100. Recalculated live from ${(c.instagram_data?.media||[]).length || 0} posts.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Engagement Rate</div>
         <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${er !== null ? `${er}%` : '—'}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:4px">${er !== null ? (igUsername ? `@${igUsername}` : 'Instagram') : 'No IG data'}</div>
       </div>
       <div class="metric-card">
-        <div class="tip">Self-reported by community leader at onboarding. Editable from their profile. Always Verified tier at best — this is a declaration, not a platform-confirmed figure.</div>
+        <div class="tip">Self-reported by community leader. Verified tier — not platform-confirmed.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Active Members</div>
         <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${c.active_members ? Number(c.active_members).toLocaleString() : '—'}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:4px">${c.active_members ? 'community-reported' : 'Not set'}</div>
       </div>
       <div class="metric-card">
-        <div class="tip">Total followers across connected engagement channels. Instagram only until additional channels are connected. Fully Verified — pulled directly from the Graph API.</div>
+        <div class="tip">Followers across connected channels. Fully Verified via API.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Total Reach</div>
         <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${followers !== null ? followers.toLocaleString() : '—'}</div>
         <div style="font-size:10px;color:var(--muted);margin-top:4px">${followers !== null ? 'Instagram' : 'Not connected'}</div>
       </div>
       <div class="metric-card" style="background:#090005;border-color:#1f0015">
-        <div class="tip">Σ(log(member followers + 1) × member ER) ÷ active members. For every 1 community member, how many people outside it are reachable? Bucket-estimated — set follower tiers on verified members below.</div>
+        <div class="tip">Organic reach per active member. Σ(log(followers) × ER) ÷ members. Set tiers on verified members below.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Network Multiplier</div>
         ${c.network_multiplier != null
           ? `<div style="font-family:'Bebas Neue';font-size:30px;color:#ff6ef2;line-height:1">${c.network_multiplier}×</div><div style="font-size:10px;color:var(--muted);margin-top:4px">bucket-estimated</div>`
           : `<div style="font-family:'Bebas Neue';font-size:20px;color:#444;line-height:1;padding-top:4px">Pending</div><div style="font-size:10px;color:#444;margin-top:4px">Set member tiers below</div>`}
       </div>
       <div class="metric-card" style="background:#0a0700;border-color:#221a00">
-        <div class="tip">Weighted average of MIQ (member influence quality), GV (growth velocity over 90 days), BAH (verified brand partnerships), and PMM (confirmed press mentions). Admin stamp adjusts within ±15 points.</div>
+        <div class="tip">MIQ + GV + BAH + PMM weighted average. Admin stamp ±15 pts. See CIS section below.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Cultural Impact</div>
         ${(c.cis_stamped != null || c.cis_raw != null)
           ? (() => { const score = c.cis_stamped != null ? c.cis_stamped : c.cis_raw; const stamped = c.cis_stamped != null; return `<div style="font-family:'Bebas Neue';font-size:30px;color:var(--orange);line-height:1">${score}<span style="font-size:14px">/100</span></div><div style="font-size:10px;color:var(--muted);margin-top:4px">${stamped ? '★ Stamped' : 'Raw — unstamped'}</div>`; })()
@@ -311,8 +307,13 @@ function openCommunity(id) {
     <!-- Channels + Capabilities -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 28px 0">
 
-      <!-- Channels -->
+      <!-- Channels + What We Offer -->
       <div class="panel">
+        ${capabilities.length ? `
+        <div style="margin-bottom:16px">
+          <div class="section-label">What We Offer</div>
+          <div>${capabilities.map(cap=>`<span class="chip">${cap}</span>`).join('')}</div>
+        </div>` : ''}
         <div class="section-label">Channels</div>
 
         ${(c.instagram_token || c.instagram_data) ? `
@@ -349,25 +350,25 @@ function openCommunity(id) {
         ${!c.instagram_token && !c.substack_url && !c.website ? '<div style="font-size:12px;color:var(--muted)">No channels connected</div>' : ''}
       </div>
 
-      <!-- Capabilities & Preferences -->
+      <!-- About + Location + Looking For -->
       <div style="display:flex;flex-direction:column;gap:12px">
-        ${capabilities.length ? `
-        <div class="panel">
-          <div class="section-label">What we offer</div>
-          <div>${capabilities.map(cap=>`<span class="chip">${cap}</span>`).join('')}</div>
-        </div>` : ''}
         ${c.description ? `
         <div class="panel">
           <div class="section-label">About</div>
-          <p style="font-size:13px;color:rgba(240,240,240,0.75);line-height:1.65">${c.description}</p>
+          <p style="font-size:13px;color:rgba(240,240,240,0.75);line-height:1.65;margin:0">${c.description}</p>
+        </div>` : ''}
+        ${c.location ? `
+        <div class="panel">
+          <div class="section-label">Location</div>
+          <p style="font-size:13px;color:rgba(240,240,240,0.75);margin:0">${c.location}</p>
         </div>` : ''}
         ${c.partnership_preferences ? `
         <div class="panel">
           <div class="section-label">Looking for</div>
-          <p style="font-size:13px;color:rgba(240,240,240,0.75);line-height:1.65">${c.partnership_preferences}</p>
+          <p style="font-size:13px;color:rgba(240,240,240,0.75);line-height:1.65;margin:0">${c.partnership_preferences}</p>
         </div>` : ''}
-        ${!capabilities.length && !c.partnership_preferences ? `
-        <div class="panel" style="color:var(--muted);font-size:13px">Capabilities & preferences not set</div>` : ''}
+        ${!c.description && !c.location && !c.partnership_preferences ? `
+        <div class="panel" style="color:var(--muted);font-size:13px">No profile text set</div>` : ''}
       </div>
     </div>
 
@@ -378,7 +379,7 @@ function openCommunity(id) {
           <div class="section-label" style="margin-bottom:0">Community Archetype</div>
           ${c.archetype ? '<span style="color:var(--lime);font-family:\'Barlow Condensed\';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em">★ Mayo assigned</span>' : ''}
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Platform-assigned based on posting behaviour, purchase signals, and member interaction patterns — never self-selected. Use ✦ Analyse to get an AI-powered recommendation, then assign manually.<br><br><span style="color:#555">Evangelists</span> → brand awareness &amp; cultural association<br><span style="color:#555">Early Adopters</span> → product launches &amp; first-mover campaigns<br><span style="color:#555">Loyalists</span> → long-term sponsorship &amp; repeat events<br><span style="color:#555">Buyers</span> → direct response &amp; product seeding</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Platform-assigned — never self-selected.</div>
         ${c.archetype ? (() => { const a = ARCHETYPES.find(x=>x.id===c.archetype); return a ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-family:'Bebas Neue';font-size:22px;color:${a.color}">${a.label}</span><span style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:3px">${a.best}</span></div>` : ''; })() : '<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Not yet assigned</div>'}
 
         <!-- AI analysis result -->
@@ -481,8 +482,15 @@ function openCommunity(id) {
             const pressMentions = c.press_mentions || [];
             const confirmedPMM = pressMentions.filter(m=>m.confirmed===true);
             const pendingPMM = pressMentions.filter(m=>m.confirmed===null);
+            const SUBSCORE_TIPS = {
+              'MIQ': 'Member Influence Quality — who are the verified members? Scored by Claude based on roles and cultural relevance.',
+              'GV':  'Growth Velocity — follower % change over 90 days. Needs two snapshots ≥90 days apart to calculate.',
+              'BAH': 'Brand Association History — score from verified platform case studies. Tier 1 brands worth more than Tier 3.',
+              'PMM': 'Press & Media Mentions — score from admin-confirmed editorial coverage. National outlets score highest.',
+            };
             const subscore = (label, val, desc) => `
-              <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:10px;text-align:center">
+              <div class="subscore">
+                <div class="tip">${SUBSCORE_TIPS[label] || ''}</div>
                 <div style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px">${label}</div>
                 <div style="font-family:'Bebas Neue';font-size:24px;color:${val!=null?'var(--orange)':'#444'};line-height:1">${val!=null?val:'—'}</div>
                 <div style="font-size:9px;color:#444;margin-top:3px">${desc}</div>
