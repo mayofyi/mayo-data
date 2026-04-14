@@ -1057,20 +1057,23 @@ def recalculate_metrics(community_id):
 
 @app.route("/api/community/<community_id>/refresh-instagram", methods=["POST"])
 def refresh_instagram(community_id):
-    """Re-run the Instagram pipeline using the stored token."""
+    """Re-run Instagram and Substack pipelines using stored credentials."""
     with get_db() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT instagram_token FROM communities WHERE id = %s", (community_id,))
+            cur.execute("SELECT instagram_token, substack_url FROM communities WHERE id = %s", (community_id,))
             row = cur.fetchone()
-    if not row or not row["instagram_token"]:
-        return jsonify({"error": "No Instagram token found. Connect Instagram first."}), 400
-    thread = threading.Thread(
-        target=run_instagram_pipeline,
-        args=(community_id, row["instagram_token"]),
-        daemon=True,
-    )
-    thread.start()
-    return jsonify({"ok": True, "message": "Instagram sync started. Refresh in a few seconds."})
+    if not row:
+        return jsonify({"error": "Community not found."}), 404
+    started = []
+    if row["instagram_token"]:
+        threading.Thread(target=run_instagram_pipeline, args=(community_id, row["instagram_token"]), daemon=True).start()
+        started.append("Instagram")
+    if row["substack_url"]:
+        threading.Thread(target=run_substack_pipeline, args=(community_id, row["substack_url"]), daemon=True).start()
+        started.append("Substack")
+    if not started:
+        return jsonify({"error": "No connected channels found. Connect Instagram or Substack first."}), 400
+    return jsonify({"ok": True, "message": f"{' & '.join(started)} sync started. Refresh in a few seconds."})
 
 
 # ── Instagram OAuth ────────────────────────────────────────────────────────────
