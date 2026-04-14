@@ -252,7 +252,7 @@ def init_db():
                     kpis JSONB DEFAULT '[]',
                     products JSONB DEFAULT '[]',
                     deadline TEXT,
-                    window TEXT,
+                    activation_window TEXT,
                     goal TEXT,
                     looking_for TEXT,
                     status TEXT DEFAULT 'open',
@@ -1084,7 +1084,7 @@ def callback():
 # ── Auth endpoints ────────────────────────────────────────────────────────────
 
 @app.route("/api/login", methods=["POST"])
-def login():
+def api_login():
     data = request.json or {}
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
@@ -1209,7 +1209,7 @@ def create_brief():
         with conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO briefs (id, brand_id, title, campaign_goal, partnership_type, budget, budget_period,
-                    tags, requirements, kpis, products, deadline, window, goal, looking_for)
+                    tags, requirements, kpis, products, deadline, activation_window, goal, looking_for)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 brief_id, payload["id"],
@@ -1219,7 +1219,7 @@ def create_brief():
                 psycopg2.extras.Json(data.get("requirements", {})),
                 psycopg2.extras.Json(data.get("kpis", [])),
                 psycopg2.extras.Json(data.get("products", [])),
-                data.get("deadline"), data.get("window"),
+                data.get("deadline"), data.get("activation_window"),
                 data.get("goal"), data.get("looking_for"),
             ))
             # Fetch the brand info to return with the brief
