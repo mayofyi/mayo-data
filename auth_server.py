@@ -184,6 +184,8 @@ def init_db():
                 ("substack_data", "JSONB"),
                 ("archetype", "TEXT"),
                 ("archetype_source", "TEXT"),
+                ("archetype_reasoning", "TEXT"),
+                ("archetype_confidence", "INT"),
                 ("network_multiplier", "FLOAT"),
                 ("cis_raw", "INT"),
                 ("cis_stamped", "INT"),
@@ -321,7 +323,7 @@ def update_community(community_id):
     allowed = ["name", "tagline", "location", "description", "tags",
                "active_members", "website", "cover_option", "substack_url",
                "leader_name", "email", "partnership_preferences", "capabilities",
-               "archetype", "archetype_source"]
+               "archetype", "archetype_source", "archetype_reasoning", "archetype_confidence"]
     fields, values = [], []
     for field in allowed:
         if field in data:

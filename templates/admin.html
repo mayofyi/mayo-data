@@ -382,14 +382,13 @@ function openCommunity(id) {
         <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Platform-assigned — never self-selected.</div>
         ${c.archetype ? (() => { const a = ARCHETYPES.find(x=>x.id===c.archetype); return a ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-family:'Bebas Neue';font-size:22px;color:${a.color}">${a.label}</span><span style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:3px">${a.best}</span></div>` : ''; })() : '<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Not yet assigned</div>'}
 
-        <!-- AI analysis result -->
-        <div id="arch-result-${c.id}" style="display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-bottom:12px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-            <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">AI Recommendation</div>
-            <div id="arch-confidence-${c.id}" style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;color:var(--lime)"></div>
+        <!-- AI reasoning (persists from DB) -->
+        <div id="arch-result-${c.id}" style="display:${c.archetype_reasoning?'block':'none'};background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Why this archetype</div>
+            <div id="arch-confidence-${c.id}" style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;color:var(--lime)">${c.archetype_confidence!=null?c.archetype_confidence+'% confidence':''}</div>
           </div>
-          <div id="arch-label-${c.id}" style="font-family:'Bebas Neue';font-size:20px;margin-bottom:6px"></div>
-          <div id="arch-reasoning-${c.id}" style="font-size:12px;color:rgba(240,240,240,0.65);line-height:1.6"></div>
+          <div id="arch-reasoning-${c.id}" style="font-size:12px;color:rgba(240,240,240,0.65);line-height:1.6">${c.archetype_reasoning||''}</div>
         </div>
 
         <div style="display:flex;align-items:center;gap:8px">
@@ -647,9 +646,6 @@ async function analyseArchetype(communityId) {
     const data = await res.json();
     if (data.error) { btn.textContent = 'Error — retry'; btn.disabled = false; return; }
 
-    const a = ARCHETYPES.find(x => x.id === data.archetype);
-    document.getElementById(`arch-label-${communityId}`).innerHTML =
-      a ? `<span style="color:${a.color}">${a.label}</span> <span style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:3px">${a.best}</span>` : data.archetype;
     document.getElementById(`arch-confidence-${communityId}`).textContent = `${data.confidence}% confidence`;
     document.getElementById(`arch-reasoning-${communityId}`).textContent = data.reasoning;
     resultBox.style.display = 'block';
@@ -670,10 +666,15 @@ async function analyseArchetype(communityId) {
 
 async function assignArchetype(communityId) {
   const val = document.getElementById(`arch-select-${communityId}`).value;
+  const result = archetypeResults[communityId];
   await fetch(`/api/community/${communityId}`, {
     method:'PUT', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ archetype: val || null, archetype_source: val ? 'mayo_assigned' : null }),
-    // Archetype is always Mayo-assigned — never self-reported by community
+    body: JSON.stringify({
+      archetype: val || null,
+      archetype_source: val ? 'mayo_assigned' : null,
+      archetype_reasoning: (val && result) ? result.reasoning : null,
+      archetype_confidence: (val && result) ? result.confidence : null,
+    }),
   });
   const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
   communities = await res.json();
@@ -687,9 +688,6 @@ function restoreArchetypeResult(communityId) {
   if (!data) return;
   const resultBox = document.getElementById(`arch-result-${communityId}`);
   if (!resultBox) return;
-  const a = ARCHETYPES.find(x => x.id === data.archetype);
-  document.getElementById(`arch-label-${communityId}`).innerHTML =
-    a ? `<span style="color:${a.color}">${a.label}</span> <span style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:3px">${a.best}</span>` : data.archetype;
   document.getElementById(`arch-confidence-${communityId}`).textContent = `${data.confidence}% confidence`;
   document.getElementById(`arch-reasoning-${communityId}`).textContent = data.reasoning;
   resultBox.style.display = 'block';
