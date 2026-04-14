@@ -750,6 +750,50 @@ function mapBrief(b) {
   };
 }
 
+function fitBlurb(brief, matchResult) {
+  // Returns { label, labelColor, lines, isFail } — all brief-relative, no community metrics
+  if (!matchResult) return null;
+  const { score, hardFail } = matchResult;
+  const pType = brief.partnershipType || '';
+  const reqs = brief.requirements || {};
+
+  if (hardFail) {
+    const n = parseInt(reqs.min_active_members);
+    return {
+      label: null,
+      lines: [n ? `This brand needs at least ${n.toLocaleString()} active members.` : hardFail],
+      isFail: true,
+    };
+  }
+
+  const lines = [];
+
+  // One line about what the brand actually wants — pulled from brief type
+  if (pType === 'Sponsorship') {
+    lines.push(reqs.events_per_month
+      ? 'They want a community that runs regular events, not just online presence.'
+      : 'Season-long sponsorship — they want consistent co-branding over time, not a one-off.');
+  } else if (pType === 'Product Partnership') {
+    lines.push('Trial partnership — they send product to members and ask for honest posts, no scripts.');
+  } else if (pType === 'Event Partnership') {
+    lines.push('They bring the setup and cover activation costs. You give them a slot at your event.');
+  } else if (pType === 'Content Partnership') {
+    lines.push('Ongoing content deal — monthly deliverables, quarterly check-ins.');
+  } else {
+    lines.push('Open partnership format — read the brief for specifics.');
+  }
+
+  // One line about a notable requirement if relevant
+  if (reqs.instagram_connected) lines.push('Instagram connection required to apply.');
+  else if (reqs.content_cadence) lines.push(`Content cadence: ${reqs.content_cadence}.`);
+  else if (reqs.event_size) lines.push(`Events should have ${reqs.event_size}.`);
+
+  const label = score >= 70 ? 'Strong Fit' : score >= 50 ? 'Good Match' : null;
+  const labelColor = score >= 70 ? 'var(--lime)' : 'var(--cyan)';
+
+  return { label, labelColor, lines, isFail: false };
+}
+
 function calcMatchScore(brief, community) {
   if (!community) return null;
   const reqs = brief.requirements || {};
@@ -1087,11 +1131,10 @@ function BriefCard({ b, onClick, showMatch, matchScore }) {
           <span className={`tag tag-${b.partnershipTypeColor}`}>{b.partnershipType}</span>
         </div>
 
-        {/* Top-right: match score — only show when calculated */}
-        {matchScore != null && (
-          <div style={{ position: 'absolute', top: 12, right: 12, background: matchScore >= 70 ? 'var(--yellow)' : matchScore >= 50 ? 'rgba(255,234,18,0.7)' : 'rgba(255,255,255,0.15)', backdropFilter: 'blur(4px)', color: matchScore >= 50 ? '#000' : '#fff', borderRadius: 6, padding: '3px 9px', textAlign: 'center' }}>
-            <div style={{ fontFamily: 'Bebas Neue', fontSize: 20, lineHeight: 1 }}>{matchScore}</div>
-            <div style={{ fontSize: 9, fontWeight: 700, fontFamily: 'Barlow Condensed', letterSpacing: '0.06em' }}>MATCH</div>
+        {/* Top-right: fit label — only for strong/good matches */}
+        {matchScore != null && matchScore >= 50 && (
+          <div style={{ position: 'absolute', top: 12, right: 12, background: matchScore >= 70 ? 'var(--lime)' : 'rgba(177,236,240,0.9)', color: '#000', borderRadius: 4, padding: '3px 8px', fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase' }}>
+            {matchScore >= 70 ? '★ Strong Fit' : 'Good Match'}
           </div>
         )}
 
@@ -2794,9 +2837,7 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
 
 function BriefDetailPage({ brief: b, onBack, role, myProfile }) {
   const matchResult = myProfile ? calcMatchScore(b, myProfile) : null;
-  const matchScore = matchResult?.score ?? null;
-  const breakdown = matchResult?.breakdown || {};
-  const hardFail = matchResult?.hardFail || null;
+  const fit = matchResult ? fitBlurb(b, matchResult) : null;
   return (
     <div>
       <button className="btn btn-ghost btn-sm" style={{ marginBottom: 16 }} onClick={onBack}>← Back to Discover</button>
@@ -2866,44 +2907,15 @@ function BriefDetailPage({ brief: b, onBack, role, myProfile }) {
 
         {/* Right col */}
         <div>
-          {/* Match score — community view only */}
-          {role === 'community' && myProfile && (
-            <div className="card p-16 mb-14" style={{ borderColor: hardFail ? 'rgba(255,80,80,0.3)' : matchScore != null ? 'rgba(255,234,18,0.3)' : 'var(--border)', background: hardFail ? 'rgba(255,80,80,0.04)' : matchScore != null ? 'rgba(255,234,18,0.04)' : 'var(--surface2)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-                <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)' }}>Your Match Score</div>
-                <div style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--muted)', opacity: 0.6 }}>Estimated</div>
-              </div>
-              {hardFail ? (
-                <div>
-                  <div style={{ fontFamily: 'Bebas Neue', fontSize: 32, color: 'rgba(255,80,80,0.7)', lineHeight: 1, marginBottom: 4 }}>—</div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,80,80,0.8)', lineHeight: 1.5 }}>{hardFail}</div>
-                </div>
-              ) : matchScore != null ? (
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 4, marginBottom: 8 }}>
-                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 48, color: matchScore >= 70 ? 'var(--yellow)' : matchScore >= 50 ? 'rgba(255,234,18,0.7)' : 'var(--muted)', lineHeight: 1 }}>{matchScore}</div>
-                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: 'var(--muted)' }}>/100</div>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                    {[
-                      { label: 'Archetype fit', val: breakdown.archetype },
-                      { label: 'Engagement rate', val: breakdown.er },
-                      { label: 'Cultural impact', val: breakdown.cis },
-                      { label: 'Network multiplier', val: breakdown.nm },
-                    ].map(({ label, val }) => val != null && (
-                      <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ fontSize: 10, color: 'var(--muted)', width: 110, flexShrink: 0 }}>{label}</div>
-                        <div style={{ flex: 1, height: 4, background: 'var(--border)', borderRadius: 2, overflow: 'hidden' }}>
-                          <div style={{ width: val + '%', height: '100%', background: val >= 70 ? 'var(--yellow)' : val >= 40 ? 'var(--cyan)' : 'var(--muted)', borderRadius: 2 }} />
-                        </div>
-                        <div style={{ fontSize: 10, color: 'var(--muted)', width: 24, textAlign: 'right' }}>{val}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>Connect Instagram to see your match score.</div>
+          {/* Fit summary — community view only, no metrics */}
+          {role === 'community' && fit && (
+            <div className="card p-16 mb-14" style={{ borderColor: fit.isFail ? 'rgba(255,80,80,0.25)' : fit.label ? (fit.label === 'Strong Fit' ? 'rgba(210,255,1,0.25)' : 'rgba(177,236,240,0.25)') : 'var(--border)' }}>
+              {fit.label && (
+                <div style={{ fontFamily: 'Barlow Condensed', fontSize: 12, fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: fit.labelColor, marginBottom: 8 }}>★ {fit.label}</div>
               )}
+              {fit.lines.map((line, i) => (
+                <div key={i} style={{ fontSize: 13, color: fit.isFail ? 'rgba(255,100,100,0.9)' : 'var(--muted)', lineHeight: 1.6, marginBottom: i < fit.lines.length - 1 ? 6 : 0 }}>{line}</div>
+              ))}
             </div>
           )}
 
