@@ -3675,56 +3675,65 @@ function MyProfileModule({ userId, onEdit }) {
         </div>
       )}
 
-      {/* Instagram posts */}
-      {igConnected && (
-        <div className="card p-20 mb-14">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase' }}>Latest Posts</div>
-            <button onClick={handleIgSync} disabled={syncing} className="btn btn-ghost btn-sm">{syncing ? 'Syncing…' : '↺ Sync'}</button>
-          </div>
-          {igPosts.length > 0 ? (
-            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
-              {igPosts.slice(0, 12).map((post, i) => (
-                <a key={i} href={post.permalink || (igProfile.username ? `https://instagram.com/${igProfile.username}` : '#')} target="_blank" rel="noopener noreferrer"
-                  style={{ flexShrink: 0, width: 110, height: 110, borderRadius: 8, overflow: 'hidden', display: 'block', textDecoration: 'none', background: 'var(--surface2)' }}>
-                  <img src={post.media_url || post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={e => { e.target.style.display = 'none'; }} />
-                </a>
-              ))}
-            </div>
-          ) : (
-            <div style={{ fontSize: 13, color: 'var(--muted)', padding: '12px 0' }}>
-              No posts loaded yet.{' '}
-              <button onClick={handleIgSync} disabled={syncing} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--cyan)', textDecoration: 'underline', fontFamily: 'inherit' }}>{syncing ? 'Syncing…' : 'Sync Instagram data'}</button>
-            </div>
-          )}
-          {syncMsg && <div style={{ fontSize: 12, color: 'var(--cyan)', marginTop: 8 }}>{syncMsg}</div>}
-        </div>
-      )}
+      {/* Unified content feed — IG + Substack merged, chronological */}
+      {(igConnected || substackPosts.length > 0) && (() => {
+        const igItems = igPosts.slice(0, 12).map(p => ({
+          type: 'ig',
+          url: p.permalink || (igProfile.username ? `https://instagram.com/${igProfile.username}` : '#'),
+          thumb: p.media_url || p.thumbnail_url,
+          date: p.timestamp ? new Date(p.timestamp) : null,
+        }));
+        const subItems = substackPosts.slice(0, 8).map(p => ({
+          type: 'substack',
+          url: p.link,
+          thumb: p.image_url || null,
+          title: p.title,
+          date: p.date ? new Date(p.date) : null,
+        }));
+        const merged = [...igItems, ...subItems]
+          .sort((a, b) => (b.date || 0) - (a.date || 0));
+        const hasContent = merged.length > 0;
 
-      {/* Substack posts */}
-      {substackPosts.length > 0 && (
-        <div className="card p-20 mb-14">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase' }}>Latest Posts</div>
-            <span style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#ff6719' }}>Substack</span>
+        return (
+          <div className="card p-20 mb-14">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase' }}>Latest Content</div>
+              <button onClick={handleIgSync} disabled={syncing} className="btn btn-ghost btn-sm">{syncing ? 'Syncing…' : '↺ Sync'}</button>
+            </div>
+            {hasContent ? (
+              <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8 }}>
+                {merged.map((item, i) => item.type === 'ig' ? (
+                  <a key={i} href={item.url} target="_blank" rel="noopener noreferrer"
+                    style={{ flexShrink: 0, width: 110, height: 110, borderRadius: 8, overflow: 'hidden', display: 'block', textDecoration: 'none', background: 'var(--surface2)', position: 'relative' }}>
+                    <img src={item.thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={e => e.target.style.display='none'} />
+                    <div style={{ position: 'absolute', bottom: 5, left: 5, width: 16, height: 16, borderRadius: 4, background: '#e1306c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    </div>
+                  </a>
+                ) : (
+                  <a key={i} href={item.url} target="_blank" rel="noopener noreferrer"
+                    style={{ flexShrink: 0, width: 140, height: 110, borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', background: 'var(--surface2)', border: '1px solid var(--border)', position: 'relative' }}>
+                    {item.thumb
+                      ? <img src={item.thumb} alt="" style={{ width: '100%', height: 68, objectFit: 'cover', display: 'block', flexShrink: 0 }} onError={e => e.target.style.display='none'} />
+                      : <div style={{ height: 68, background: 'linear-gradient(135deg, #1a0800, #7a3500)', flexShrink: 0 }} />
+                    }
+                    <div style={{ padding: '5px 8px', flex: 1 }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: '#fff', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.title}</div>
+                    </div>
+                    <div style={{ position: 'absolute', bottom: 5, left: 6, width: 16, height: 16, borderRadius: 4, background: '#ff6719', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: '#fff', fontFamily: 'Barlow Condensed' }}>S</div>
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: 'var(--muted)', padding: '12px 0' }}>
+                No posts loaded yet.{' '}
+                <button onClick={handleIgSync} disabled={syncing} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--cyan)', textDecoration: 'underline', fontFamily: 'inherit' }}>{syncing ? 'Syncing…' : 'Sync now'}</button>
+              </div>
+            )}
+            {syncMsg && <div style={{ fontSize: 12, color: 'var(--cyan)', marginTop: 8 }}>{syncMsg}</div>}
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {substackPosts.slice(0, 5).map((post, i) => (
-              <a key={i} href={post.link} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', gap: 12, alignItems: 'center', textDecoration: 'none', padding: '10px 12px', background: 'var(--surface2)', borderRadius: 8, border: '1px solid var(--border)' }}>
-                {post.image_url && (
-                  <img src={post.image_url} alt="" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} onError={e => e.target.style.display='none'} />
-                )}
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', lineHeight: 1.35, marginBottom: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{post.title}</div>
-                  {post.excerpt && <div style={{ fontSize: 11, color: 'var(--muted)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{post.excerpt}</div>}
-                  {post.date && <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 4 }}>{new Date(post.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</div>}
-                </div>
-                <div style={{ color: 'var(--muted)', fontSize: 14, flexShrink: 0 }}>↗</div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Photos & Events */}
       {mediaItems.length > 0 && (
