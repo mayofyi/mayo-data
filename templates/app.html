@@ -1123,30 +1123,18 @@ function CommunityCard({ c, onClick }) {
 
 function BriefCard({ b, onClick, showMatch, matchScore }) {
   const cardStyle = (() => {
-    if (matchScore == null) return {};
-    if (matchScore >= 70) {
-      // Scale glow intensity with score: 70→subtle, 100→strong
-      const t = (matchScore - 70) / 30; // 0–1
-      const borderA = (0.4 + t * 0.4).toFixed(2);
-      const glow1 = (0.12 + t * 0.18).toFixed(2);
-      const glow2 = (0.06 + t * 0.1).toFixed(2);
-      const spread1 = Math.round(14 + t * 20);
-      const spread2 = Math.round(4 + t * 8);
-      return {
-        border: `1.5px solid rgba(210,255,1,${borderA})`,
-        boxShadow: `0 0 ${spread1}px rgba(210,255,1,${glow1}), 0 0 ${spread2}px rgba(210,255,1,${glow2})`,
-      };
-    }
-    if (matchScore >= 50) {
-      const t = (matchScore - 50) / 20; // 0–1
-      const borderA = (0.2 + t * 0.2).toFixed(2);
-      const glow1 = (0.05 + t * 0.07).toFixed(2);
-      return {
-        border: `1.5px solid rgba(177,236,240,${borderA})`,
-        boxShadow: `0 0 ${Math.round(8 + t * 6)}px rgba(177,236,240,${glow1})`,
-      };
-    }
-    return {};
+    if (matchScore == null || matchScore < 50) return {};
+    // Single continuous scale: 50 = no glow, 100 = full glow
+    const t = (matchScore - 50) / 50;
+    const isLime = matchScore >= 70;
+    const color = isLime ? '210,255,1' : '177,236,240';
+    const borderA = (0.3 + t * 0.55).toFixed(2);
+    const glowA = (t * 0.28).toFixed(2);
+    const spread = Math.round(t * 36);
+    return {
+      border: `3px solid rgba(${color},${borderA})`,
+      boxShadow: spread > 2 ? `0 0 ${spread}px rgba(${color},${glowA})` : 'none',
+    };
   })();
   return (
     <div className="community-card" style={cardStyle} onClick={() => onClick(b)}>
@@ -3614,23 +3602,24 @@ function MyProfileModule({ userId, onEdit }) {
         </div>
       </div>
 
-      {/* Key stats row */}
-      {(data.active_members || igFollowers > 0 || igEr) && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
-          <div className="metric-card dark">
-            <div className="metric-label">Active Members</div>
-            <div className="metric-value sm" style={{ color: 'var(--cyan)' }}>{data.active_members ? Number(data.active_members).toLocaleString() : '—'}</div>
+      {/* Key stats row — Active Members + Reach only */}
+      {(data.active_members || igFollowers > 0) && (() => {
+        const reach = igFollowers || 0;
+        const fmtReach = reach >= 1000000 ? (reach / 1000000).toFixed(1) + 'M' : reach >= 1000 ? (reach / 1000).toFixed(1) + 'K' : reach > 0 ? String(reach) : '—';
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+            <div className="metric-card dark">
+              <div className="metric-label">Active Members</div>
+              <div className="metric-value sm" style={{ color: 'var(--cyan)' }}>{data.active_members ? Number(data.active_members).toLocaleString() : '—'}</div>
+            </div>
+            <div className="metric-card dark">
+              <div className="metric-label">Reach</div>
+              <div className="metric-value sm" style={{ color: reach ? 'var(--lime)' : 'var(--muted)' }}>{fmtReach}</div>
+              {reach > 0 && <div className="metric-sub" style={{ fontSize: 9 }}>{igConnected ? 'Instagram' : ''}{data.substack_url ? (igConnected ? ' + Substack' : 'Substack') : ''}</div>}
+            </div>
           </div>
-          <div className="metric-card dark">
-            <div className="metric-label">Instagram Followers</div>
-            <div className="metric-value sm" style={{ color: igFollowers ? 'var(--lime)' : 'var(--muted)' }}>{igFollowers > 0 ? (igFollowers >= 1000 ? (igFollowers / 1000).toFixed(1) + 'K' : igFollowers) : '—'}</div>
-          </div>
-          <div className="metric-card dark">
-            <div className="metric-label">Engagement Rate</div>
-            <div className="metric-value sm" style={{ color: igEr ? 'var(--lime)' : 'var(--muted)' }}>{igEr ? igEr + '%' : '—'}</div>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Info card */}
       <div className="card p-20 mb-14">
@@ -3650,16 +3639,24 @@ function MyProfileModule({ userId, onEdit }) {
           {igConnected && (
             <div>
               <div className="text-muted text-xs mb-4">Instagram</div>
-              {igProfile.username
-                ? <a href={`https://instagram.com/${igProfile.username}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#e1306c', textDecoration: 'none' }}>@{igProfile.username}</a>
-                : <button onClick={handleIgSync} disabled={syncing} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--cyan)', textDecoration: 'underline', fontFamily: 'inherit' }}>{syncing ? 'Syncing…' : 'Sync Instagram data'}</button>
-              }
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <div style={{ width: 22, height: 22, borderRadius: 5, background: '#e1306c22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#e1306c"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                </div>
+                {igProfile.username
+                  ? <a href={`https://instagram.com/${igProfile.username}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#e1306c', textDecoration: 'none' }}>@{igProfile.username}</a>
+                  : <button onClick={handleIgSync} disabled={syncing} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--cyan)', textDecoration: 'underline', fontFamily: 'inherit' }}>{syncing ? 'Syncing…' : 'Sync Instagram'}</button>
+                }
+              </div>
             </div>
           )}
           {data.substack_url && (
             <div>
               <div className="text-muted text-xs mb-4">Substack</div>
-              <a href={data.substack_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#ff6719', textDecoration: 'none' }}>{data.substack_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}</a>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                <div style={{ width: 22, height: 22, borderRadius: 5, background: '#ff671922', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontFamily: 'Barlow Condensed', fontWeight: 800, fontSize: 11, color: '#ff6719' }}>S</div>
+                <a href={data.substack_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#ff6719', textDecoration: 'none' }}>{data.substack_url.replace(/^https?:\/\//, '').replace(/\/$/, '')}</a>
+              </div>
             </div>
           )}
         </div>
@@ -3690,8 +3687,8 @@ function MyProfileModule({ userId, onEdit }) {
         </div>
       )}
 
-      {/* Archetype */}
-      {archetype && (
+      {/* Archetype — admin/brand only, not shown in community's own dash view */}
+      {false && archetype && (
         <div className="card p-20 mb-14">
           <div style={{ fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 10 }}>Community Type</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: data.archetype_reasoning ? 12 : 0 }}>
