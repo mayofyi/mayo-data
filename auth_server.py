@@ -4,6 +4,10 @@ Serves the community onboarding flow, handles Instagram OAuth,
 stores community profiles in PostgreSQL, and runs the data pipeline.
 """
 
+import base64
+import hashlib
+import hmac
+import json as _json_stdlib
 import math
 import os
 import threading
@@ -24,6 +28,51 @@ REDIRECT_URI = os.getenv("REDIRECT_URI")
 ADMIN_TOKEN = os.getenv("ADMIN_TOKEN", "mayo-admin")
 SUPABASE_URL = os.getenv("SUPABASE_URL", "")
 SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY", "")
+SECRET_KEY = os.getenv("SECRET_KEY", "mayo-secret-key-change-in-production")
+
+
+# ── Auth utilities ─────────────────────────────────────────────────────────────
+
+def hash_password(password):
+    salt = os.urandom(16)
+    key = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 200_000)
+    return base64.b64encode(salt + key).decode()
+
+
+def verify_password(password, stored):
+    try:
+        decoded = base64.b64decode(stored.encode())
+        salt, key = decoded[:16], decoded[16:]
+        check = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, 200_000)
+        return hmac.compare_digest(key, check)
+    except Exception:
+        return False
+
+
+def create_token(payload):
+    payload = {**payload, "iat": int(time.time())}
+    encoded = base64.b64encode(_json_stdlib.dumps(payload).encode()).decode()
+    sig = hmac.new(SECRET_KEY.encode(), encoded.encode(), hashlib.sha256).hexdigest()
+    return f"{encoded}.{sig}"
+
+
+def verify_token(token):
+    try:
+        encoded, sig = token.rsplit(".", 1)
+        expected = hmac.new(SECRET_KEY.encode(), encoded.encode(), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(sig, expected):
+            return None
+        return _json_stdlib.loads(base64.b64decode(encoded).decode())
+    except Exception:
+        return None
+
+
+def require_auth(req):
+    """Return token payload or raise 401."""
+    auth = req.headers.get("Authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    return verify_token(auth[7:])
 STORAGE_BUCKET = "mayo-assets"
 
 # ── Metric calculation utilities ───────────────────────────────────────────────
@@ -171,6 +220,69 @@ def init_db():
                     updated_at TIMESTAMP DEFAULT NOW()
                 )
             """)
+            # Brands table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS brands (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    tagline TEXT,
+                    bio TEXT,
+                    website TEXT,
+                    category TEXT,
+                    color TEXT DEFAULT '#888',
+                    gradient TEXT,
+                    initial TEXT,
+                    created_at TIMESTAMP DEFAULT NOW()
+                )
+            """)
+            # Briefs table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS briefs (
+                    id TEXT PRIMARY KEY,
+                    brand_id TEXT REFERENCES brands(id),
+                    title TEXT NOT NULL,
+                    campaign_goal TEXT,
+                    partnership_type TEXT,
+                    budget TEXT,
+                    budget_period TEXT,
+                    tags TEXT[],
+                    requirements JSONB DEFAULT '{}',
+                    kpis JSONB DEFAULT '[]',
+                    products JSONB DEFAULT '[]',
+                    deadline TEXT,
+                    window TEXT,
+                    goal TEXT,
+                    looking_for TEXT,
+                    status TEXT DEFAULT 'open',
+                    response_count INTEGER DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT NOW()
+                )
+            """)
+            # Projects table
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS projects (
+                    id TEXT PRIMARY KEY,
+                    brief_id TEXT REFERENCES briefs(id),
+                    community_id TEXT REFERENCES communities(id),
+                    brand_id TEXT REFERENCES brands(id),
+                    type TEXT,
+                    budget NUMERIC,
+                    stage INTEGER DEFAULT 0,
+                    stages JSONB DEFAULT '[]',
+                    timeline JSONB DEFAULT '[]',
+                    milestones JSONB DEFAULT '[]',
+                    logistics JSONB DEFAULT '{}',
+                    payments JSONB DEFAULT '{}',
+                    team JSONB DEFAULT '[]',
+                    chat JSONB DEFAULT '[]',
+                    status TEXT DEFAULT 'active',
+                    start_date TEXT,
+                    end_date TEXT,
+                    created_at TIMESTAMP DEFAULT NOW()
+                )
+            """)
             # Add new columns to existing tables
             for col, typedef in [
                 ("cover_image_url", "TEXT"),
@@ -196,6 +308,7 @@ def init_db():
                 ("press_mentions", "JSONB DEFAULT '[]'"),
                 ("miq_score", "INT"),
                 ("miq_reasoning", "TEXT"),
+                ("password_hash", "TEXT"),
             ]:
                 cur.execute(f"""
                     ALTER TABLE communities ADD COLUMN IF NOT EXISTS {col} {typedef}
@@ -281,12 +394,14 @@ def run_substack_pipeline(community_id, substack_url):
 def create_community():
     data = request.json or {}
     community_id = str(uuid.uuid4())
+    pw = data.get("password", "")
+    pw_hash = hash_password(pw) if pw else None
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO communities
-                    (id, name, tagline, location, description, tags, active_members, website, cover_option, leader_name, email, capabilities, partnership_preferences)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    (id, name, tagline, location, description, tags, active_members, website, cover_option, leader_name, email, capabilities, partnership_preferences, password_hash)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 community_id,
                 data.get("name"),
@@ -301,9 +416,12 @@ def create_community():
                 data.get("email"),
                 data.get("capabilities", []),
                 data.get("partnership_preferences"),
+                pw_hash,
             ))
         conn.commit()
-    return jsonify({"id": community_id})
+    token = create_token({"id": community_id, "role": "community", "name": data.get("name", "")})
+    return jsonify({"id": community_id, "token": token, "role": "community",
+                    "user": {"id": community_id, "name": data.get("name", ""), "org": data.get("name", ""), "role": "community"}})
 
 
 @app.route("/api/community/<community_id>", methods=["GET"])
@@ -960,13 +1078,179 @@ def callback():
     )
     thread.start()
 
-    return redirect(f"/?community_id={community_id}&instagram_connected=true&step=3")
+    return redirect(f"/onboard?community_id={community_id}&instagram_connected=true&step=3")
+
+
+# ── Auth endpoints ────────────────────────────────────────────────────────────
+
+@app.route("/api/login", methods=["POST"])
+def login():
+    data = request.json or {}
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+    if not email or not password:
+        return jsonify({"error": "Email and password required"}), 400
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            # Check brands first
+            cur.execute("SELECT * FROM brands WHERE LOWER(email) = %s", (email,))
+            brand = cur.fetchone()
+            if brand:
+                brand = dict(brand)
+                if not verify_password(password, brand.get("password_hash", "")):
+                    return jsonify({"error": "Invalid credentials"}), 401
+                token = create_token({"id": brand["id"], "role": "brand", "name": brand["name"]})
+                return jsonify({"token": token, "role": "brand",
+                                "user": {"id": brand["id"], "name": brand["name"], "org": brand["name"],
+                                         "role": "brand", "initial": (brand.get("initial") or brand["name"][0]).upper()}})
+            # Check communities
+            cur.execute("SELECT id, name, email, password_hash FROM communities WHERE LOWER(email) = %s", (email,))
+            community = cur.fetchone()
+            if not community:
+                return jsonify({"error": "No account found with that email"}), 404
+            community = dict(community)
+            if not community.get("password_hash"):
+                return jsonify({"error": "No password set — use your setup link to create one"}), 401
+            if not verify_password(password, community["password_hash"]):
+                return jsonify({"error": "Invalid credentials"}), 401
+            token = create_token({"id": community["id"], "role": "community", "name": community["name"]})
+            return jsonify({"token": token, "role": "community",
+                            "user": {"id": community["id"], "name": community["name"], "org": community["name"],
+                                     "role": "community", "initial": (community["name"] or "C")[0].upper()}})
+
+
+@app.route("/api/register/brand", methods=["POST"])
+def register_brand():
+    data = request.json or {}
+    email = (data.get("email") or "").strip().lower()
+    password = data.get("password") or ""
+    name = (data.get("name") or "").strip()
+    if not email or not password or not name:
+        return jsonify({"error": "Name, email and password required"}), 400
+    brand_id = str(uuid.uuid4())
+    pw_hash = hash_password(password)
+    initial = name[0].upper()
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO brands (id, name, email, password_hash, tagline, bio, website, category, color, gradient, initial)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """, (brand_id, name, email, pw_hash,
+                      data.get("tagline"), data.get("bio"), data.get("website"),
+                      data.get("category"), data.get("color", "#888"),
+                      data.get("gradient"), initial))
+            conn.commit()
+    except psycopg2.errors.UniqueViolation:
+        return jsonify({"error": "An account with that email already exists"}), 409
+    token = create_token({"id": brand_id, "role": "brand", "name": name})
+    return jsonify({"token": token, "role": "brand",
+                    "user": {"id": brand_id, "name": name, "org": name, "role": "brand", "initial": initial}})
+
+
+# ── Public community listing ───────────────────────────────────────────────────
+
+@app.route("/api/communities", methods=["GET"])
+def list_communities():
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, name, tagline, location, description, tags, active_members, website,
+                       cover_option, cover_image_url, archetype, archetype_source,
+                       network_multiplier, cis_raw, cis_stamped, instagram_data, instagram_token,
+                       notable_members, case_studies, capabilities, partnership_preferences,
+                       leader_name, created_at
+                FROM communities ORDER BY created_at DESC
+            """)
+            rows = cur.fetchall()
+    result = []
+    for row in rows:
+        d = dict(row)
+        for k, v in d.items():
+            if hasattr(v, "isoformat"):
+                d[k] = v.isoformat()
+        result.append(d)
+    return jsonify(result)
+
+
+# ── Briefs ────────────────────────────────────────────────────────────────────
+
+@app.route("/api/briefs", methods=["GET"])
+def list_briefs():
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT br.*, b.name AS brand_name, b.tagline AS brand_tagline,
+                       b.bio AS brand_bio, b.color AS brand_color, b.gradient AS brand_gradient, b.initial AS brand_initial
+                FROM briefs br
+                LEFT JOIN brands b ON br.brand_id = b.id
+                WHERE br.status = 'open'
+                ORDER BY br.created_at DESC
+            """)
+            rows = cur.fetchall()
+    result = []
+    for row in rows:
+        d = dict(row)
+        for k, v in d.items():
+            if hasattr(v, "isoformat"):
+                d[k] = v.isoformat()
+        result.append(d)
+    return jsonify(result)
+
+
+@app.route("/api/briefs", methods=["POST"])
+def create_brief():
+    payload = require_auth(request)
+    if not payload or payload.get("role") != "brand":
+        return jsonify({"error": "Brand login required"}), 401
+    data = request.json or {}
+    brief_id = str(uuid.uuid4())
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO briefs (id, brand_id, title, campaign_goal, partnership_type, budget, budget_period,
+                    tags, requirements, kpis, products, deadline, window, goal, looking_for)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                brief_id, payload["id"],
+                data.get("title"), data.get("campaign_goal"), data.get("partnership_type"),
+                data.get("budget"), data.get("budget_period"),
+                data.get("tags", []),
+                psycopg2.extras.Json(data.get("requirements", {})),
+                psycopg2.extras.Json(data.get("kpis", [])),
+                psycopg2.extras.Json(data.get("products", [])),
+                data.get("deadline"), data.get("window"),
+                data.get("goal"), data.get("looking_for"),
+            ))
+            # Fetch the brand info to return with the brief
+            cur.execute("""
+                SELECT br.*, b.name AS brand_name, b.tagline AS brand_tagline,
+                       b.bio AS brand_bio, b.color AS brand_color, b.gradient AS brand_gradient, b.initial AS brand_initial
+                FROM briefs br LEFT JOIN brands b ON br.brand_id = b.id WHERE br.id = %s
+            """, (brief_id,))
+            row = cur.fetchone()
+        conn.commit()
+    d = dict(row)
+    for k, v in d.items():
+        if hasattr(v, "isoformat"):
+            d[k] = v.isoformat()
+    return jsonify(d), 201
 
 
 # ── Pages ──────────────────────────────────────────────────────────────────────
 
 @app.route("/")
 def index():
+    return redirect("/app")
+
+
+@app.route("/app")
+def app_shell():
+    return render_template("app.html")
+
+
+@app.route("/onboard")
+def onboard():
     return render_template("onboarding.html")
 
 

@@ -339,7 +339,7 @@ function Step2({ onNext, onBack, form, setForm }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const canContinue = form.leaderName.trim() && form.email.trim() && form.name.trim() && form.tagline.trim() && form.description.trim();
+  const canContinue = form.leaderName.trim() && form.email.trim() && form.name.trim() && form.tagline.trim() && form.description.trim() && form.password.trim().length >= 8;
 
   async function handleSubmit() {
     setLoading(true);
@@ -359,9 +359,15 @@ function Step2({ onNext, onBack, form, setForm }) {
           website: form.website,
           cover_option: form.coverOption,
           capabilities: form.capabilities,
+          password: form.password,
         }),
       });
       const data = await res.json();
+      // Store auth token so user is logged in after onboarding
+      if (data.token) {
+        sessionStorage.setItem('mayo_token', data.token);
+        sessionStorage.setItem('mayo_user', JSON.stringify(data.user));
+      }
       setForm(f => ({ ...f, communityId: data.id }));
       onNext();
     } catch (e) {
@@ -394,6 +400,10 @@ function Step2({ onNext, onBack, form, setForm }) {
               <label className="label">Email *</label>
               <input className="input" type="email" placeholder="you@example.com" value={form.email} onChange={e => setForm(f=>({...f,email:e.target.value}))} />
             </div>
+          </div>
+          <div className="form-group">
+            <label className="label">Create a password * <span style={{ color:'var(--muted)', fontWeight:400, textTransform:'none', fontSize:11 }}>— min. 8 characters, used to log back in</span></label>
+            <input className="input" type="password" placeholder="••••••••" value={form.password} onChange={e => setForm(f=>({...f,password:e.target.value}))} />
           </div>
           <div className="form-group">
             <label className="label">Community Name *</label>
@@ -1135,6 +1145,16 @@ function Step6({ form, setForm }) {
             <span onClick={copyProfileLink} style={{ color:'var(--cyan)', cursor:'pointer', textDecoration:'underline' }}>Copy your profile link</span>
           </div>
         </div>
+        <div style={{ margin:'16px 24px 0', display:'flex', gap:10 }}>
+          <button onClick={() => window.location.href = '/app'}
+            style={{ flex:1, background:'var(--lime)', color:'#000', border:'none', borderRadius:8, padding:'12px', fontFamily:'Barlow Condensed', fontSize:14, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer' }}>
+            Go to Dashboard →
+          </button>
+          <button onClick={copyProfileLink}
+            style={{ background:'var(--surface2)', color: copied ? 'var(--lime)' : 'var(--white)', border:'1px solid var(--border2)', borderRadius:8, padding:'12px 16px', fontFamily:'Barlow Condensed', fontSize:13, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', cursor:'pointer', transition:'all 0.2s' }}>
+            {copied ? '✓ Copied' : 'Share Profile'}
+          </button>
+        </div>
 
         {lightbox && <Lightbox items={lightbox.items} startIndex={lightbox.index} onClose={() => setLightbox(null)} />}
       </div>
@@ -1149,6 +1169,7 @@ function App() {
     communityId: null,
     leaderName: '',
     email: '',
+    password: '',
     name: '',
     tagline: '',
     location: '',
@@ -1200,7 +1221,7 @@ function App() {
           }));
           if (s) setStep(s);
         });
-      window.history.replaceState({}, '', '/');
+      window.history.replaceState({}, '', '/onboard');
     }
   }, []);
 
