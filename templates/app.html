@@ -2652,7 +2652,7 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
         {onBack && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, left: 14, zIndex: 2 }} onClick={onBack}>← Back</button>}
         {isOwnProfile && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, right: 14, zIndex: 2 }}>Edit Profile</button>}
         {!isOwnProfile && (role === 'brand' || role === 'admin') && c.email && (
-          <a href={`mailto:${c.email}?subject=Partnership enquiry — ${encodeURIComponent(c.name)}`}
+          <a href={`mailto:${c.email}?subject=Partnership enquiry - ${encodeURIComponent(c.name)}`}
             className="btn btn-lime btn-sm"
             style={{ position: 'absolute', top: 14, right: 14, zIndex: 2, textDecoration: 'none' }}>
             Reach Out →
