@@ -3256,6 +3256,56 @@ function MeasurePage() {
   );
 }
 
+// ─── SHARED HELPERS (used by profile module) ────────────────────────────────
+
+const ARCHETYPES = [
+  { id:'evangelists',    label:'Evangelists',    color:'#ff6ef2', best:'Brand Awareness',       desc:'Champions brands they believe in. High share rate, unsolicited advocacy, identity-linked.' },
+  { id:'early_adopters', label:'Early Adopters',  color:'#d2ff01', best:'Product Launches',      desc:'Loves being first. Trend-forward, high try rate, first-to-know pride.' },
+  { id:'loyalists',      label:'Loyalists',       color:'#b1ecf0', best:'Long-term Sponsorship', desc:'Shows up every time. Repeat engagement, high attendance, low churn.' },
+  { id:'buyers',         label:'Buyers',          color:'#ffab40', best:'Direct Response',       desc:'Converts. Purchase intent, conversion signals, practical focus.' },
+];
+
+const AVATAR_COLORS_P = [
+  { bg:'#d2ff01', text:'#000' }, { bg:'#b1ecf0', text:'#000' },
+  { bg:'#ff6ef2', text:'#000' }, { bg:'#ffab40', text:'#000' },
+  { bg:'#b3ff9e', text:'#000' }, { bg:'#ffea12', text:'#000' },
+  { bg:'#ff6b6b', text:'#000' },
+];
+function avatarColor(name) {
+  let h = 0;
+  for (let i = 0; i < (name||'').length; i++) h = ((h << 5) - h + (name||'').charCodeAt(i)) | 0;
+  return AVATAR_COLORS_P[Math.abs(h) % AVATAR_COLORS_P.length];
+}
+
+function Lightbox({ items, startIndex, onClose }) {
+  const norm = (items||[]).map(i => typeof i === 'string' ? {url:i} : i);
+  const [idx, setIdx] = React.useState(startIndex || 0);
+  React.useEffect(() => {
+    const h = e => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight') setIdx(i => Math.min(i+1, norm.length-1));
+      if (e.key === 'ArrowLeft') setIdx(i => Math.max(i-1, 0));
+    };
+    document.addEventListener('keydown', h);
+    return () => document.removeEventListener('keydown', h);
+  }, [norm.length]);
+  const cur = norm[idx] || {};
+  return (
+    <div onClick={onClose} style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.93)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div onClick={e=>e.stopPropagation()} style={{ display:'flex', flexDirection:'column', alignItems:'center', maxWidth:'90vw', position:'relative' }}>
+        <button onClick={onClose} style={{ position:'absolute', top:-14, right:-14, background:'rgba(255,255,255,0.15)', border:'none', borderRadius:'50%', width:30, height:30, color:'#fff', fontSize:14, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1 }}>✕</button>
+        <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+          {norm.length > 1 && <button onClick={()=>setIdx(i=>Math.max(i-1,0))} disabled={idx===0} style={{ background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'50%', width:40, height:40, color:'#fff', fontSize:20, cursor:'pointer', opacity:idx===0?0.3:1, flexShrink:0 }}>‹</button>}
+          <img src={cur.url} alt="" style={{ maxWidth:'75vw', maxHeight:'70vh', objectFit:'contain', borderRadius:8, display:'block' }} />
+          {norm.length > 1 && <button onClick={()=>setIdx(i=>Math.min(i+1,norm.length-1))} disabled={idx===norm.length-1} style={{ background:'rgba(255,255,255,0.12)', border:'none', borderRadius:'50%', width:40, height:40, color:'#fff', fontSize:20, cursor:'pointer', opacity:idx===norm.length-1?0.3:1, flexShrink:0 }}>›</button>}
+        </div>
+        {cur.caption && <div style={{ textAlign:'center', marginTop:12, fontSize:13, color:'rgba(255,255,255,0.65)', maxWidth:500 }}>{cur.caption}</div>}
+        {norm.length > 1 && <div style={{ marginTop:10, color:'rgba(255,255,255,0.4)', fontSize:11, fontFamily:'Barlow Condensed', fontWeight:600 }}>{idx+1} / {norm.length}</div>}
+      </div>
+    </div>
+  );
+}
+
 // ─── MY PROFILE MODULE ───────────────────────────────────────────────────────
 
 function MyProfileModule({ userId, onEdit }) {
@@ -3790,11 +3840,15 @@ function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIE
       </div>
 
       {/* Discover CTA for community users */}
-      {!isBrand && BRIEFS.length > 0 && (
+      {!isBrand && (
         <div style={{ marginBottom: 20, padding: '20px 24px', background: 'rgba(210,255,1,0.05)', border: '1px solid rgba(210,255,1,0.2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
           <div>
-            <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 3 }}>{BRIEFS.length} Open Brief{BRIEFS.length !== 1 ? 's' : ''} Available</div>
-            <div style={{ fontSize: 13, color: 'var(--muted)' }}>Brands are looking for community partners like yours.</div>
+            <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 3 }}>
+              {BRIEFS.length > 0 ? `${BRIEFS.length} Open Brief${BRIEFS.length !== 1 ? 's' : ''} Available` : 'Discover Brand Partnerships'}
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+              {BRIEFS.length > 0 ? 'Brands are looking for community partners like yours.' : 'Browse open briefs and pitch your community to brands.'}
+            </div>
           </div>
           <button className="btn btn-lime" onClick={() => onNavigate('discover')}>Browse Briefs →</button>
         </div>
@@ -4070,9 +4124,11 @@ function App() {
     settings: 'Settings',
   };
 
-  const userInitial = user ? user.name[0] : (isBrand ? 'K' : 'P');
-  const userName = user ? user.name : (isBrand ? 'Katie Pearce' : 'Paul Crew');
-  const userOrg = user ? user.org : (isBrand ? 'Hyperice' : 'Southbound 400');
+  const userInitial = user ? (user.initial || (user.leader_name || user.name)[0]) : (isBrand ? 'K' : 'P');
+  // For community: top line = community name, bottom line = leader's name
+  // For brand: top line = brand name, bottom line = blank
+  const userName = user ? (isBrand ? user.name : user.name) : (isBrand ? 'Hyperice' : 'Southbound 400');
+  const userSub = user ? (isBrand ? '' : (user.leader_name || '')) : (isBrand ? '' : 'Paul Crew');
 
   return (
     <div className="app">
@@ -4085,11 +4141,11 @@ function App() {
           </span>
         </div>
 
-        <div className="sidenav-user">
+        <div className="sidenav-user" onClick={() => navigate('profile')} style={{ cursor: 'pointer' }} title="View my profile">
           <div className="avatar">{userInitial}</div>
           <div>
             <div className="user-name">{userName}</div>
-            <div className="user-org">{userOrg}</div>
+            {userSub && <div className="user-org">{userSub}</div>}
           </div>
         </div>
 
@@ -4126,11 +4182,8 @@ function App() {
             {activePage === 'discover' && isBrand && (
               <button className="btn btn-lime btn-sm" onClick={() => setCreatingBrief(true)}>+ New Brief</button>
             )}
-            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--surface2)', border: '1px solid var(--border2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 13 }}>
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--surface2)', border: '1px solid var(--border2)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: 13 }} title="Notifications">
               🔔
-            </div>
-            <div className="avatar" style={{ width: 32, height: 32, cursor: 'pointer' }}>
-              {userInitial}
             </div>
           </div>
         </div>

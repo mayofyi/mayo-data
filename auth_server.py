@@ -1122,7 +1122,7 @@ def api_login():
                                 "user": {"id": brand["id"], "name": brand["name"], "org": brand["name"],
                                          "role": "brand", "initial": (brand.get("initial") or brand["name"][0]).upper()}})
             # Check communities
-            cur.execute("SELECT id, name, email, password_hash FROM communities WHERE LOWER(email) = %s", (email,))
+            cur.execute("SELECT id, name, leader_name, email, password_hash FROM communities WHERE LOWER(email) = %s", (email,))
             community = cur.fetchone()
             if not community:
                 return jsonify({"error": "No account found with that email"}), 404
@@ -1131,10 +1131,12 @@ def api_login():
                 return jsonify({"error": "No password set — use your setup link to create one"}), 401
             if not verify_password(password, community["password_hash"]):
                 return jsonify({"error": "Invalid credentials"}), 401
+            leader = community.get("leader_name") or community["name"]
             token = create_token({"id": community["id"], "role": "community", "name": community["name"]})
             return jsonify({"token": token, "role": "community",
-                            "user": {"id": community["id"], "name": community["name"], "org": community["name"],
-                                     "role": "community", "initial": (community["name"] or "C")[0].upper()}})
+                            "user": {"id": community["id"], "name": community["name"], "leader_name": leader,
+                                     "org": community["name"], "role": "community",
+                                     "initial": (leader or "C")[0].upper()}})
 
 
 @app.route("/api/register/brand", methods=["POST"])
