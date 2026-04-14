@@ -2205,10 +2205,10 @@ function LoginScreen({ onLogin }) {
           <div style={{ borderTop: '1px solid var(--border)', paddingTop: 20 }}>
             <div className="login-label" style={{ marginBottom: 12 }}>New to mayo?</div>
             <div className="role-cards">
-              <div className="role-card brand" style={{ cursor: 'pointer', opacity: 0.5 }}>
+              <div className="role-card brand" onClick={() => window.location.href = '/onboard/brand'} style={{ cursor: 'pointer', borderColor: 'rgba(177,236,240,0.2)' }}>
                 <div className="role-card-icon">🏷</div>
                 <div className="role-card-title">Join as a Brand</div>
-                <div className="role-card-desc">Coming soon — contact us at hello@mayo.fyi</div>
+                <div className="role-card-desc">Post briefs, discover communities, run real partnerships</div>
               </div>
               <div className="role-card community" onClick={() => window.location.href = '/onboard'} style={{ cursor: 'pointer', borderColor: 'rgba(210,255,1,0.2)' }}>
                 <div className="role-card-icon">🤝</div>

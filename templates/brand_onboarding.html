@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mayo — join as a brand</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+:root {
+  --lime: #d2ff01;
+  --yellow: #ffea12;
+  --black: #080808;
+  --surface: #111111;
+  --surface2: #1a1a1a;
+  --surface3: #222222;
+  --white: #f0f0f0;
+  --muted: #888;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --cyan: #b1ecf0;
+  --pink: #ff6ef2;
+  --orange: #ffab40;
+  --green: #b3ff9e;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; background: var(--black); color: var(--white); font-family: 'Barlow', sans-serif; font-size: 14px; line-height: 1.5; }
+.bb { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.03em; }
+.bc { font-family: 'Barlow Condensed', sans-serif; }
+::-webkit-scrollbar { width: 4px; height: 6px; } ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; } ::-webkit-scrollbar-track { background: transparent; }
+
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:9px 18px; border-radius:6px; border:none; cursor:pointer; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:0.06em; text-transform:uppercase; transition:all 0.15s; white-space:nowrap; }
+.btn-lime { background:var(--lime); color:var(--black); }
+.btn-lime:hover { background:#bfee00; }
+.btn-ghost { background:transparent; color:var(--white); border:1px solid var(--border2); }
+.btn-ghost:hover { background:var(--surface2); }
+.btn-sm { padding:6px 13px; font-size:12px; }
+.btn-lg { padding:12px 28px; font-size:15px; }
+.btn:disabled { opacity:0.35; cursor:not-allowed; }
+
+.input { width:100%; background:var(--surface2); border:1px solid var(--border2); border-radius:6px; padding:10px 12px; color:var(--white); font-family:'Barlow',sans-serif; font-size:14px; outline:none; transition:border 0.15s; }
+.input:focus { border-color:rgba(255,255,255,0.3); }
+.input.error { border-color:rgba(255,80,80,0.5); }
+textarea.input { resize:none; }
+.label { display:block; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.form-group { margin-bottom:18px; }
+.field-hint { font-size:11px; color:var(--muted); margin-top:4px; }
+.field-error { font-size:11px; color:rgba(255,80,80,0.85); margin-top:4px; }
+.field-ok { font-size:11px; color:var(--lime); margin-top:4px; }
+
+.onboarding-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+.onboarding-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; width:100%; max-width:480px; overflow:hidden; }
+.onboarding-header { padding:28px 36px 24px; border-bottom:1px solid var(--border); }
+.onboarding-body { padding:28px 36px; }
+.onboarding-footer { padding:16px 36px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.step-dots { display:flex; gap:5px; margin-bottom:16px; }
+.step-dot { height:4px; width:12px; border-radius:2px; background:var(--surface3); transition:all 0.2s; }
+.step-dot.active { background:var(--lime); width:20px; }
+.step-dot.done { background:var(--lime); opacity:0.4; }
+
+.color-swatch { width:36px; height:36px; border-radius:8px; cursor:pointer; border:2px solid transparent; transition:all 0.12s; flex-shrink:0; }
+.color-swatch.selected { border-color:var(--white); box-shadow:0 0 0 1px var(--white); }
+
+.gradient-opt { height:48px; border-radius:6px; cursor:pointer; border:2px solid transparent; transition:all 0.12s; }
+.gradient-opt.selected { border-color:var(--lime); box-shadow:0 0 0 1px var(--lime); }
+
+.cat-item { padding:7px 12px; border-radius:6px; border:1px solid var(--border2); color:var(--muted); font-family:'Barlow Condensed',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; cursor:pointer; background:transparent; transition:all 0.12s; text-align:left; }
+.cat-item:hover { border-color:rgba(255,255,255,0.25); color:var(--white); }
+.cat-item.selected { background:var(--lime); border-color:var(--lime); color:var(--black); }
+
+.char-count { font-size:11px; color:var(--muted); text-align:right; margin-top:4px; }
+
+.preview-card { background:var(--surface2); border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+.preview-gradient { height:80px; }
+.preview-body { padding:16px 18px; }
+.review-row { display:flex; align-items:flex-start; gap:10; padding:10px 0; border-bottom:1px solid var(--border); }
+.review-row:last-child { border-bottom:none; }
+.review-label { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); min-width:100px; padding-top:1px; }
+.review-val { font-size:13px; color:var(--white); flex:1; line-height:1.55; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+{% raw %}<script type="text/babel">
+const { useState } = React;
+
+const TOTAL_STEPS = 5;
+
+const CATEGORIES = [
+  'Activewear & Performance',
+  'Wellness & Supplements',
+  'Outdoor & Adventure Gear',
+  'Fitness Lifestyle & Content',
+  'Food & Beverage',
+  'Technology & Apps',
+  'Beauty & Personal Care',
+  'Apparel & Fashion',
+  'Sports Equipment',
+  'Health & Recovery',
+  'Other',
+];
+
+const BRAND_COLORS = [
+  { hex:'#d2ff01', label:'Lime' },
+  { hex:'#b1ecf0', label:'Cyan' },
+  { hex:'#ff6ef2', label:'Pink' },
+  { hex:'#ffab40', label:'Orange' },
+  { hex:'#00c4a7', label:'Teal' },
+  { hex:'#22c55e', label:'Green' },
+  { hex:'#8b5cf6', label:'Purple' },
+  { hex:'#f97316', label:'Ember' },
+  { hex:'#facc15', label:'Gold' },
+  { hex:'#ef4444', label:'Red' },
+  { hex:'#3b82f6', label:'Blue' },
+  { hex:'#ffffff', label:'White' },
+];
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return `${r},${g},${b}`;
+}
+
+function makeGradient(hex) {
+  // Dark base gradient from near-black to the brand color
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  const dark1 = `rgb(${Math.round(r*0.08)},${Math.round(g*0.08)},${Math.round(b*0.08)})`;
+  const dark2 = `rgb(${Math.round(r*0.18)},${Math.round(g*0.18)},${Math.round(b*0.18)})`;
+  const mid   = `rgb(${Math.round(r*0.38)},${Math.round(g*0.38)},${Math.round(b*0.38)})`;
+  return `linear-gradient(135deg, ${dark1} 0%, ${dark2} 40%, ${mid} 70%, ${hex} 100%)`;
+}
+
+function extractDomain(url) {
+  try {
+    const u = new URL(url.startsWith('http') ? url : 'https://'+url);
+    return u.hostname.replace(/^www\./, '').toLowerCase();
+  } catch { return ''; }
+}
+
+function emailDomain(email) {
+  const parts = (email||'').split('@');
+  return parts.length === 2 ? parts[1].toLowerCase() : '';
+}
+
+function domainMatch(emailAddr, website) {
+  if (!emailAddr || !website) return null; // not enough info yet
+  const ed = emailDomain(emailAddr);
+  const wd = extractDomain(website);
+  if (!ed || !wd) return null;
+  return ed === wd || ed.endsWith('.'+wd) || wd.endsWith('.'+ed);
+}
+
+function StepDots({ current }) {
+  return (
+    <div className="step-dots">
+      {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+        <div key={i} className={`step-dot ${i+1 === current ? 'active' : i+1 < current ? 'done' : ''}`} />
+      ))}
+    </div>
+  );
+}
+
+// ── Step 1: Account ────────────────────────────────────────────────────────────
+
+function Step1Account({ form, setForm, onNext }) {
+  const [showPw, setShowPw] = useState(false);
+  const [pwError, setPwError] = useState('');
+
+  function validate() {
+    if (!form.email.trim()) return false;
+    if (!/\S+@\S+\.\S+/.test(form.email)) return false;
+    if (form.password.length < 8) return false;
+    if (form.password !== form.confirmPassword) return false;
+    return true;
+  }
+
+  function handleNext() {
+    if (form.password !== form.confirmPassword) {
+      setPwError('Passwords do not match.');
+      return;
+    }
+    setPwError('');
+    onNext();
+  }
+
+  const pwMismatch = form.confirmPassword && form.password !== form.confirmPassword;
+
+  return (
+    <div className="onboarding-screen">
+      <div className="onboarding-box">
+        <div className="onboarding-header">
+          <StepDots current={1} />
+          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Create your account</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>You'll use this to log in and manage your briefs.</div>
+        </div>
+        <div className="onboarding-body">
+          <div className="form-group">
+            <label className="label">Work email *</label>
+            <input className="input" type="email" placeholder="you@yourbrand.com"
+              value={form.email} onChange={e => setForm(f=>({...f,email:e.target.value.trim()}))} />
+            <div className="field-hint">Use your brand domain email — we'll verify it matches your website.</div>
+          </div>
+          <div className="form-group">
+            <label className="label">Password *</label>
+            <div style={{ position:'relative' }}>
+              <input className="input" type={showPw ? 'text' : 'password'} placeholder="8+ characters"
+                style={{ paddingRight:44 }}
+                value={form.password} onChange={e => setForm(f=>({...f,password:e.target.value}))} />
+              <button onClick={() => setShowPw(v=>!v)}
+                style={{ position:'absolute', right:12, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--muted)', fontSize:11, fontFamily:'Barlow Condensed', fontWeight:700, letterSpacing:'0.05em', textTransform:'uppercase' }}>
+                {showPw ? 'Hide' : 'Show'}
+              </button>
+            </div>
+          </div>
+          <div className="form-group" style={{ marginBottom:0 }}>
+            <label className="label">Confirm password *</label>
+            <input className={`input${pwMismatch ? ' error' : ''}`} type={showPw ? 'text' : 'password'} placeholder="Repeat password"
+              value={form.confirmPassword} onChange={e => setForm(f=>({...f,confirmPassword:e.target.value}))} />
+            {pwMismatch && <div className="field-error">Passwords do not match.</div>}
+          </div>
+        </div>
+        <div className="onboarding-footer">
+          <a href="/app" style={{ fontFamily:'Barlow Condensed', fontSize:12, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase', color:'var(--muted)', textDecoration:'none' }}>Already have an account?</a>
+          <button className="btn btn-lime" disabled={!validate()} onClick={handleNext}>Continue →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 2: Brand basics ───────────────────────────────────────────────────────
+
+function Step2Brand({ form, setForm, onNext, onBack }) {
+  const match = domainMatch(form.email, form.website);
+  const websiteOk = form.website && match === true;
+  const websiteWarn = form.website && match === false;
+  const websiteUnknown = form.website && match === null;
+
+  const canContinue = form.name.trim() && form.website.trim() && form.category && match !== false;
+
+  return (
+    <div className="onboarding-screen">
+      <div className="onboarding-box">
+        <div className="onboarding-header">
+          <StepDots current={2} />
+          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Your brand</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>The basics — what you are and where to find you.</div>
+        </div>
+        <div className="onboarding-body">
+          <div className="form-group">
+            <label className="label">Brand name *</label>
+            <input className="input" placeholder="e.g. FORM Athletic"
+              value={form.name} onChange={e => setForm(f=>({...f,name:e.target.value}))} />
+          </div>
+          <div className="form-group">
+            <label className="label">Website *</label>
+            <input className="input" placeholder="https://yourbrand.com"
+              value={form.website} onChange={e => setForm(f=>({...f,website:e.target.value.trim()}))} />
+            {websiteOk && <div className="field-ok">Domain matches your email — good to go.</div>}
+            {websiteWarn && (
+              <div className="field-error">
+                Email domain ({emailDomain(form.email)}) doesn't match website ({extractDomain(form.website)}). Use a matching brand email to continue.
+              </div>
+            )}
+            {websiteUnknown && <div className="field-hint">Couldn't parse domain — check the URL format.</div>}
+            {!form.website && <div className="field-hint">Must match the domain of your account email.</div>}
+          </div>
+          <div className="form-group" style={{ marginBottom:0 }}>
+            <label className="label">Category *</label>
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6, marginTop:2 }}>
+              {CATEGORIES.map(cat => (
+                <button key={cat} className={`cat-item${form.category === cat ? ' selected' : ''}`}
+                  onClick={() => setForm(f=>({...f,category:cat}))}>
+                  {cat}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="onboarding-footer">
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>Back</button>
+          <button className="btn btn-lime" disabled={!canContinue} onClick={onNext}>Continue →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 3: Story ──────────────────────────────────────────────────────────────
+
+function Step3Story({ form, setForm, onNext, onBack }) {
+  const canContinue = form.tagline.trim() && form.bio.trim().length >= 50;
+
+  return (
+    <div className="onboarding-screen">
+      <div className="onboarding-box">
+        <div className="onboarding-header">
+          <StepDots current={3} />
+          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Your story</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>Communities read this before they respond to your briefs. Be direct — what you stand for, who you're for.</div>
+        </div>
+        <div className="onboarding-body">
+          <div className="form-group">
+            <label className="label">Tagline *</label>
+            <input className="input" placeholder="e.g. Built for the way you move."
+              maxLength={80}
+              value={form.tagline} onChange={e => setForm(f=>({...f,tagline:e.target.value}))} />
+            <div className="char-count">{form.tagline.length}/80</div>
+          </div>
+          <div className="form-group" style={{ marginBottom:0 }}>
+            <label className="label">Brand bio *</label>
+            <textarea className="input" rows={7} placeholder="Who are you, who do you serve, and why do you work with communities? Keep it honest — communities can spot marketing copy."
+              maxLength={600}
+              value={form.bio} onChange={e => setForm(f=>({...f,bio:e.target.value}))} />
+            <div className="char-count">{form.bio.length}/600 {form.bio.length < 50 && form.bio.length > 0 && <span style={{ color:'rgba(255,80,80,0.7)' }}>— need at least 50 characters</span>}</div>
+          </div>
+        </div>
+        <div className="onboarding-footer">
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>Back</button>
+          <button className="btn btn-lime" disabled={!canContinue} onClick={onNext}>Continue →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 4: Visual identity ────────────────────────────────────────────────────
+
+function Step4Visual({ form, setForm, onNext, onBack }) {
+  const selectedColor = BRAND_COLORS.find(c => c.hex === form.color) || BRAND_COLORS[0];
+  const gradient = form.gradient || makeGradient(form.color || '#888');
+  const initial = (form.name || 'B')[0].toUpperCase();
+
+  return (
+    <div className="onboarding-screen">
+      <div className="onboarding-box">
+        <div className="onboarding-header">
+          <StepDots current={4} />
+          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Look and feel</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>Pick a brand colour. This sets the tone for your profile and briefs.</div>
+        </div>
+        <div className="onboarding-body">
+          {/* Live preview */}
+          <div className="preview-card" style={{ marginBottom:24 }}>
+            <div className="preview-gradient" style={{ background:gradient }} />
+            <div className="preview-body">
+              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <div style={{ width:44, height:44, borderRadius:10, background:form.color||'#888', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Bebas Neue', fontSize:22, color:'#000', flexShrink:0 }}>
+                  {initial}
+                </div>
+                <div>
+                  <div style={{ fontFamily:'Bebas Neue', fontSize:20, letterSpacing:'0.03em' }}>{form.name || 'Your Brand'}</div>
+                  <div style={{ fontSize:11, color:'var(--muted)', fontFamily:'Barlow Condensed', fontWeight:600, letterSpacing:'0.05em', textTransform:'uppercase' }}>{form.category || 'Category'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Color swatches */}
+          <div className="form-group" style={{ marginBottom:0 }}>
+            <label className="label">Brand colour *</label>
+            <div style={{ display:'flex', flexWrap:'wrap', gap:8, marginTop:6 }}>
+              {BRAND_COLORS.map(c => (
+                <div key={c.hex} title={c.label}
+                  className={`color-swatch${form.color === c.hex ? ' selected' : ''}`}
+                  style={{ background:c.hex }}
+                  onClick={() => setForm(f=>({ ...f, color: c.hex, gradient: makeGradient(c.hex) }))} />
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="onboarding-footer">
+          <button className="btn btn-ghost btn-sm" onClick={onBack}>Back</button>
+          <button className="btn btn-lime" disabled={!form.color} onClick={onNext}>Continue →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 5: Review + Submit ────────────────────────────────────────────────────
+
+function Step5Review({ form, onBack, onDone }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const gradient = form.gradient || makeGradient(form.color || '#888');
+  const initial = (form.name || 'B')[0].toUpperCase();
+
+  async function handleSubmit() {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/register/brand', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          email: form.email,
+          password: form.password,
+          tagline: form.tagline,
+          bio: form.bio,
+          website: form.website,
+          category: form.category,
+          color: form.color,
+          gradient: gradient,
+          initial: initial,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Something went wrong. Please try again.');
+        return;
+      }
+      if (data.token) {
+        sessionStorage.setItem('mayo_token', data.token);
+        sessionStorage.setItem('mayo_user', JSON.stringify(data.user));
+      }
+      onDone();
+    } catch (e) {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="onboarding-screen">
+      <div className="onboarding-box">
+        <div className="onboarding-header">
+          <StepDots current={5} />
+          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Ready to go</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>Check everything looks right before we create your account.</div>
+        </div>
+        <div className="onboarding-body" style={{ maxHeight:'60vh', overflowY:'auto' }}>
+          {/* Preview card */}
+          <div className="preview-card" style={{ marginBottom:20 }}>
+            <div className="preview-gradient" style={{ background:gradient }} />
+            <div className="preview-body">
+              <div style={{ display:'flex', alignItems:'center', gap:12 }}>
+                <div style={{ width:44, height:44, borderRadius:10, background:form.color||'#888', display:'flex', alignItems:'center', justifyContent:'center', fontFamily:'Bebas Neue', fontSize:22, color:'#000', flexShrink:0 }}>
+                  {initial}
+                </div>
+                <div>
+                  <div style={{ fontFamily:'Bebas Neue', fontSize:20, letterSpacing:'0.03em' }}>{form.name}</div>
+                  <div style={{ fontSize:11, color:'var(--muted)', fontFamily:'Barlow Condensed', fontWeight:600, letterSpacing:'0.05em', textTransform:'uppercase' }}>{form.category}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Review rows */}
+          <div style={{ background:'var(--surface2)', borderRadius:10, border:'1px solid var(--border)', overflow:'hidden' }}>
+            {[
+              { label:'Email', val:form.email },
+              { label:'Website', val:form.website },
+              { label:'Tagline', val:form.tagline },
+              { label:'Bio', val:form.bio },
+            ].map(row => (
+              <div key={row.label} className="review-row" style={{ display:'flex', gap:10, padding:'11px 16px', borderBottom:'1px solid var(--border)' }}>
+                <div className="review-label">{row.label}</div>
+                <div className="review-val">{row.val}</div>
+              </div>
+            ))}
+            <div style={{ display:'flex', gap:10, padding:'11px 16px' }}>
+              <div className="review-label">Colour</div>
+              <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <div style={{ width:20, height:20, borderRadius:4, background:form.color }} />
+                <span style={{ fontSize:13 }}>{BRAND_COLORS.find(c=>c.hex===form.color)?.label || form.color}</span>
+              </div>
+            </div>
+          </div>
+
+          {error && (
+            <div style={{ marginTop:14, padding:'10px 14px', background:'rgba(255,80,80,0.1)', border:'1px solid rgba(255,80,80,0.3)', borderRadius:6, fontSize:13, color:'rgba(255,100,100,0.9)' }}>
+              {error}
+            </div>
+          )}
+        </div>
+        <div className="onboarding-footer">
+          <button className="btn btn-ghost btn-sm" onClick={onBack} disabled={loading}>Back</button>
+          <button className="btn btn-lime btn-lg" onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Creating account…' : 'Create account →'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Step 6: Done ───────────────────────────────────────────────────────────────
+
+function StepDone({ form }) {
+  return (
+    <div className="onboarding-screen">
+      <div className="onboarding-box">
+        <div className="onboarding-header" style={{ border:'none' }}>
+          <div style={{ display:'flex', gap:5, marginBottom:16 }}>
+            {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+              <div key={i} className="step-dot done" />
+            ))}
+          </div>
+          <div className="bb" style={{ fontSize:36, color:'var(--lime)', marginBottom:8 }}>You're in.</div>
+          <div style={{ fontSize:14, color:'var(--muted)', lineHeight:1.6 }}>
+            Account created for <strong style={{ color:'var(--white)' }}>{form.name}</strong>. Head to the platform to create your first brief.
+          </div>
+        </div>
+        <div className="onboarding-body">
+          <div style={{ padding:'14px 16px', background:'rgba(210,255,1,0.06)', border:'1px solid rgba(210,255,1,0.2)', borderRadius:10, marginBottom:16, fontSize:13, color:'var(--muted)', lineHeight:1.65 }}>
+            <strong style={{ color:'var(--lime)', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', fontSize:11 }}>One more step</strong><br />
+            We'll review your account before it goes live. Most approvals happen within 24 hours. You can log in now and draft a brief while you wait.
+          </div>
+          <a href="/app" className="btn btn-lime btn-lg" style={{ width:'100%', textDecoration:'none', justifyContent:'center' }}>
+            Go to platform →
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Root ───────────────────────────────────────────────────────────────────────
+
+function BrandOnboarding() {
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    name: '',
+    website: '',
+    category: '',
+    tagline: '',
+    bio: '',
+    color: '#d2ff01',
+    gradient: makeGradient('#d2ff01'),
+  });
+
+  const next = () => setStep(s => s + 1);
+  const back = () => setStep(s => s - 1);
+
+  if (step === 1) return <Step1Account form={form} setForm={setForm} onNext={next} />;
+  if (step === 2) return <Step2Brand form={form} setForm={setForm} onNext={next} onBack={back} />;
+  if (step === 3) return <Step3Story form={form} setForm={setForm} onNext={next} onBack={back} />;
+  if (step === 4) return <Step4Visual form={form} setForm={setForm} onNext={next} onBack={back} />;
+  if (step === 5) return <Step5Review form={form} onBack={back} onDone={next} />;
+  return <StepDone form={form} />;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<BrandOnboarding />);
+</script>{% endraw %}
+</body>
+</html>

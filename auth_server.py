@@ -320,6 +320,8 @@ def init_db():
                 cur.execute(f"""
                     ALTER TABLE communities ADD COLUMN IF NOT EXISTS {col} {typedef}
                 """)
+            # Brands table migrations
+            cur.execute("ALTER TABLE brands ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT FALSE")
             # Briefs table migrations
             cur.execute("ALTER TABLE briefs ADD COLUMN IF NOT EXISTS cover_image_url TEXT")
         conn.commit()
@@ -1193,14 +1195,39 @@ def api_login():
                                      "initial": (leader or "C")[0].upper()}})
 
 
+def _extract_domain(url):
+    """Return bare domain (no www) from a URL or domain string."""
+    import urllib.parse
+    if not url:
+        return ""
+    if not url.startswith("http"):
+        url = "https://" + url
+    try:
+        return urllib.parse.urlparse(url).hostname.lstrip("www.").lower()
+    except Exception:
+        return ""
+
+
 @app.route("/api/register/brand", methods=["POST"])
 def register_brand():
     data = request.json or {}
     email = (data.get("email") or "").strip().lower()
     password = data.get("password") or ""
     name = (data.get("name") or "").strip()
+    website = (data.get("website") or "").strip()
     if not email or not password or not name:
         return jsonify({"error": "Name, email and password required"}), 400
+
+    # Domain validation — email must share domain with brand website
+    if website:
+        email_domain = email.split("@")[-1] if "@" in email else ""
+        site_domain = _extract_domain(website)
+        if email_domain and site_domain:
+            if email_domain != site_domain and not email_domain.endswith("." + site_domain) and not site_domain.endswith("." + email_domain):
+                return jsonify({
+                    "error": f"Email domain ({email_domain}) must match your website domain ({site_domain}). Use a brand email address."
+                }), 400
+
     brand_id = str(uuid.uuid4())
     pw_hash = hash_password(password)
     initial = name[0].upper()
@@ -1208,12 +1235,12 @@ def register_brand():
         with get_db() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO brands (id, name, email, password_hash, tagline, bio, website, category, color, gradient, initial)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO brands (id, name, email, password_hash, tagline, bio, website, category, color, gradient, initial, verified)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (brand_id, name, email, pw_hash,
-                      data.get("tagline"), data.get("bio"), data.get("website"),
+                      data.get("tagline"), data.get("bio"), website,
                       data.get("category"), data.get("color", "#888"),
-                      data.get("gradient"), initial))
+                      data.get("gradient"), initial, False))
             conn.commit()
     except psycopg2.errors.UniqueViolation:
         return jsonify({"error": "An account with that email already exists"}), 409
@@ -1326,6 +1353,11 @@ def app_shell():
 @app.route("/onboard")
 def onboard():
     return render_template("onboarding.html")
+
+
+@app.route("/onboard/brand")
+def onboard_brand():
+    return render_template("brand_onboarding.html")
 
 
 @app.route("/admin")
