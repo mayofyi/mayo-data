@@ -76,16 +76,36 @@ tbody td { padding:14px; vertical-align:top; font-size:13px; }
 </header>
 
 <main id="main-view">
-  <div class="page-title">Communities</div>
-  <div class="page-sub" id="last-updated">Loading…</div>
-  <div class="stats-row">
-    <div class="stat-card"><div class="stat-label">Total Profiles</div><div class="stat-value" id="stat-total">—</div></div>
-    <div class="stat-card"><div class="stat-label">Instagram Connected</div><div class="stat-value" id="stat-ig">—</div></div>
-    <div class="stat-card"><div class="stat-label">Fully Verified</div><div class="stat-value" id="stat-fv">—</div></div>
-    <div class="stat-card"><div class="stat-label">Avg. ER</div><div class="stat-value" id="stat-er">—</div></div>
+  <!-- Tabs -->
+  <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:28px;">
+    <button id="tab-communities" onclick="switchTab('communities')" style="background:none;border:none;border-bottom:2px solid var(--lime);color:var(--white);font-family:'Barlow Condensed';font-size:14px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:10px 20px 10px 0;cursor:pointer;margin-right:20px;">Communities</button>
+    <button id="tab-briefs" onclick="switchTab('briefs')" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'Barlow Condensed';font-size:14px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:10px 20px 10px 0;cursor:pointer;">Briefs</button>
   </div>
-  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
-    <div id="table-container" class="loading">Loading communities…</div>
+
+  <!-- Communities view -->
+  <div id="view-communities">
+    <div class="page-sub" id="last-updated">Loading…</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-label">Total Profiles</div><div class="stat-value" id="stat-total">—</div></div>
+      <div class="stat-card"><div class="stat-label">Instagram Connected</div><div class="stat-value" id="stat-ig">—</div></div>
+      <div class="stat-card"><div class="stat-label">Fully Verified</div><div class="stat-value" id="stat-fv">—</div></div>
+      <div class="stat-card"><div class="stat-label">Avg. ER</div><div class="stat-value" id="stat-er">—</div></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div id="table-container" class="loading">Loading communities…</div>
+    </div>
+  </div>
+
+  <!-- Briefs view -->
+  <div id="view-briefs" style="display:none;">
+    <div class="page-sub" id="briefs-sub">Loading…</div>
+    <div class="stats-row" style="grid-template-columns:repeat(2,1fr);">
+      <div class="stat-card"><div class="stat-label">Total Briefs</div><div class="stat-value" id="stat-briefs-total">—</div></div>
+      <div class="stat-card"><div class="stat-label">Brands</div><div class="stat-value" id="stat-briefs-brands">—</div></div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+      <div id="briefs-container" class="loading">Loading briefs…</div>
+    </div>
   </div>
 </main>
 
@@ -845,6 +865,98 @@ async function load() {
     renderTable();
   } catch (e) {
     document.getElementById('table-container').innerHTML = '<div class="empty">Failed to load communities.</div>';
+  }
+}
+
+// ── Tabs ──────────────────────────────────────────────────────────────────────
+
+let activeTab = 'communities';
+let briefs = [];
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('view-communities').style.display = tab === 'communities' ? 'block' : 'none';
+  document.getElementById('view-briefs').style.display = tab === 'briefs' ? 'block' : 'none';
+  document.getElementById('tab-communities').style.borderBottomColor = tab === 'communities' ? 'var(--lime)' : 'transparent';
+  document.getElementById('tab-communities').style.color = tab === 'communities' ? 'var(--white)' : 'var(--muted)';
+  document.getElementById('tab-briefs').style.borderBottomColor = tab === 'briefs' ? 'var(--lime)' : 'transparent';
+  document.getElementById('tab-briefs').style.color = tab === 'briefs' ? 'var(--white)' : 'var(--muted)';
+  if (tab === 'briefs' && briefs.length === 0) loadBriefs();
+}
+
+// ── Briefs ─────────────────────────────────────────────────────────────────────
+
+async function loadBriefs() {
+  try {
+    const res = await fetch(`/api/admin/briefs?token=${ADMIN_TOKEN}`);
+    briefs = await res.json();
+    renderBriefs();
+  } catch (e) {
+    document.getElementById('briefs-container').innerHTML = '<div class="empty">Failed to load briefs.</div>';
+  }
+}
+
+function renderBriefs() {
+  const typeColors = { Sponsorship:'var(--orange)', 'Product Partnership':'var(--cyan)', 'Event Partnership':'var(--green)', 'Content Partnership':'#7eb8ff', Collaboration:'var(--pink)' };
+  document.getElementById('stat-briefs-total').textContent = briefs.length;
+  const uniqueBrands = new Set(briefs.map(b => b.brand_id).filter(Boolean));
+  document.getElementById('stat-briefs-brands').textContent = uniqueBrands.size;
+  document.getElementById('briefs-sub').textContent = `${briefs.length} brief${briefs.length !== 1 ? 's' : ''} · Last refreshed ${new Date().toLocaleTimeString()}`;
+
+  if (!briefs.length) {
+    document.getElementById('briefs-container').innerHTML = '<div class="empty">No briefs yet.</div>';
+    return;
+  }
+
+  document.getElementById('briefs-container').innerHTML = `
+    <div style="overflow-x:auto;">
+    <table style="min-width:900px;">
+      <thead><tr>
+        <th>Brand</th>
+        <th>Brief Title</th>
+        <th>Type</th>
+        <th>Budget</th>
+        <th>Deadline</th>
+        <th>Activation</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        ${briefs.map(b => {
+          const typeColor = typeColors[b.partnership_type] || 'var(--muted)';
+          const budget = b.budget ? `$${parseInt(b.budget).toLocaleString()}` : '—';
+          return `<tr>
+            <td>
+              <div class="community-name" style="color:${b.brand_color || 'var(--white)'}">${b.brand_name || '—'}</div>
+            </td>
+            <td>
+              <div style="font-size:13px;font-weight:500;max-width:260px">${b.title || '—'}</div>
+            </td>
+            <td><span style="font-family:'Barlow Condensed';font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:${typeColor}">${b.partnership_type || '—'}</span></td>
+            <td><div class="metric">${budget}</div><div class="metric-label">${b.budget_period || ''}</div></td>
+            <td style="font-size:12px;color:var(--muted)">${b.deadline || '—'}</td>
+            <td style="font-size:12px;color:var(--muted)">${b.activation_window || '—'}</td>
+            <td><span class="badge ${b.status === 'open' ? 'badge-lime' : 'badge-muted'}">${b.status || 'open'}</span></td>
+            <td style="font-size:12px;color:var(--muted)">${formatDate(b.created_at)}</td>
+            <td>
+              <button onclick="deleteBrief('${b.id}', '${(b.title||'').replace(/'/g, "\\'")}')" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:4px 10px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer">Delete</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+    </div>`;
+}
+
+async function deleteBrief(briefId, title) {
+  if (!confirm(`Delete brief "${title}"?\n\nThis cannot be undone.`)) return;
+  try {
+    await fetch(`/api/admin/briefs/${briefId}?token=${ADMIN_TOKEN}`, { method: 'DELETE' });
+    briefs = briefs.filter(b => b.id !== briefId);
+    renderBriefs();
+  } catch (e) {
+    alert('Delete failed — try again.');
   }
 }
 

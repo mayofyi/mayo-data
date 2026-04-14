@@ -708,6 +708,8 @@ function mapCommunity(c) {
     channels, notableMembers: Array.isArray(c.notable_members) ? c.notable_members : [],
     partnerships: csParsed.filter(cs => cs.mayo_verified || cs.verified),
     casestudies: csParsed,
+    archetypeBest: ({evangelical:'Brand Awareness', loyalists:'Long-term Sponsorship', buyers:'Direct Response', early:'Product Launches', cultural:'Cultural Credibility'}[c.archetype] || ''),
+    archetypeReasoning: c.archetype_reasoning || null,
     campaignType: 'Brand Awareness', primaryKPI: 'Post Rate',
     matchRationale: 'Match rationale is calculated relative to an active brief.',
     igUsername, igFollowers: followers, igBio: igProfile.biography || '',
@@ -2568,11 +2570,11 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
         </div>
         <div className={"metric-card " + (c.archetype === 'evangelical' ? 'pink' : c.archetype === 'loyalists' ? 'cyan' : c.archetype === 'early' ? 'green' : 'orange')}>
           <div className="metric-label">Community Type</div>
-          <div style={{ fontFamily: 'Bebas Neue', fontSize: 32, marginBottom: 6 }}>{c.archetypeLabel}</div>
-          <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 6 }}>High Advocacy Behaviour</div>
-          <div style={{ fontSize: 11, opacity: 0.8, marginBottom: 10 }}>Recommended Campaign Type:</div>
-          <div style={{ background: 'rgba(0,0,0,0.15)', borderRadius: 4, padding: '4px 10px', display: 'inline-block', fontFamily: 'Barlow Condensed', fontSize: 13, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{c.campaignType}</div>
-          <div style={{ marginTop: 8, fontSize: 11, opacity: 0.75 }}>Primary KPI: {c.primaryKPI}</div>
+          <div style={{ fontFamily: 'Bebas Neue', fontSize: 32, lineHeight: 1, marginBottom: 4 }}>{c.archetypeLabel}</div>
+          {c.archetypeBest && <div style={{ fontFamily: 'Barlow Condensed', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.7, marginBottom: c.archetypeReasoning ? 12 : 0 }}>Best for {c.archetypeBest}</div>}
+          {c.archetypeReasoning && (
+            <div style={{ fontSize: 11, lineHeight: 1.55, opacity: 0.85, borderTop: '1px solid rgba(0,0,0,0.2)', paddingTop: 10 }}>{c.archetypeReasoning}</div>
+          )}
         </div>
       </div>
 
@@ -3503,6 +3505,22 @@ function MyProfileModule({ userId, onEdit }) {
         <div className="card p-20 mb-14">
           <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10 }}>What We Look For</div>
           <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.75, fontStyle: 'italic', borderLeft: '2px solid var(--lime)', paddingLeft: 14 }}>"{partnershipPrefs}"</div>
+        </div>
+      )}
+
+      {/* Archetype */}
+      {archetype && (
+        <div className="card p-20 mb-14">
+          <div style={{ fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: 10 }}>Community Type</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: data.archetype_reasoning ? 12 : 0 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: archetype.color, flexShrink: 0 }} />
+            <div style={{ fontFamily: 'Barlow Condensed', fontSize: 17, fontWeight: 800, textTransform: 'uppercase', color: archetype.color }}>{archetype.label}</div>
+            <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', color: 'var(--muted)', marginLeft: 4 }}>Best for {archetype.best}</div>
+          </div>
+          {data.archetype_reasoning
+            ? <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6, borderLeft: '2px solid ' + archetype.color, paddingLeft: 12 }}>{data.archetype_reasoning}</div>
+            : <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.55 }}>{archetype.desc}</div>
+          }
         </div>
       )}
 

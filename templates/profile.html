@@ -426,13 +426,16 @@ function ProfilePage() {
           {/* Archetype */}
           {archetype && (
             <div style={{ background:'var(--surface)', border:'1px solid var(--border)', borderRadius:12, padding:'16px 24px', marginBottom:14 }}>
-              <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:8 }}>Community Type</div>
-              <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+              <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, letterSpacing:'0.08em', textTransform:'uppercase', color:'var(--muted)', marginBottom:10 }}>Community Type</div>
+              <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom: data.archetype_reasoning ? 12 : 0 }}>
                 <div style={{ width:8, height:8, borderRadius:'50%', background:archetype.color, flexShrink:0 }} />
                 <div style={{ fontFamily:'Barlow Condensed', fontSize:17, fontWeight:800, textTransform:'uppercase', color:archetype.color }}>{archetype.label}</div>
                 <div style={{ fontFamily:'Barlow Condensed', fontSize:11, fontWeight:600, textTransform:'uppercase', color:'var(--muted)', marginLeft:4 }}>Best for {archetype.best}</div>
               </div>
-              <div style={{ fontSize:12, color:'var(--muted)', marginTop:6, lineHeight:1.55 }}>{archetype.desc}</div>
+              {data.archetype_reasoning
+                ? <div style={{ fontSize:12, color:'rgba(240,240,240,0.65)', lineHeight:1.6, borderLeft:'2px solid ' + archetype.color, paddingLeft:12 }}>{data.archetype_reasoning}</div>
+                : <div style={{ fontSize:12, color:'var(--muted)', marginTop:6, lineHeight:1.55 }}>{archetype.desc}</div>
+              }
             </div>
           )}
 

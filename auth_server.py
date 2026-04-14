@@ -1302,6 +1302,42 @@ def admin_communities():
     return jsonify(result)
 
 
+@app.route("/api/admin/briefs")
+def admin_briefs():
+    token = request.args.get("token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT br.*, b.name AS brand_name, b.color AS brand_color
+                FROM briefs br
+                LEFT JOIN brands b ON br.brand_id = b.id
+                ORDER BY br.created_at DESC
+            """)
+            rows = cur.fetchall()
+    result = []
+    for row in rows:
+        d = dict(row)
+        for k, v in d.items():
+            if hasattr(v, "isoformat"):
+                d[k] = v.isoformat()
+        result.append(d)
+    return jsonify(result)
+
+
+@app.route("/api/admin/briefs/<brief_id>", methods=["DELETE"])
+def admin_delete_brief(brief_id):
+    token = request.args.get("token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM briefs WHERE id = %s", (brief_id,))
+        conn.commit()
+    return jsonify({"ok": True})
+
+
 @app.route("/profile/<community_id>")
 def public_profile(community_id):
     return render_template("profile.html", community_id=community_id)
