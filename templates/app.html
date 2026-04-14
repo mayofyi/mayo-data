@@ -3299,7 +3299,7 @@ function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIE
                   {myCommunity.tags.slice(0, 2).map(t => <span key={t} className="tag tag-ghost" style={{ fontSize: 10 }}>{t}</span>)}
                 </div>
               </div>
-              <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('profile')}>View My Profile →</button>
+              <a href={`/profile/${user && user.id}`} className="btn btn-ghost btn-sm" style={{ textDecoration:'none' }}>View My Profile →</a>
             </div>
           </div>
           <div style={{ padding: '14px 20px' }}>
@@ -3330,7 +3330,7 @@ function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIE
         <div className="card mb-20 p-20" style={{ borderColor: 'rgba(210,255,1,0.15)', background: 'rgba(210,255,1,0.03)' }}>
           <div className="bc" style={{ fontSize: 16, fontWeight: 800, textTransform: 'uppercase', marginBottom: 6 }}>Welcome to Mayo.</div>
           <p style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.6, marginBottom: 16 }}>Your profile is live. Brands will be able to discover your community and send partnership proposals here.</p>
-          <button className="btn btn-lime btn-sm" onClick={() => onNavigate('profile')}>View My Profile →</button>
+          <a href={`/profile/${user && user.id}`} className="btn btn-lime btn-sm" style={{ textDecoration:'none' }}>View My Profile →</a>
         </div>
       )}
 
@@ -3499,24 +3499,17 @@ function App() {
         </div>
       );
       case 'profile': {
-        if (isBrand) {
-          return (
-            <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
-              <div style={{ fontSize: 48, marginBottom: 12 }}>🏷</div>
-              <div className="bc" style={{ fontSize: 18, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>Brand Profile</div>
-              <div style={{ fontSize: 13 }}>Brand profile management coming soon.</div>
-            </div>
-          );
+        if (!isBrand && user) {
+          window.location.href = `/profile/${user.id}`;
+          return <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Redirecting to your profile…</div>;
         }
-        const profileCommunity = user ? communities.find(c => String(c.id) === String(user.id)) : null;
-        if (!profileCommunity) return (
+        return (
           <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>◯</div>
-            <div className="bc" style={{ fontSize: 18, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>Loading your profile...</div>
-            <div style={{ fontSize: 13 }}>If this persists, try signing out and back in.</div>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🏷</div>
+            <div className="bc" style={{ fontSize: 18, fontWeight: 700, textTransform: 'uppercase', marginBottom: 8 }}>Brand Profile</div>
+            <div style={{ fontSize: 13 }}>Brand profile management coming soon.</div>
           </div>
         );
-        return <CommunityProfilePage community={profileCommunity} onBack={null} role={role} isOwnProfile={true} />;
       }
       case 'briefs': return (
         <div>
@@ -3591,12 +3584,24 @@ function App() {
         </div>
 
         <div className="sidenav-bottom">
-          {navBottom.map(n => (
-            <button key={n.id} className={"nav-item " + (activePage === n.id ? 'active' : '')} onClick={() => navigate(n.id)}>
-              <span className="nav-icon">{n.icon}</span>
-              {n.label}
-            </button>
-          ))}
+          {navBottom.map(n => {
+            if (n.id === 'profile' && !isBrand && user) {
+              return (
+                <a key={n.id} href={`/profile/${user.id}`} style={{ textDecoration:'none' }}>
+                  <div className="nav-item">
+                    <span className="nav-icon">{n.icon}</span>
+                    {n.label}
+                  </div>
+                </a>
+              );
+            }
+            return (
+              <button key={n.id} className={"nav-item " + (activePage === n.id ? 'active' : '')} onClick={() => navigate(n.id)}>
+                <span className="nav-icon">{n.icon}</span>
+                {n.label}
+              </button>
+            );
+          })}
           <button className="nav-item" onClick={handleLogout} style={{ color: 'var(--muted)' }}>
             <span className="nav-icon">⇥</span> Sign Out
           </button>
