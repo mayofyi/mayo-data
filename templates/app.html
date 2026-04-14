@@ -45,6 +45,11 @@ body {
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
+.content-feed::-webkit-scrollbar { height: 8px; }
+.content-feed::-webkit-scrollbar-track { background: var(--surface2); border-radius: 4px; }
+.content-feed::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+.content-feed::-webkit-scrollbar-thumb:hover { background: #444; }
+.content-feed { scrollbar-width: thin; scrollbar-color: var(--border2) var(--surface2); }
 
 /* ─── BUTTONS ─── */
 .btn {
@@ -1117,11 +1122,32 @@ function CommunityCard({ c, onClick }) {
 }
 
 function BriefCard({ b, onClick, showMatch, matchScore }) {
-  const cardStyle = matchScore >= 70
-    ? { border: '1.5px solid rgba(210,255,1,0.6)', boxShadow: '0 0 18px rgba(210,255,1,0.18), 0 0 6px rgba(210,255,1,0.1)' }
-    : matchScore >= 50
-    ? { border: '1.5px solid rgba(177,236,240,0.4)', boxShadow: '0 0 12px rgba(177,236,240,0.1)' }
-    : {};
+  const cardStyle = (() => {
+    if (matchScore == null) return {};
+    if (matchScore >= 70) {
+      // Scale glow intensity with score: 70→subtle, 100→strong
+      const t = (matchScore - 70) / 30; // 0–1
+      const borderA = (0.4 + t * 0.4).toFixed(2);
+      const glow1 = (0.12 + t * 0.18).toFixed(2);
+      const glow2 = (0.06 + t * 0.1).toFixed(2);
+      const spread1 = Math.round(14 + t * 20);
+      const spread2 = Math.round(4 + t * 8);
+      return {
+        border: `1.5px solid rgba(210,255,1,${borderA})`,
+        boxShadow: `0 0 ${spread1}px rgba(210,255,1,${glow1}), 0 0 ${spread2}px rgba(210,255,1,${glow2})`,
+      };
+    }
+    if (matchScore >= 50) {
+      const t = (matchScore - 50) / 20; // 0–1
+      const borderA = (0.2 + t * 0.2).toFixed(2);
+      const glow1 = (0.05 + t * 0.07).toFixed(2);
+      return {
+        border: `1.5px solid rgba(177,236,240,${borderA})`,
+        boxShadow: `0 0 ${Math.round(8 + t * 6)}px rgba(177,236,240,${glow1})`,
+      };
+    }
+    return {};
+  })();
   return (
     <div className="community-card" style={cardStyle} onClick={() => onClick(b)}>
       {/* 3:4 block — gradient cover + overlaid info + metrics */}
@@ -3706,26 +3732,26 @@ function MyProfileModule({ userId, onEdit }) {
               <button onClick={handleIgSync} disabled={syncing} className="btn btn-ghost btn-sm">{syncing ? 'Syncing…' : '↺ Sync'}</button>
             </div>
             {hasContent ? (
-              <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 8 }}>
+              <div className="content-feed" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 12 }}>
                 {merged.map((item, i) => item.type === 'ig' ? (
                   <a key={i} href={item.url} target="_blank" rel="noopener noreferrer"
-                    style={{ flexShrink: 0, width: 110, height: 110, borderRadius: 8, overflow: 'hidden', display: 'block', textDecoration: 'none', background: 'var(--surface2)', position: 'relative' }}>
+                    style={{ flexShrink: 0, width: 220, height: 220, borderRadius: 8, overflow: 'hidden', display: 'block', textDecoration: 'none', background: 'var(--surface2)', position: 'relative' }}>
                     <img src={item.thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={e => e.target.style.display='none'} />
-                    <div style={{ position: 'absolute', bottom: 5, left: 5, width: 16, height: 16, borderRadius: 4, background: '#e1306c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="9" height="9" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    <div style={{ position: 'absolute', bottom: 8, left: 8, width: 20, height: 20, borderRadius: 5, background: '#e1306c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
                     </div>
                   </a>
                 ) : (
                   <a key={i} href={item.url} target="_blank" rel="noopener noreferrer"
-                    style={{ flexShrink: 0, width: 140, height: 110, borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', background: 'var(--surface2)', border: '1px solid var(--border)', position: 'relative' }}>
+                    style={{ flexShrink: 0, width: 200, height: 220, borderRadius: 8, overflow: 'hidden', display: 'flex', flexDirection: 'column', textDecoration: 'none', background: 'var(--surface2)', border: '1px solid var(--border)', position: 'relative' }}>
                     {item.thumb
-                      ? <img src={item.thumb} alt="" style={{ width: '100%', height: 68, objectFit: 'cover', display: 'block', flexShrink: 0 }} onError={e => e.target.style.display='none'} />
-                      : <div style={{ height: 68, background: 'linear-gradient(135deg, #1a0800, #7a3500)', flexShrink: 0 }} />
+                      ? <img src={item.thumb} alt="" style={{ width: '100%', height: 150, objectFit: 'cover', display: 'block', flexShrink: 0 }} onError={e => e.target.style.display='none'} />
+                      : <div style={{ height: 150, background: 'linear-gradient(135deg, #1a0800, #7a3500)', flexShrink: 0 }} />
                     }
-                    <div style={{ padding: '5px 8px', flex: 1 }}>
-                      <div style={{ fontSize: 10, fontWeight: 600, color: '#fff', lineHeight: 1.3, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{item.title}</div>
+                    <div style={{ padding: '8px 10px', flex: 1 }}>
+                      <div style={{ fontSize: 11, fontWeight: 600, color: '#fff', lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' }}>{item.title}</div>
                     </div>
-                    <div style={{ position: 'absolute', bottom: 5, left: 6, width: 16, height: 16, borderRadius: 4, background: '#ff6719', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 9, fontWeight: 800, color: '#fff', fontFamily: 'Barlow Condensed' }}>S</div>
+                    <div style={{ position: 'absolute', bottom: 8, left: 8, width: 20, height: 20, borderRadius: 5, background: '#ff6719', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 800, color: '#fff', fontFamily: 'Barlow Condensed' }}>S</div>
                   </a>
                 ))}
               </div>
