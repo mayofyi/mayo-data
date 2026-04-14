@@ -3263,14 +3263,36 @@ function MyProfileModule({ userId, onEdit }) {
   const [loading, setLoading] = React.useState(true);
   const [copied, setCopied] = React.useState(false);
   const [lightbox, setLightbox] = React.useState(null);
+  const [syncing, setSyncing] = React.useState(false);
+  const [syncMsg, setSyncMsg] = React.useState('');
 
-  React.useEffect(() => {
+  function loadData() {
     if (!userId) { setLoading(false); return; }
     fetch(`/api/community/${userId}`)
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [userId]);
+  }
+
+  React.useEffect(() => { loadData(); }, [userId]);
+
+  async function handleIgSync() {
+    setSyncing(true); setSyncMsg('');
+    try {
+      const token = getToken();
+      const res = await fetch(`/api/community/${userId}/refresh-instagram`, {
+        method: 'POST',
+        headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+      });
+      const result = await res.json();
+      setSyncMsg(result.message || 'Sync started — reloading in a few seconds.');
+      setTimeout(() => { setLoading(true); setSyncMsg(''); loadData(); }, 6000);
+    } catch(e) {
+      setSyncMsg('Sync failed. Please try again.');
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   if (loading) return <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)', fontFamily: 'Barlow Condensed', fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Loading profile…</div>;
   if (!data) return <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)' }}>Profile not found.</div>;
@@ -3307,12 +3329,17 @@ function MyProfileModule({ userId, onEdit }) {
   return (
     <div>
       {/* Profile actions bar */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginBottom: 20 }}>
-        <button onClick={copyLink} className="btn btn-ghost btn-sm">
-          {copied ? '✓ Copied Link' : 'Share Profile'}
-        </button>
-        <a href={`/profile/${userId}`} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm" style={{ textDecoration: 'none' }}>Public View ↗</a>
-        <button className="btn btn-lime btn-sm" onClick={onEdit}>Edit Profile</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 12, color: 'var(--muted)', fontStyle: syncMsg ? 'normal' : 'normal' }}>
+          {syncMsg && <span style={{ color: 'var(--cyan)' }}>{syncMsg}</span>}
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={copyLink} className="btn btn-ghost btn-sm">
+            {copied ? '✓ Copied Link' : 'Share Profile'}
+          </button>
+          <a href={`/profile/${userId}`} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-sm" style={{ textDecoration: 'none' }}>Public View ↗</a>
+          <button className="btn btn-lime btn-sm" onClick={onEdit}>Edit Profile</button>
+        </div>
       </div>
 
       {/* Face card — 3:4 full width */}
@@ -3372,7 +3399,7 @@ function MyProfileModule({ userId, onEdit }) {
               <div className="text-muted text-xs mb-4">Instagram</div>
               {igProfile.username
                 ? <a href={`https://instagram.com/${igProfile.username}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: '#e1306c', textDecoration: 'none' }}>@{igProfile.username}</a>
-                : <span style={{ fontSize: 13, color: 'var(--muted)' }}>Connected — syncing…</span>
+                : <button onClick={handleIgSync} disabled={syncing} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--cyan)', textDecoration: 'underline', fontFamily: 'inherit' }}>{syncing ? 'Syncing…' : 'Sync Instagram data'}</button>
               }
             </div>
           )}
@@ -3426,7 +3453,7 @@ function MyProfileModule({ userId, onEdit }) {
               </a>
             ))}
           </div>
-          {!igProfile.username && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Instagram data syncing — username not yet available.</div>}
+          {!igProfile.username && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Username not yet available. <button onClick={handleIgSync} disabled={syncing} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--cyan)', textDecoration: 'underline', fontFamily: 'inherit' }}>{syncing ? 'Syncing…' : 'Sync now'}</button></div>}
         </div>
       )}
 

@@ -15,7 +15,6 @@ from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
-from tabulate import tabulate
 
 load_dotenv()
 
@@ -227,6 +226,7 @@ def collect(account_name: str = None) -> dict:
 # ── CLI summary ───────────────────────────────────────────────────────────────
 
 def _print_summary(data: dict) -> None:
+    from tabulate import tabulate
     profile = data["profile"]
     insights = data["insights"]
 

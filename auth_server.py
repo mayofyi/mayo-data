@@ -1004,6 +1004,24 @@ def recalculate_metrics(community_id):
     return jsonify({"network_multiplier": nm, "cis_raw": cis_raw, "gv": gv, "bah": bah, "pmm": pmm, "miq": c.get("miq_score")})
 
 
+@app.route("/api/community/<community_id>/refresh-instagram", methods=["POST"])
+def refresh_instagram(community_id):
+    """Re-run the Instagram pipeline using the stored token."""
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT instagram_token FROM communities WHERE id = %s", (community_id,))
+            row = cur.fetchone()
+    if not row or not row["instagram_token"]:
+        return jsonify({"error": "No Instagram token found. Connect Instagram first."}), 400
+    thread = threading.Thread(
+        target=run_instagram_pipeline,
+        args=(community_id, row["instagram_token"]),
+        daemon=True,
+    )
+    thread.start()
+    return jsonify({"ok": True, "message": "Instagram sync started. Refresh in a few seconds."})
+
+
 # ── Instagram OAuth ────────────────────────────────────────────────────────────
 
 @app.route("/login")
