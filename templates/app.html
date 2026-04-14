@@ -736,7 +736,7 @@ function mapBrief(b) {
     brandGradient: b.brand_gradient || ('linear-gradient(135deg, #1a0505 0%, #3d0a0a 40%, #7a1515 70%, ' + brandColor + ' 100%)'),
     brandInitial: b.brand_initial || (b.brand_name || 'B')[0], brandTagline: b.brand_tagline || '',
     brandBio: b.brand_bio || b.brand_desc || '',
-    heroImage: heroImageMap[b.partnership_type] || heroImageMap['Sponsorship'],
+    heroImage: b.cover_image_url || heroImageMap[b.partnership_type] || heroImageMap['Sponsorship'],
     partnershipType: b.partnership_type || 'Sponsorship',
     partnershipTypeColor: typeColorMap[b.partnership_type] || 'orange',
     title: b.title || '', goal: b.goal || b.goals || '',
@@ -995,9 +995,9 @@ function BriefCard({ b, onClick, showMatch }) {
     <div className="community-card" onClick={() => onClick(b)}>
       {/* 3:4 block — gradient cover + overlaid info + metrics */}
       <div className="community-card-3x4">
-        {/* Background image + gradient */}
-        <img src={b.heroImage} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.35 }} onError={e => e.target.style.display='none'} />
-        <div style={{ position: 'absolute', inset: 0, background: b.brandGradient || 'var(--surface3)', opacity: 0.7 }} />
+        {/* Background image */}
+        <div style={{ position: 'absolute', inset: 0, background: 'var(--surface3)' }} />
+        <img src={b.heroImage} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} onError={e => e.target.style.display='none'} />
         <div className="community-card-cover-overlay" />
 
         {/* Top-left: partnership type badge */}
@@ -3484,17 +3484,13 @@ function MyProfileModule({ userId, onEdit }) {
           )}
         </div>
         {data.description && (
-          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)', fontSize: 13, color: 'var(--muted)', lineHeight: 1.7 }}>{data.description}</div>
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+            <div className="text-muted text-xs mb-6" style={{ marginBottom: 6 }}>Description</div>
+            <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.7 }}>{data.description}</div>
+          </div>
         )}
       </div>
 
-      {/* Instagram bio */}
-      {igProfile.biography && (
-        <div className="card p-20 mb-14">
-          <div className="text-muted text-xs mb-6">Instagram Bio</div>
-          <div style={{ fontSize: 13, lineHeight: 1.6 }}>{igProfile.biography}</div>
-        </div>
-      )}
 
       {/* Capabilities */}
       {capabilities.length > 0 && (
@@ -3531,18 +3527,28 @@ function MyProfileModule({ userId, onEdit }) {
       )}
 
       {/* Instagram posts */}
-      {igPosts.length > 0 && (
+      {igConnected && (
         <div className="card p-20 mb-14">
-          <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 12 }}>Latest Posts</div>
-          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
-            {igPosts.slice(0, 12).map((post, i) => (
-              <a key={i} href={post.permalink || `https://instagram.com/${igProfile.username}`} target="_blank" rel="noopener noreferrer"
-                style={{ flexShrink: 0, width: 110, height: 110, borderRadius: 8, overflow: 'hidden', display: 'block', textDecoration: 'none', background: 'var(--surface2)' }}>
-                <img src={post.media_url || post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              </a>
-            ))}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase' }}>Latest Posts</div>
+            <button onClick={handleIgSync} disabled={syncing} className="btn btn-ghost btn-sm">{syncing ? 'Syncing…' : '↺ Sync'}</button>
           </div>
-          {!igProfile.username && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Username not yet available. <button onClick={handleIgSync} disabled={syncing} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--cyan)', textDecoration: 'underline', fontFamily: 'inherit' }}>{syncing ? 'Syncing…' : 'Sync now'}</button></div>}
+          {igPosts.length > 0 ? (
+            <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 8 }}>
+              {igPosts.slice(0, 12).map((post, i) => (
+                <a key={i} href={post.permalink || (igProfile.username ? `https://instagram.com/${igProfile.username}` : '#')} target="_blank" rel="noopener noreferrer"
+                  style={{ flexShrink: 0, width: 110, height: 110, borderRadius: 8, overflow: 'hidden', display: 'block', textDecoration: 'none', background: 'var(--surface2)' }}>
+                  <img src={post.media_url || post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={e => { e.target.style.display = 'none'; }} />
+                </a>
+              ))}
+            </div>
+          ) : (
+            <div style={{ fontSize: 13, color: 'var(--muted)', padding: '12px 0' }}>
+              No posts loaded yet.{' '}
+              <button onClick={handleIgSync} disabled={syncing} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 13, color: 'var(--cyan)', textDecoration: 'underline', fontFamily: 'inherit' }}>{syncing ? 'Syncing…' : 'Sync Instagram data'}</button>
+            </div>
+          )}
+          {syncMsg && <div style={{ fontSize: 12, color: 'var(--cyan)', marginTop: 8 }}>{syncMsg}</div>}
         </div>
       )}
 
@@ -3572,8 +3578,11 @@ function MyProfileModule({ userId, onEdit }) {
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8 }}>
                   <div style={{ width: 36, height: 36, borderRadius: '50%', background: ac.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Barlow Condensed', fontSize: 15, fontWeight: 700, color: ac.text, flexShrink: 0 }}>{(m.name || '?')[0].toUpperCase()}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600 }}>{m.name}</div>
-                    {m.role && <div style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'Barlow Condensed', fontWeight: 600, textTransform: 'uppercase' }}>{m.role}</div>}
+                    <div style={{ fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</div>
+                    {m.ig_handle && (
+                      <a href={`https://instagram.com/${m.ig_handle}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--muted)', textDecoration: 'none', display: 'block', marginTop: 1 }}>@{m.ig_handle}</a>
+                    )}
+                    {m.role && <div style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'Barlow Condensed', fontWeight: 600, textTransform: 'uppercase', marginTop: 2 }}>{m.role}</div>}
                   </div>
                 </div>
               );
@@ -3586,15 +3595,26 @@ function MyProfileModule({ userId, onEdit }) {
       {caseStudies.length > 0 && (
         <div className="card p-20 mb-14">
           <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 12 }}>Past Partnerships</div>
-          {caseStudies.map((cs, i) => (
-            <div key={i} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 16px', marginBottom: 8 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: cs.description ? 5 : 0 }}>
-                <div className="bc" style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase' }}>{cs.brand}</div>
-                {cs.year && <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'Barlow Condensed', fontWeight: 600 }}>{cs.year}</div>}
+          {caseStudies.map((cs, i) => {
+            const imgs = cs.images?.length ? cs.images : cs.image_url ? [cs.image_url] : [];
+            return (
+              <div key={i} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', marginBottom: 8 }}>
+                {imgs.length > 0 && (
+                  <div onClick={() => setLightbox({ items: imgs.map(url => ({ url, title: cs.brand })), index: 0 })} style={{ cursor: 'pointer', position: 'relative', height: 180, overflow: 'hidden' }}>
+                    <img src={imgs[0]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    {imgs.length > 1 && <div style={{ position: 'absolute', bottom: 8, right: 8, background: 'rgba(0,0,0,0.65)', borderRadius: 4, padding: '3px 8px', fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, color: '#fff' }}>+{imgs.length - 1} more</div>}
+                  </div>
+                )}
+                <div style={{ padding: '12px 14px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: cs.description ? 4 : 0 }}>
+                    <div className="bc" style={{ fontSize: 14, fontWeight: 800, textTransform: 'uppercase' }}>{cs.brand}</div>
+                    {cs.year && <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'Barlow Condensed', fontWeight: 600 }}>{cs.year}</div>}
+                  </div>
+                  {cs.description && <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>{cs.description}</div>}
+                </div>
               </div>
-              {cs.description && <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>{cs.description}</div>}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 

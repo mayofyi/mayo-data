@@ -263,6 +263,7 @@ def init_db():
                     looking_for TEXT,
                     status TEXT DEFAULT 'open',
                     response_count INTEGER DEFAULT 0,
+                    cover_image_url TEXT,
                     created_at TIMESTAMP DEFAULT NOW()
                 )
             """)
@@ -319,6 +320,8 @@ def init_db():
                 cur.execute(f"""
                     ALTER TABLE communities ADD COLUMN IF NOT EXISTS {col} {typedef}
                 """)
+            # Briefs table migrations
+            cur.execute("ALTER TABLE briefs ADD COLUMN IF NOT EXISTS cover_image_url TEXT")
         conn.commit()
 
 
@@ -1372,6 +1375,37 @@ def admin_briefs():
                 d[k] = v.isoformat()
         result.append(d)
     return jsonify(result)
+
+
+@app.route("/api/briefs/<brief_id>/cover", methods=["POST"])
+def upload_brief_cover(brief_id):
+    """Upload a cover image for a brief. Accepts multipart form with 'file' field."""
+    import uuid as _uuid
+    import base64 as _base64
+    payload = require_auth(request)
+    if not payload:
+        # Also allow admin token
+        token = request.headers.get("Authorization", "").replace("Bearer ", "")
+        if token != ADMIN_TOKEN:
+            return jsonify({"error": "Unauthorized"}), 401
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "No file provided"}), 400
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if file.content_type not in allowed:
+        return jsonify({"error": "Invalid file type"}), 400
+    ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif"}.get(file.content_type, "jpg")
+    filename = f"brief-{brief_id}-{_uuid.uuid4().hex[:8]}.{ext}"
+    upload_dir = os.path.join(os.path.dirname(__file__), "static", "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+    filepath = os.path.join(upload_dir, filename)
+    file.save(filepath)
+    url = f"/static/uploads/{filename}"
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("UPDATE briefs SET cover_image_url = %s WHERE id = %s", (url, brief_id))
+        conn.commit()
+    return jsonify({"ok": True, "url": url})
 
 
 @app.route("/api/admin/briefs/<brief_id>", methods=["DELETE"])

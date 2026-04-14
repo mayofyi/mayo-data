@@ -977,13 +977,41 @@ function renderBriefs() {
             <td><span class="badge ${b.status === 'open' ? 'badge-lime' : 'badge-muted'}">${b.status || 'open'}</span></td>
             <td style="font-size:12px;color:var(--muted)">${formatDate(b.created_at)}</td>
             <td>
-              <button onclick="deleteBrief('${b.id}', '${(b.title||'').replace(/'/g, "\\'")}')" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:4px 10px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer">Delete</button>
+              <div style="display:flex;gap:6px;flex-direction:column">
+                <label style="background:var(--surface2);color:var(--white);border:1px solid var(--border2);border-radius:4px;padding:4px 10px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;text-align:center;white-space:nowrap">
+                  ${b.cover_image_url ? '↺ Cover' : '+ Cover'}
+                  <input type="file" accept="image/*" style="display:none" onchange="uploadBriefCover('${b.id}', this)" />
+                </label>
+                <button onclick="deleteBrief('${b.id}', '${(b.title||'').replace(/'/g, "\\'")}')" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:4px 10px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer">Delete</button>
+              </div>
             </td>
           </tr>`;
         }).join('')}
       </tbody>
     </table>
     </div>`;
+}
+
+async function uploadBriefCover(briefId, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const formData = new FormData();
+  formData.append('file', file);
+  try {
+    const res = await fetch(`/api/briefs/${briefId}/cover`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` },
+      body: formData,
+    });
+    const data = await res.json();
+    if (data.ok) {
+      await loadBriefs();
+    } else {
+      alert('Upload failed: ' + (data.error || 'unknown error'));
+    }
+  } catch (e) {
+    alert('Upload failed.');
+  }
 }
 
 async function deleteBrief(briefId, title) {
