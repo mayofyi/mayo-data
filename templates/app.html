@@ -40,6 +40,7 @@ body {
 }
 .bb { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.03em; }
 .bc { font-family: 'Barlow Condensed', sans-serif; }
+.display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.03em; }
 
 /* ─── SCROLLBAR ─── */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
@@ -1145,7 +1146,7 @@ function CommunityCard({ c, onClick }) {
   );
 }
 
-function BriefCard({ b, onClick, showMatch, matchScore }) {
+function BriefCard({ b, onClick, showMatch, matchScore, isBrandOwner }) {
   const cardStyle = (() => {
     if (matchScore == null || matchScore < 50) return {};
     // Single continuous scale: 50 = no glow, 100 = full glow
@@ -1207,7 +1208,7 @@ function BriefCard({ b, onClick, showMatch, matchScore }) {
       {/* Footer — deadline + respond button, outside 3:4 */}
       <div className="community-card-footer">
         <span className="text-muted text-xs">Deadline: {b.deadline}</span>
-        <button className="btn btn-sm btn-lime">Respond →</button>
+        <button className="btn btn-sm btn-lime">{isBrandOwner ? 'Responses' : 'Respond →'}</button>
       </div>
     </div>
   );
@@ -1726,6 +1727,13 @@ function BriefCreation({ onPublish, onCancel, user }) {
   const [customInterest, setCustomInterest] = useState('');
   const [customInterests, setCustomInterests] = useState([]);
   const [minEngagement, setMinEngagement] = useState('');
+  const [instagramRequired, setInstagramRequired] = useState(false);
+  const [minIgFollowers, setMinIgFollowers] = useState('');
+  const [eventsPerMonth, setEventsPerMonth] = useState('');
+  const [minEventSize, setMinEventSize] = useState('');
+  const [contentCadence, setContentCadence] = useState('');
+  const [selectedArchetypes, setSelectedArchetypes] = useState([]);
+  const toggleArchetype = (a) => setSelectedArchetypes(prev => prev.includes(a) ? prev.filter(x => x !== a) : [...prev, a]);
 
   const toggleKpi = (k) => setSelectedKpis(prev => prev.includes(k) ? prev.filter(x => x !== k) : [...prev, k]);
   const toggleRegion = (r) => setSelectedRegions(prev => prev.includes(r) ? prev.filter(x => x !== r) : [...prev, r]);
@@ -2002,7 +2010,7 @@ function BriefCreation({ onPublish, onCancel, user }) {
               </div>
             </div>
 
-            <div className="form-group" style={{ marginBottom: 0 }}>
+            <div className="form-group">
               <label className="label">Minimum Engagement <span style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>— not shown to communities</span></label>
               <select className="input" value={minEngagement} onChange={e => setMinEngagement(e.target.value)}>
                 <option value="">No minimum</option>
@@ -2011,6 +2019,32 @@ function BriefCreation({ onPublish, onCancel, user }) {
                 <option value="3">3%+</option>
                 <option value="5">5%+</option>
               </select>
+            </div>
+
+            <div className="form-group">
+              <label className="label">Minimum Instagram Followers <span style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>— not shown to communities</span></label>
+              <select className="input" value={minIgFollowers} onChange={e => setMinIgFollowers(e.target.value)}>
+                <option value="">No minimum</option>
+                <option value="500">500+</option>
+                <option value="1000">1,000+</option>
+                <option value="2500">2,500+</option>
+                <option value="5000">5,000+</option>
+                <option value="10000">10,000+</option>
+              </select>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="label">Instagram Connected</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+                <button
+                  onClick={() => setInstagramRequired(v => !v)}
+                  style={{ width: 40, height: 22, borderRadius: 11, border: 'none', background: instagramRequired ? 'var(--lime)' : 'var(--surface3)', cursor: 'pointer', position: 'relative', transition: 'background 0.15s', flexShrink: 0 }}>
+                  <div style={{ position: 'absolute', top: 3, left: instagramRequired ? 20 : 3, width: 16, height: 16, borderRadius: '50%', background: instagramRequired ? '#000' : '#555', transition: 'left 0.15s' }} />
+                </button>
+                <span style={{ fontSize: 13, color: instagramRequired ? 'var(--white)' : 'var(--muted)' }}>
+                  {instagramRequired ? 'Required — community must have Instagram connected' : 'Not required'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -2024,6 +2058,56 @@ function BriefCreation({ onPublish, onCancel, user }) {
                 ))}
               </div>
             </div>
+
+            <div className="form-group">
+              <label className="label">Events per Month</label>
+              <select className="input" value={eventsPerMonth} onChange={e => setEventsPerMonth(e.target.value)}>
+                <option value="">No requirement</option>
+                <option value="At least 1 group event per month">At least 1 event/month</option>
+                <option value="At least 2 group events per month">At least 2 events/month</option>
+                <option value="Weekly events or meetups">Weekly events or meetups</option>
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="label">Minimum Event Size <span style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 400, textTransform: 'none' }}>— attendees per event</span></label>
+              <select className="input" value={minEventSize} onChange={e => setMinEventSize(e.target.value)}>
+                <option value="">No minimum</option>
+                <option value="20+ attendees per event">20+ per event</option>
+                <option value="50+ attendees per event">50+ per event</option>
+                <option value="100+ attendees per event">100+ per event</option>
+                <option value="250+ attendees per event">250+ per event</option>
+              </select>
+            </div>
+
+            <div className="form-group" style={{ marginBottom: 0 }}>
+              <label className="label">Content Cadence</label>
+              <select className="input" value={contentCadence} onChange={e => setContentCadence(e.target.value)}>
+                <option value="">No requirement</option>
+                <option value="Able to produce 1–2 pieces of content per month">1–2 pieces/month</option>
+                <option value="Able to produce 4+ pieces of content per month">4+ pieces/month</option>
+                <option value="Able to produce 8+ pieces of content per month">8+ pieces/month</option>
+                <option value="Weekly content output">Weekly content</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Community type preference — full width */}
+        <div className="form-group" style={{ marginBottom: 16 }}>
+          <label className="label">Preferred Community Type <span style={{ color: 'var(--muted)', fontWeight: 400, textTransform: 'none', fontSize: 11 }}>— optional, select all that apply</span></label>
+          <div className="tag-select-grid mt-8">
+            {[
+              { id: 'evangelists', label: 'Evangelists', desc: 'Brand awareness, organic advocacy' },
+              { id: 'early_adopters', label: 'Early Adopters', desc: 'Product launches, first-movers' },
+              { id: 'loyalists', label: 'Loyalists', desc: 'Long-term sponsorship, retention' },
+              { id: 'buyers', label: 'Buyers', desc: 'Direct response, product seeding' },
+            ].map(a => (
+              <button key={a.id} className={`tag-select-item ${selectedArchetypes.includes(a.id) ? 'selected' : ''}`} onClick={() => toggleArchetype(a.id)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left', height: 'auto', padding: '8px 12px' }}>
+                <span style={{ fontWeight: 800 }}>{a.label}</span>
+                <span style={{ fontWeight: 400, fontSize: 10, color: selectedArchetypes.includes(a.id) ? 'rgba(0,0,0,0.6)' : 'var(--muted)', textTransform: 'none', letterSpacing: 0 }}>{a.desc}</span>
+              </button>
+            ))}
           </div>
         </div>
 
@@ -2054,6 +2138,19 @@ function BriefCreation({ onPublish, onCancel, user }) {
   // ── Step 5 — Preview + Publish ────────────────────────────────────────────
   const activeDeliverables = deliverables.filter(d => d.trim().length > 0);
 
+  const builtRequirements = {
+    ...(minMembers ? { min_active_members: parseInt(minMembers) } : {}),
+    ...(selectedRegions.length ? { location: selectedRegions.join(', ') } : {}),
+    ...(ageMin !== 18 || ageMax !== 45 ? { age_range: `${ageMin}–${ageMax === 65 ? '65+' : ageMax}` } : {}),
+    ...(minEngagement ? { min_engagement_rate: minEngagement + '%+' } : {}),
+    ...(instagramRequired ? { instagram_connected: true } : {}),
+    ...(minIgFollowers ? { instagram_followers: minIgFollowers + '+ followers' } : {}),
+    ...(eventsPerMonth ? { events_per_month: eventsPerMonth } : {}),
+    ...(minEventSize ? { event_size: minEventSize } : {}),
+    ...(contentCadence ? { content_cadence: contentCadence } : {}),
+    ...(selectedArchetypes.length ? { preferred_archetypes: selectedArchetypes.join(', ') } : {}),
+  };
+
   const previewBrief = {
     brand: brandData.name,
     brandColor: brandData.color,
@@ -2071,9 +2168,11 @@ function BriefCreation({ onPublish, onCancel, user }) {
     deliverables: activeDeliverables,
     tags: selectedInterests.slice(0, 3),
     kpis: selectedKpis,
+    requirements: builtRequirements,
     deadline: deadline || 'TBC',
     window: activationStart && activationEnd ? `${activationStart} → ${activationEnd}` : 'TBC',
     lookingFor,
+    campaignGoal: goal?.label || '',
   };
 
   if (step === 5) return (
@@ -2793,9 +2892,9 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
   return (
     <div>
       {/* ── Cover / Header ─────────────────────────────────────────────────── */}
-      <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 14, background: c.coverGradient || 'var(--surface3)', minHeight: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-        {c.cover && <img src={c.cover} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5, mixBlendMode: 'luminosity' }} onError={e => e.target.style.display='none'} />}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)' }} />
+      <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 14, background: 'var(--surface2)', minHeight: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        {c.cover && <img src={c.cover} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }} onError={e => e.target.style.display='none'} />}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.05) 100%)' }} />
         {onBack && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, left: 14, zIndex: 2 }} onClick={onBack}>← Back</button>}
         {isOwnProfile && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, right: 14, zIndex: 2 }}>Edit Profile</button>}
         {!isOwnProfile && (role === 'brand' || role === 'admin') && c.email && (
@@ -4392,14 +4491,15 @@ function EditProfileModule({ userId, onDone }) {
   );
 }
 
-function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIEFS = [], onNavigate, myProfile }) {
+function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIEFS = [], onNavigate, myProfile, onCreateBrief }) {
   const isBrand = role === 'brand';
   const firstName = user ? user.name.split(' ')[0] : 'there';
   const myCommunity = myProfile || (!isBrand && user ? COMMUNITIES.find(c => c.id === user.id) : null);
 
+  const myBriefCount = isBrand ? BRIEFS.filter(b => b.brandId === user?.id).length : 0;
   const summaryCards = isBrand ? [
     { label: 'Communities on Mayo', val: String(COMMUNITIES.length), color: COMMUNITIES.length ? 'lime' : 'dark' },
-    { label: 'Open Briefs', val: String(BRIEFS.length), color: BRIEFS.length ? 'cyan' : 'dark' },
+    { label: 'Open Briefs', val: String(myBriefCount), color: myBriefCount ? 'cyan' : 'dark' },
     { label: 'Active Partnerships', val: '0', color: 'dark' },
     { label: 'Total Spend', val: '$0', color: 'dark' },
   ] : [
@@ -4410,7 +4510,14 @@ function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIE
 
   return (
     <div>
-      <div className="display mb-20" style={{ fontSize: 36 }}>{"Good morning, " + firstName + "."}</div>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div className="display" style={{ fontSize: 36 }}>{"Good morning, " + firstName + "."}</div>
+        {isBrand && onCreateBrief && (
+          <button className="btn btn-lime" style={{ fontSize: 14, padding: '12px 24px' }} onClick={onCreateBrief}>
+            + Create a Brief
+          </button>
+        )}
+      </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${summaryCards.length}, 1fr)`, gap: 14, marginBottom: 28 }}>
         {summaryCards.map(c => (
@@ -4486,12 +4593,12 @@ function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIE
 
       <div>
         <div className="section-header mb-14">
-          <span className="section-title">{isBrand ? "Communities on Mayo" : "Open Briefs"}</span>
+          <span className="section-title">{isBrand ? "Recommended Communities" : "Open Briefs"}</span>
           <button className="btn btn-ghost btn-sm" onClick={() => onNavigate('discover')}>See All →</button>
         </div>
         {isBrand ? (
           COMMUNITIES.length > 0
-            ? <div className="community-grid">{COMMUNITIES.slice(0, 2).map(c => <CommunityCard key={c.id} c={c} onClick={() => onNavigate('discover')} />)}</div>
+            ? <div className="community-grid">{COMMUNITIES.slice(0, 5).map(c => <CommunityCard key={c.id} c={c} onClick={() => onNavigate('discover')} />)}</div>
             : <div style={{ padding: '28px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>Communities joining Mayo will appear here.</div>
         ) : (
           BRIEFS.length > 0
@@ -4650,7 +4757,7 @@ function App() {
       return <BriefDetailPage brief={selectedBrief} onBack={() => setSelectedBrief(null)} role={role} myProfile={myProfile} />;
     }
     switch (activePage) {
-      case 'home': return <DashboardHome role={role} user={user} communities={communities} briefs={briefs} onNavigate={navigate} myProfile={myProfile} />;
+      case 'home': return <DashboardHome role={role} user={user} communities={communities} briefs={briefs} onNavigate={navigate} myProfile={myProfile} onCreateBrief={() => setCreatingBrief(true)} />;
       case 'discover': return <DiscoverPage role={role} communities={communities} briefs={briefs} onViewCommunity={setSelectedCommunity} onViewBrief={setSelectedBrief} activeBriefFilter={activeBriefFilter} onClearBriefFilter={() => setActiveBriefFilter(null)} onSetBriefFilter={handleSetBriefFilter} myProfile={myProfile} />;
       case 'project': return (
         <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)' }}>
@@ -4691,7 +4798,7 @@ function App() {
           {isBrand
             ? <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div className="community-grid">
-                  {briefs.filter(b => b.brandId === user?.id).map(b => <BriefCard key={b.id} b={b} onClick={setSelectedBrief} />)}
+                  {briefs.filter(b => b.brandId === user?.id).map(b => <BriefCard key={b.id} b={b} onClick={setSelectedBrief} isBrandOwner={true} />)}
                 </div>
                 <button className="btn btn-lime" style={{ alignSelf: 'flex-start' }} onClick={() => setCreatingBrief(true)}>+ Create New Brief</button>
               </div>

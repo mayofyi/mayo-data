@@ -72,6 +72,12 @@ PAIRS = [
                 "location": "US",
                 "events_per_month": "At least 1 regular group event (run, workout, meetup)",
             },
+            "deliverables": [
+                "2× co-branded social posts per event featuring FORM product",
+                "1× event recap reel or story set posted within 48 hours",
+                "FORM branding visible at event (banners, kit on leaders)",
+                "Monthly attendance report — number of participants, photos",
+            ],
             "looking_for": (
                 "Communities that run regular in-person events. We care more about "
                 "consistency and culture than follower count. Tell us about your events — "
@@ -125,6 +131,11 @@ PAIRS = [
                 "location": "US",
                 "instagram_connected": True,
             },
+            "deliverables": [
+                "3–5 Instagram posts or stories per member using #DailyRitualCore",
+                "Short written or voice-note feedback on each product (via a simple form)",
+                "At least 1 group post or recap showing product in a training context",
+            ],
             "looking_for": (
                 "Communities whose members actually train. We want the product used on "
                 "runs, at group workouts, and on rest days — not just photographed. "
@@ -178,6 +189,11 @@ PAIRS = [
                 "location": "Los Angeles, New York, Austin, Chicago, Denver (or pitch us your city)",
                 "event_size": "50+ attendees per event",
             },
+            "deliverables": [
+                "Minimum 60-minute pop-up slot at one upcoming event",
+                "2–3 social tags on event day using #ApexActivation",
+                "Post-event photo set shared with Apex (10+ usable shots)",
+            ],
             "looking_for": (
                 "Communities with regular in-person gatherings where people actually "
                 "show up. Group runs, fitness classes, wellness markets, outdoor clubs — "
@@ -232,6 +248,12 @@ PAIRS = [
                 "instagram_followers": "1,000+ on community account",
                 "content_cadence": "Able to produce 4+ pieces of content per month",
             },
+            "deliverables": [
+                "4× Instagram posts or reels per month featuring Motion product",
+                "1× 60-second video per quarter for Motion's owned channels",
+                "Monthly content pack: 10+ stills delivered via shared drive",
+                "Quarterly Zoom check-in with Motion content team",
+            ],
             "looking_for": (
                 "Communities that already post regularly and have a clear visual identity. "
                 "We don't want to manufacture your content — we want to be a natural part "
