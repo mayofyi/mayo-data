@@ -1273,10 +1273,11 @@ def list_communities():
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT id, name, tagline, location, description, tags, active_members, website,
-                       cover_option, cover_image_url, archetype, archetype_source,
+                       cover_option, cover_image_url, archetype, archetype_source, archetype_reasoning,
                        network_multiplier, cis_raw, cis_stamped, instagram_data, instagram_token,
                        notable_members, case_studies, capabilities, partnership_preferences,
-                       leader_name, created_at
+                       leader_name, email, substack_url, substack_data,
+                       miq_score, miq_reasoning, press_mentions, created_at
                 FROM communities ORDER BY created_at DESC
             """)
             rows = cur.fetchall()
