@@ -758,6 +758,7 @@ function mapBrief(b) {
     budget: (b.budget_amount || b.budget) ? ('$' + parseInt(b.budget_amount || b.budget).toLocaleString()) : '—',
     budgetPeriod: b.budget_period || 'Quarterly',
     products, tags, requirements: reqs, kpis,
+    deliverables: Array.isArray(b.deliverables) ? b.deliverables : [],
     posted: b.created_at ? new Date(b.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: '2-digit' }) : '—',
     deadline: b.deadline || '—', window: b.activation_window || '—',
     lookingFor: b.looking_for || '', responseCount: b.response_count || 0,
@@ -2054,6 +2055,7 @@ function BriefCreation({ onPublish, onCancel, user }) {
     budget: budgetAmount || '$—',
     budgetPeriod,
     products: productOffer ? [productOffer] : [],
+    deliverables: activeDeliverables,
     tags: selectedInterests.slice(0, 3),
     kpis: selectedKpis,
     deadline: deadline || 'TBC',
@@ -2674,20 +2676,23 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
   const allCaseStudies = c.casestudies || [];
   const verifiedCS = allCaseStudies.filter(cs => cs.mayo_verified || cs.verified);
   const selfCS = allCaseStudies.filter(cs => !cs.mayo_verified && !cs.verified && cs.source === 'self-reported');
-
-  // CIS sub-scores (read-only, mirrors admin logic)
-  const confirmedPress = c.pressMentions.filter(m => m.confirmed === true);
+  const confirmedPress = (c.pressMentions || []).filter(m => m.confirmed === true);
   const cisBAH = verifiedCS.length ? Math.min(100, verifiedCS.length * 12) : null;
   const cisPMM = confirmedPress.length ? Math.min(100, confirmedPress.reduce((s, m) => s + ({'national':25,'regional':12,'niche':6,'unknown':3}[m.outlet_tier] || 3), 0)) : null;
 
-  const archetypeColor = { evangelical:'pink', loyalists:'cyan', early:'green', cultural:'orange', buyers:'orange' }[c.archetype] || 'orange';
+  const igCh = c.channels.find(ch => ch.name === 'Instagram');
+  const substackCh = c.channels.find(ch => ch.name === 'Substack');
+  const websiteCh = c.channels.find(ch => ch.name === 'Website');
+
+  const archetypeColors = { evangelical:'var(--pink)', loyalists:'var(--cyan)', early:'var(--lime)', buyers:'var(--orange)', cultural:'var(--orange)' };
+  const archetypeColor = archetypeColors[c.archetype] || 'var(--orange)';
 
   return (
     <div>
-      {/* ── Facecard — same 16:9 as before ──────────────────────────────────── */}
-      <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 16, background: c.coverGradient || 'var(--surface3)', aspectRatio: '16/9' }}>
+      {/* ── Cover / Header ─────────────────────────────────────────────────── */}
+      <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 14, background: c.coverGradient || 'var(--surface3)', minHeight: 200, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
         {c.cover && <img src={c.cover} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5, mixBlendMode: 'luminosity' }} onError={e => e.target.style.display='none'} />}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(0,0,0,0.7) 65%, rgba(0,0,0,0.92) 100%)' }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)' }} />
         {onBack && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, left: 14, zIndex: 2 }} onClick={onBack}>← Back</button>}
         {isOwnProfile && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, right: 14, zIndex: 2 }}>Edit Profile</button>}
         {!isOwnProfile && (role === 'brand' || role === 'admin') && c.email && (
@@ -2697,147 +2702,155 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
             Reach Out →
           </a>
         )}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 20px', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginBottom: 10 }}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'Bebas Neue', fontSize: 38, color: '#fff', lineHeight: 1, textShadow: '0 1px 6px rgba(0,0,0,0.5)', marginBottom: 3 }}>{c.name}</div>
-              {c.tagline && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginBottom: 2 }}>{c.tagline}</div>}
-            </div>
-            <ArchetypeBadge type={c.archetype} label={c.archetypeLabel} />
-          </div>
-          {c.tags.length > 0 && (
-            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-              {c.tags.map(t => <span key={t} className="tag tag-ghost" style={{ fontSize: 10 }}>{t}</span>)}
+        <div style={{ position: 'relative', zIndex: 1, padding: '24px 22px 22px' }}>
+          <div style={{ fontFamily: 'Bebas Neue', fontSize: 44, lineHeight: 1, textShadow: '0 2px 12px rgba(0,0,0,0.6)', marginBottom: 4 }}>{c.name}</div>
+          {(c.tagline || c.location) && (
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
+              {[c.tagline, c.location].filter(Boolean).join(' · ')}
             </div>
           )}
-        </div>
-      </div>
-
-      {/* ── Tier strip ────────────────────────────────────────────────────────── */}
-      <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, border: '1px solid var(--border)' }}>
-        <div className="flex items-center gap-10">
+          {c.tags.length > 0 && (
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+              {c.tags.map(t => <span key={t} style={{ padding: '3px 10px', borderRadius: 4, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t}</span>)}
+            </div>
+          )}
           <TierBadge tier={c.tier || 'starter'} />
-          <div className="text-muted text-xs">
-            {c.engagement !== '—' ? c.engagement + '% ER · ' : ''}
-            {(c.activeMembers || 0).toLocaleString()} active members
-            {c.reach ? ' · ' + c.reach.toLocaleString() + ' reach' : ''}
-          </div>
         </div>
-        {role === 'brand' && !isOwnProfile && <button className="btn btn-lime btn-sm" onClick={onRequestPartnership}>Request Partnership →</button>}
-        {isOwnProfile && <span className="text-muted text-xs" style={{ alignSelf: 'center' }}>{verifiedCS.length} verified partnerships</span>}
       </div>
 
       {/* ── 6 metric cards ───────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 14, marginBottom: 20 }}>
-        <div className="metric-card yellow">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6,1fr)', gap: 10, marginBottom: 12 }}>
+        <div className="metric-card" style={{ background: '#0f0f00', borderColor: '#2a2800' }}>
           <div className="metric-label">Match Score</div>
-          <div className="metric-value" style={{ fontSize: 28 }}>—</div>
+          <div style={{ fontFamily: 'Bebas Neue', fontSize: 30, color: '#555', lineHeight: 1 }}>—</div>
           <div className="metric-sub" style={{ fontSize: 10 }}>No active brief</div>
         </div>
-        <div className="metric-card dark">
+        <div className="metric-card">
           <div className="metric-label">Engagement Rate</div>
-          <div className="metric-value sm">{c.engagement !== '—' ? c.engagement + '%' : '—'}</div>
+          <div style={{ fontFamily: 'Bebas Neue', fontSize: 30, lineHeight: 1 }}>{c.engagement !== '—' ? c.engagement + '%' : '—'}</div>
           <div className="metric-sub" style={{ fontSize: 10 }}>{c.igUsername ? '@' + c.igUsername : c.engagement !== '—' ? 'Instagram' : 'No IG data'}</div>
         </div>
-        <div className="metric-card dark">
+        <div className="metric-card">
           <div className="metric-label">Active Members</div>
-          <div className="metric-value sm">{c.activeMembers ? c.activeMembers.toLocaleString() : '—'}</div>
+          <div style={{ fontFamily: 'Bebas Neue', fontSize: 30, lineHeight: 1 }}>{c.activeMembers ? c.activeMembers.toLocaleString() : '—'}</div>
           <div className="metric-sub" style={{ fontSize: 10 }}>community-reported</div>
         </div>
-        <div className="metric-card dark">
+        <div className="metric-card">
           <div className="metric-label">Total Reach</div>
-          <div className="metric-value sm">{c.reach ? c.reach.toLocaleString() : '—'}</div>
+          <div style={{ fontFamily: 'Bebas Neue', fontSize: 30, lineHeight: 1 }}>{c.reach ? c.reach.toLocaleString() : '—'}</div>
           <div className="metric-sub" style={{ fontSize: 10 }}>{c.reach ? 'Instagram' : 'Not connected'}</div>
         </div>
-        <div className="metric-card dark">
+        <div className="metric-card" style={{ background: '#090005', borderColor: '#1f0015' }}>
           <div className="metric-label">Network Multiplier</div>
-          <div className="metric-value sm">{c.networkMultiplier !== '—' ? c.networkMultiplier + 'x' : '—'}</div>
-          <div className="metric-sub" style={{ fontSize: 10 }}>{c.networkMultiplier !== '—' ? 'verified members' : 'Pending'}</div>
+          {c.networkMultiplier !== '—'
+            ? <><div style={{ fontFamily: 'Bebas Neue', fontSize: 30, color: 'var(--pink)', lineHeight: 1 }}>{c.networkMultiplier}×</div><div className="metric-sub" style={{ fontSize: 10 }}>verified members</div></>
+            : <><div style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: '#444', lineHeight: 1, paddingTop: 4 }}>Pending</div><div className="metric-sub" style={{ fontSize: 10, color: '#444' }}>Enter follower data</div></>}
         </div>
-        <div className="metric-card orange">
+        <div className="metric-card" style={{ background: '#0a0700', borderColor: '#221a00' }}>
           <div className="metric-label">Cultural Impact</div>
-          <div className="metric-value sm">{c.cis != null ? c.cis : '—'}{c.cis != null && <span style={{ fontSize: 16 }}>/100</span>}</div>
-          <div className="metric-sub" style={{ fontSize: 10 }}>{c.cisStamped != null ? '★ Mayo stamped' : c.cisRaw != null ? 'Raw score' : 'Pending'}</div>
+          {(c.cisStamped != null || c.cisRaw != null)
+            ? <><div style={{ fontFamily: 'Bebas Neue', fontSize: 30, color: 'var(--orange)', lineHeight: 1 }}>{c.cis}<span style={{ fontSize: 14 }}>/100</span></div><div className="metric-sub" style={{ fontSize: 10 }}>{c.cisStamped != null ? '★ Stamped' : 'Raw — unstamped'}</div></>
+            : <><div style={{ fontFamily: 'Bebas Neue', fontSize: 20, color: '#444', lineHeight: 1, paddingTop: 4 }}>Pending</div><div className="metric-sub" style={{ fontSize: 10, color: '#444' }}>Not yet scored</div></>}
         </div>
       </div>
 
-      {/* ── Channels + Archetype ─────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
+      {/* ── Channels (left) + About/Location/Looking For (right) ─────────────── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+        {/* Channels + capabilities */}
         <div className="card p-16">
           {c.capabilities.length > 0 && (
             <div style={{ marginBottom: 16 }}>
-              <div className="section-title mb-8">What We Offer</div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-                {c.capabilities.map(cap => <span key={cap} className="tag tag-ghost" style={{ fontSize: 10 }}>{cap}</span>)}
+              <div className="section-title mb-8" style={{ fontSize: 10, letterSpacing: '0.1em' }}>What We Offer</div>
+              <div>{c.capabilities.map(cap => <span key={cap} style={{ display: 'inline-block', padding: '4px 10px', borderRadius: 4, fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', background: 'var(--surface3)', border: '1px solid var(--border2)', color: 'var(--white)', margin: 2 }}>{cap}</span>)}</div>
+            </div>
+          )}
+          <div className="section-title mb-10" style={{ fontSize: 10, letterSpacing: '0.1em' }}>Channels</div>
+          {igCh && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: (substackCh || websiteCh) ? '1px solid var(--border)' : 'none' }}>
+              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0, fontSize: 13 }}>IG</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>Instagram{igCh.username ? <span style={{ color: 'var(--muted)', fontWeight: 400 }}> · @{igCh.username}</span> : ''}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{[igCh.reach ? igCh.reach.toLocaleString() + ' followers' : null, igCh.engagement ? igCh.engagement + '% ER' : null].filter(Boolean).join(' · ') || 'Connected'}</div>
+              </div>
+              <span style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--lime)' }}>✓ Live</span>
+            </div>
+          )}
+          {substackCh && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: websiteCh ? '1px solid var(--border)' : 'none' }}>
+              <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#ff6719', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 14, color: '#fff', flexShrink: 0 }}>S</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>Substack</div>
+                {substackCh.url && <div style={{ fontSize: 11, marginTop: 2 }}><a href={substackCh.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)', textDecoration: 'none' }}>{substackCh.url.replace(/^https?:\/\//,'')}</a></div>}
+              </div>
+              <span style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)' }}>URL saved</span>
+            </div>
+          )}
+          {websiteCh && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0' }}>
+              <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--surface3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', flexShrink: 0, fontSize: 13 }}>W</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>Website <span style={{ fontWeight: 400, color: 'var(--muted)', fontSize: 11 }}>— reference only</span></div>
+                {websiteCh.url && <div style={{ fontSize: 11, marginTop: 2 }}><a href={websiteCh.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)', textDecoration: 'none' }}>{websiteCh.url.replace(/^https?:\/\//,'')}</a></div>}
               </div>
             </div>
           )}
-          <div className="section-header mb-12"><span className="section-title">Channels</span></div>
-          {c.channels.map(ch => (
-            <div key={ch.name} className="channel-item">
-              <div className="channel-dot" style={{ background: ch.color + '33', color: ch.color }}>{ch.name[0]}</div>
-              <div className="channel-info">
-                <div className="channel-name">{ch.name}</div>
-                {ch.engagementChannel
-                  ? <div className="channel-stats">
-                      {ch.reach ? ch.reach.toLocaleString() + ' followers' : '—'}
-                      {ch.engagement ? ' · ' + ch.engagement + '% ER' : ''}
-                      {ch.url && ch.username && <span> · <a href={ch.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)', textDecoration: 'none' }}>@{ch.username}</a></span>}
-                    </div>
-                  : <div className="channel-stats" style={{ color: 'var(--muted)', fontStyle: 'italic' }}>Reference only — <a href={ch.url} style={{ color: 'var(--cyan)', textDecoration: 'none' }} target="_blank" rel="noopener noreferrer">{(ch.url||'').replace(/^https?:\/\//,'')}</a></div>
-                }
-              </div>
-              {ch.engagementChannel && ch.engagement !== null && (
-                <div className="channel-bar-track"><div className="channel-bar-fill" style={{ background: ch.color, width: Math.min((ch.engagement || 0) / 15 * 100, 100) + '%' }} /></div>
-              )}
-            </div>
-          ))}
-          {c.channels.length === 0 && <div className="text-muted text-xs">No channels connected</div>}
+          {!igCh && !substackCh && !websiteCh && <div className="text-muted text-xs">No channels connected</div>}
         </div>
 
-        <div className={"metric-card " + archetypeColor}>
-          <div className="metric-label">Community Type</div>
-          <div style={{ fontFamily: 'Bebas Neue', fontSize: 32, lineHeight: 1, marginBottom: 4 }}>{c.archetypeLabel}</div>
-          {c.archetypeBest && <div style={{ fontFamily: 'Barlow Condensed', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.7, marginBottom: c.archetypeReasoning ? 12 : 0 }}>Best for {c.archetypeBest}</div>}
-          {c.archetypeReasoning && (
-            <div style={{ fontSize: 11, lineHeight: 1.55, opacity: 0.85, borderTop: '1px solid rgba(0,0,0,0.2)', paddingTop: 10 }}>{c.archetypeReasoning}</div>
+        {/* About + Location + Looking For stacked */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {c.description && (
+            <div className="card p-16">
+              <div className="section-title mb-8" style={{ fontSize: 10, letterSpacing: '0.1em' }}>About</div>
+              <p style={{ fontSize: 13, color: 'rgba(240,240,240,0.75)', lineHeight: 1.65, margin: 0 }}>{c.description}</p>
+            </div>
+          )}
+          {c.location && (
+            <div className="card p-16">
+              <div className="section-title mb-6" style={{ fontSize: 10, letterSpacing: '0.1em' }}>Location</div>
+              <p style={{ fontSize: 13, color: 'rgba(240,240,240,0.75)', margin: 0 }}>{c.location}</p>
+            </div>
+          )}
+          {c.partnershipPreferences && (
+            <div className="card p-16">
+              <div className="section-title mb-8" style={{ fontSize: 10, letterSpacing: '0.1em' }}>Looking For</div>
+              <p style={{ fontSize: 13, color: 'rgba(240,240,240,0.75)', lineHeight: 1.65, margin: 0 }}>{c.partnershipPreferences}</p>
+            </div>
+          )}
+          {!c.description && !c.location && !c.partnershipPreferences && (
+            <div className="card p-16 text-muted" style={{ fontSize: 13 }}>No profile text set</div>
           )}
         </div>
       </div>
 
-      {/* ── About + Location + Looking For ──────────────────────────────────── */}
-      {(c.description || c.location || c.partnershipPreferences) && (
-        <div style={{ display: 'grid', gridTemplateColumns: c.description && (c.location || c.partnershipPreferences) ? '1fr 1fr' : '1fr', gap: 14, marginBottom: 14 }}>
-          {c.description && (
-            <div className="card p-16">
-              <div className="section-title mb-8">About</div>
-              <p style={{ fontSize: 13, color: 'rgba(240,240,240,0.75)', lineHeight: 1.65, margin: 0 }}>{c.description}</p>
-            </div>
-          )}
-          {(c.location || c.partnershipPreferences) && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {c.location && (
-                <div className="card p-16">
-                  <div className="section-title mb-6">Location</div>
-                  <div style={{ fontSize: 13 }}>{c.location}</div>
-                </div>
-              )}
-              {c.partnershipPreferences && (
-                <div className="card p-16">
-                  <div className="section-title mb-8">Looking for in a brand</div>
-                  <p style={{ fontSize: 13, color: 'rgba(240,240,240,0.75)', lineHeight: 1.65, margin: 0 }}>{c.partnershipPreferences}</p>
-                </div>
-              )}
-            </div>
-          )}
+      {/* ── Archetype ─────────────────────────────────────────────────────────── */}
+      <div className="card p-16" style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <div className="section-title" style={{ fontSize: 10, letterSpacing: '0.1em', marginBottom: 0 }}>Community Archetype</div>
+          {c.archetype && <span style={{ fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--lime)' }}>★ Mayo assigned</span>}
         </div>
-      )}
+        <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 12 }}>Platform-assigned — never self-selected.</div>
+        {c.archetype ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: c.archetypeReasoning ? 14 : 0 }}>
+            <span style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: archetypeColor }}>{c.archetypeLabel}</span>
+            {c.archetypeBest && <span style={{ background: archetypeColor + '22', border: '1px solid ' + archetypeColor + '44', color: archetypeColor, fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '2px 8px', borderRadius: 3 }}>{c.archetypeBest}</span>}
+          </div>
+        ) : (
+          <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>Not yet assigned</div>
+        )}
+        {c.archetypeReasoning && (
+          <div style={{ background: 'var(--surface2)', border: '1px solid var(--border2)', borderRadius: 8, padding: '12px 14px' }}>
+            <div style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 6 }}>Why this archetype</div>
+            <div style={{ fontSize: 12, color: 'rgba(240,240,240,0.65)', lineHeight: 1.6 }}>{c.archetypeReasoning}</div>
+          </div>
+        )}
+      </div>
 
       {/* ── Notable Members ──────────────────────────────────────────────────── */}
       {c.notableMembers.length > 0 && (
-        <div className="card p-16" style={{ marginBottom: 14 }}>
-          <div className="section-header mb-12">
-            <span className="section-title">Notable Members</span>
+        <div className="card p-16" style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div className="section-title" style={{ fontSize: 10, letterSpacing: '0.1em', marginBottom: 0 }}>Notable Members</div>
             <span className="text-muted text-xs">{c.notableMembers.filter(m=>m.verified).length}/{c.notableMembers.length} verified</span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
@@ -2845,7 +2858,7 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
               const nm = m.name || '?';
               const hasData = m.ig_followers || m.follower_tier;
               return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'var(--surface2)', border: `1px solid ${m.verified ? 'rgba(210,255,1,0.2)' : 'var(--border)'}`, borderRadius: 8 }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'var(--surface2)', border: `1px solid ${m.verified ? 'rgba(210,255,1,0.2)' : 'var(--border)'}`, borderRadius: 8 }}>
                   <div style={{ width: 36, height: 36, borderRadius: '50%', background: m.verified ? 'rgba(210,255,1,0.15)' : 'var(--surface3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 16, color: m.verified ? 'var(--lime)' : 'var(--muted)', flexShrink: 0 }}>{nm[0].toUpperCase()}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{nm}</div>
@@ -2853,7 +2866,7 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
                     {m.role && <div style={{ fontSize: 11, color: 'var(--muted)' }}>{m.role}</div>}
                     {m.verified && hasData && (
                       <div style={{ fontSize: 10, color: 'var(--lime)', fontFamily: 'Barlow Condensed', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2 }}>
-                        {m.ig_followers ? '✓ ' + m.ig_followers.toLocaleString() + ' followers' : m.follower_tier ? '✓ ' + m.follower_tier + ' tier' : '✓ Verified'}
+                        ✓ {m.ig_followers ? m.ig_followers.toLocaleString() + ' followers' : m.follower_tier + ' tier'}
                         {m.ig_er ? ' · ' + m.ig_er + '% ER' : ''}
                       </div>
                     )}
@@ -2868,67 +2881,52 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
 
       {/* ── Past Partnerships ────────────────────────────────────────────────── */}
       {(verifiedCS.length > 0 || selfCS.length > 0 || isOwnProfile) && (
-        <div style={{ marginBottom: 14 }}>
-          <div className="section-header mb-12">
-            <span className="section-title">Past Partnerships</span>
-            <span className="text-muted text-xs">{isOwnProfile ? 'Click to view · Add your own below' : 'Click to view case study'}</span>
+        <div className="card p-16" style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <div className="section-title" style={{ fontSize: 10, letterSpacing: '0.1em', marginBottom: 0 }}>Past Partnerships</div>
+            <span className="text-muted text-xs">{isOwnProfile ? 'Click to view · Add yours below' : 'Click to view case study'}</span>
           </div>
-          <div className="carousel-track">
+          <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
             {verifiedCS.map((p, idx) => (
-              <div key={idx} className="partnership-gallery-card" onClick={() => setActiveCaseStudy(p)} title="Click to view case study">
-                <div className="pgc-cover">
-                  <div style={{ width: '100%', height: '100%', background: p.gradient || 'linear-gradient(135deg,#1a1a2e,#2d1b69)' }} />
-                  <div className="pgc-overlay" />
-                  {p.brandColor && <div style={{ position: 'absolute', top: 8, left: 8 }}><div style={{ width: 28, height: 28, borderRadius: 5, background: p.brandColor, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 14, border: '1.5px solid rgba(255,255,255,0.2)' }}>{p.brandInitial || (p.brand||'?')[0]}</div></div>}
-                  <div style={{ position: 'absolute', top: 8, right: 8 }}><span style={{ background: 'rgba(210,255,1,0.9)', color: '#000', borderRadius: 3, padding: '2px 6px', fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>★ Mayo Verified</span></div>
-                  <div style={{ position: 'absolute', bottom: 8, left: 10, right: 10 }}>
-                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 16, color: '#fff', lineHeight: 1 }}>{p.brand}</div>
-                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>{p.type} · {p.year}</div>
-                  </div>
+              <div key={idx} style={{ background: 'var(--surface2)', border: '1px solid rgba(210,255,1,0.25)', borderRadius: 8, overflow: 'hidden', minWidth: 200, maxWidth: 220, flexShrink: 0, cursor: 'pointer' }} onClick={() => setActiveCaseStudy(p)}>
+                <div style={{ height: 110, position: 'relative', background: p.gradient || 'linear-gradient(135deg,#1a1a2e,#2d1b69)' }}>
+                  <div style={{ position: 'absolute', top: 6, right: 6 }}><span style={{ background: 'var(--lime)', color: '#000', fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '2px 6px', borderRadius: 3 }}>★ Mayo Verified</span></div>
+                  {p.brandColor && <div style={{ position: 'absolute', top: 6, left: 8, width: 28, height: 28, borderRadius: 5, background: p.brandColor, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 14 }}>{p.brandInitial || (p.brand||'?')[0]}</div>}
                 </div>
-                <div className="pgc-body">
-                  <div style={{ fontFamily: 'Barlow Condensed', fontSize: 13, fontWeight: 700, color: 'var(--lime)', marginBottom: 2 }}>{p.result}</div>
-                  <div className="text-muted text-xs">{p.postRate ? p.postRate + ' post rate' : ''}{p.attendees ? (p.postRate ? ' · ' : '') + p.attendees + ' attendees' : ''}</div>
+                <div style={{ padding: '10px 12px' }}>
+                  <div style={{ fontWeight: 700, fontSize: 13 }}>{p.brand || '—'}</div>
+                  {p.year && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>{p.year}</div>}
+                  {p.result && <div style={{ fontSize: 11, color: 'var(--lime)', marginTop: 5, fontFamily: 'Barlow Condensed', fontWeight: 700 }}>{p.result}</div>}
                 </div>
               </div>
             ))}
             {selfCS.map((p, idx) => (
-              <div key={'self-'+idx} className="partnership-gallery-card" onClick={() => setActiveCaseStudy(p)}>
-                <div className="pgc-cover">
-                  <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#1a1a2e,#2d1b69)' }} />
-                  <div className="pgc-overlay" />
-                  <div style={{ position: 'absolute', top: 8, right: 8 }}><span style={{ background: 'rgba(136,136,136,0.85)', color: '#fff', borderRadius: 3, padding: '2px 6px', fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Self-reported</span></div>
-                  <div style={{ position: 'absolute', bottom: 8, left: 10, right: 10 }}>
-                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 16, color: '#fff', lineHeight: 1 }}>{p.brand}</div>
-                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)' }}>{p.type} · {p.year}</div>
-                  </div>
+              <div key={'self-'+idx} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', minWidth: 200, maxWidth: 220, flexShrink: 0, cursor: 'pointer' }} onClick={() => setActiveCaseStudy(p)}>
+                <div style={{ height: 110, position: 'relative', background: 'linear-gradient(135deg,#1a1a2e,#2d1b69)' }}>
+                  <div style={{ position: 'absolute', top: 6, right: 6 }}><span style={{ background: 'rgba(136,136,136,0.85)', color: '#fff', fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '2px 6px', borderRadius: 3 }}>Self-reported</span></div>
                 </div>
-                <div className="pgc-body">
-                  <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.4 }}>{(p.description||'').slice(0,60)}{(p.description||'').length>60?'…':''}</div>
+                <div style={{ padding: '10px 12px' }}>
+                  <div style={{ fontWeight: 700, fontSize: 13 }}>{p.brand || '—'}</div>
+                  {p.year && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>{p.year}</div>}
+                  {p.description && <div style={{ fontSize: 11, color: 'rgba(240,240,240,0.5)', marginTop: 5, lineHeight: 1.4 }}>{p.description.slice(0,70)}{p.description.length > 70 ? '…' : ''}</div>}
                 </div>
               </div>
             ))}
             {isOwnProfile && pendingCaseStudies.map((p, idx) => (
-              <div key={'pending-'+idx} className="partnership-gallery-card" style={{ opacity: 0.5 }}>
-                <div className="pgc-cover">
-                  <div style={{ width: '100%', height: '100%', background: 'linear-gradient(135deg,#1a1a1a,#2a2a2a)' }} />
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-                    <div style={{ fontSize: 20 }}>⏳</div>
-                    <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', textAlign: 'center' }}>Pending Review</div>
-                  </div>
-                  <div style={{ position: 'absolute', bottom: 8, left: 10, right: 10 }}>
-                    <div style={{ fontFamily: 'Bebas Neue', fontSize: 16, color: '#fff', lineHeight: 1 }}>{p.brand}</div>
-                    <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)' }}>{p.type} · {p.year}</div>
-                  </div>
+              <div key={'pending-'+idx} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', minWidth: 200, maxWidth: 220, flexShrink: 0, opacity: 0.5 }}>
+                <div style={{ height: 110, background: 'linear-gradient(135deg,#1a1a1a,#2a2a2a)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <div style={{ fontSize: 20 }}>⏳</div>
+                  <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)' }}>Pending Review</div>
                 </div>
-                <div className="pgc-body">
-                  <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Awaiting Mayo review</div>
+                <div style={{ padding: '10px 12px' }}>
+                  <div style={{ fontWeight: 700, fontSize: 13 }}>{p.brand}</div>
+                  {p.year && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 1 }}>{p.year}</div>}
                 </div>
               </div>
             ))}
             {isOwnProfile && (
               <div onClick={() => setShowAddCaseStudy(true)}
-                style={{ flexShrink: 0, width: 140, borderRadius: 10, border: '1px dashed var(--border2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, cursor: 'pointer', color: 'var(--muted)', transition: 'all 0.12s' }}
+                style={{ minWidth: 140, borderRadius: 8, border: '1px dashed var(--border2)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 16, cursor: 'pointer', color: 'var(--muted)', transition: 'all 0.12s', flexShrink: 0 }}
                 onMouseEnter={e => { e.currentTarget.style.borderColor='var(--lime)'; e.currentTarget.style.color='var(--lime)'; }}
                 onMouseLeave={e => { e.currentTarget.style.borderColor='var(--border2)'; e.currentTarget.style.color='var(--muted)'; }}>
                 <div style={{ fontSize: 24 }}>+</div>
@@ -2939,65 +2937,59 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
         </div>
       )}
 
-      {/* ── Cultural Impact Score (read-only) ────────────────────────────────── */}
-      <div className="card p-16" style={{ marginBottom: 14 }}>
-        <div className="section-header mb-6">
-          <span className="section-title">Cultural Impact Score</span>
-          {c.cisStamped != null && <span style={{ fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--orange)' }}>★ Mayo Stamped</span>}
+      {/* ── Cultural Impact Score ─────────────────────────────────────────────── */}
+      <div className="card p-16" style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <div className="section-title" style={{ fontSize: 10, letterSpacing: '0.1em', marginBottom: 0 }}>Cultural Impact Score</div>
+          {c.cisStamped != null && <span style={{ fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--orange)' }}>★ Stamped</span>}
         </div>
-        <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 14, lineHeight: 1.5 }}>Part algorithmic, part editorial. Scored across Member Influence Quality, Growth Velocity, Brand Association History, and Press Mentions.</div>
-
-        {/* Sub-scores */}
+        <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 14, lineHeight: 1.5 }}>Part algorithmic, part editorial. Raw score calculated from MIQ, Growth Velocity, Brand History, and Press Mentions.</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 16 }}>
           {[
-            { label: 'MIQ', val: c.miqScore, sub: c.miqScore != null ? 'member influence' : 'Not yet run' },
-            { label: 'GV', val: null, sub: 'Needs 90-day data' },
-            { label: 'BAH', val: cisBAH, sub: cisBAH != null ? verifiedCS.length + ' verified case' + (verifiedCS.length !== 1 ? 's' : '') : 'No verified cases' },
-            { label: 'PMM', val: cisPMM, sub: confirmedPress.length ? confirmedPress.length + ' confirmed mention' + (confirmedPress.length !== 1 ? 's' : '') : 'No confirmed mentions' },
+            { label: 'MIQ', val: c.miqScore, sub: c.miqScore != null ? 'member influence' : 'run analysis' },
+            { label: 'GV',  val: null, sub: 'needs 90-day data' },
+            { label: 'BAH', val: cisBAH, sub: cisBAH != null ? verifiedCS.length + ' verified case' + (verifiedCS.length !== 1 ? 's' : '') : 'no verified cases' },
+            { label: 'PMM', val: cisPMM, sub: confirmedPress.length ? confirmedPress.length + ' confirmed mention' + (confirmedPress.length !== 1 ? 's' : '') : 'no confirmed mentions' },
           ].map(s => (
-            <div key={s.label} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', textAlign: 'center' }}>
+            <div key={s.label} style={{ background: 'var(--surface2)', border: '1px solid var(--border2)', borderRadius: 6, padding: '10px', textAlign: 'center' }}>
               <div style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 4 }}>{s.label}</div>
-              <div style={{ fontFamily: 'Bebas Neue', fontSize: 26, color: s.val != null ? 'var(--orange)' : '#444', lineHeight: 1 }}>{s.val != null ? s.val : '—'}</div>
-              <div style={{ fontSize: 9, color: '#555', marginTop: 3 }}>{s.sub}</div>
+              <div style={{ fontFamily: 'Bebas Neue', fontSize: 24, color: s.val != null ? 'var(--orange)' : '#444', lineHeight: 1 }}>{s.val != null ? s.val : '—'}</div>
+              <div style={{ fontSize: 9, color: '#444', marginTop: 3 }}>{s.sub}</div>
             </div>
           ))}
         </div>
-
-        {/* Raw → Stamped */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ flex: 1, background: 'var(--surface2)', border: '1px solid var(--border2)', borderRadius: 6, padding: '10px', textAlign: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+          <div style={{ flex: 1, background: 'var(--surface2)', border: '1px solid var(--border2)', borderRadius: 6, padding: 12, textAlign: 'center' }}>
             <div style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 4 }}>Raw CIS</div>
-            <div style={{ fontFamily: 'Bebas Neue', fontSize: 28, lineHeight: 1, color: c.cisRaw != null ? 'var(--orange)' : '#444' }}>{c.cisRaw != null ? c.cisRaw : '—'}</div>
+            <div style={{ fontFamily: 'Bebas Neue', fontSize: 32, lineHeight: 1, color: c.cisRaw != null ? 'var(--orange)' : '#444' }}>{c.cisRaw != null ? c.cisRaw : '—'}</div>
           </div>
-          <div style={{ color: 'var(--muted)', fontSize: 18 }}>→</div>
-          <div style={{ flex: 1, background: c.cisStamped != null ? 'rgba(255,171,64,0.08)' : 'var(--surface2)', border: `1px solid ${c.cisStamped != null ? 'rgba(255,171,64,0.3)' : 'var(--border2)'}`, borderRadius: 6, padding: '10px', textAlign: 'center' }}>
+          <div style={{ color: 'var(--muted)', fontSize: 18, paddingTop: 18 }}>→</div>
+          <div style={{ flex: 1, background: c.cisStamped != null ? 'rgba(255,171,64,0.08)' : 'var(--surface2)', border: `1px solid ${c.cisStamped != null ? 'rgba(255,171,64,0.3)' : 'var(--border2)'}`, borderRadius: 6, padding: 12, textAlign: 'center' }}>
             <div style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 4 }}>Stamped CIS</div>
-            <div style={{ fontFamily: 'Bebas Neue', fontSize: 28, lineHeight: 1, color: c.cisStamped != null ? 'var(--orange)' : '#444' }}>{c.cisStamped != null ? c.cisStamped : '—'}</div>
+            <div style={{ fontFamily: 'Bebas Neue', fontSize: 32, lineHeight: 1, color: c.cisStamped != null ? 'var(--orange)' : '#444' }}>{c.cisStamped != null ? c.cisStamped : '—'}</div>
           </div>
         </div>
-
-        {/* MIQ reasoning */}
         {c.miqReasoning && (
-          <div style={{ marginTop: 12, padding: '10px 12px', background: 'var(--surface2)', border: '1px solid var(--border2)', borderRadius: 6 }}>
-            <div style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 5 }}>MIQ Analysis</div>
+          <div style={{ marginTop: 14, background: 'var(--surface2)', border: '1px solid var(--border2)', borderRadius: 6, padding: 12 }}>
+            <div style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 6 }}>MIQ Analysis</div>
             <div style={{ fontSize: 12, color: 'rgba(240,240,240,0.7)', lineHeight: 1.6 }}>{c.miqReasoning}</div>
           </div>
         )}
       </div>
 
-      {/* ── Press mentions (read-only) ────────────────────────────────────────── */}
-      {c.pressMentions.length > 0 && (
+      {/* ── Press & Media Mentions ───────────────────────────────────────────── */}
+      {(c.pressMentions || []).filter(m => m.confirmed !== false).length > 0 && (
         <div className="card p-16">
-          <div className="section-header mb-12">
-            <span className="section-title">Press & Media Mentions</span>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div className="section-title" style={{ fontSize: 10, letterSpacing: '0.1em', marginBottom: 0 }}>Press & Media Mentions</div>
             <span className="text-muted text-xs">{confirmedPress.length} confirmed</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {c.pressMentions.filter(m => m.confirmed !== false).map((m, i) => (
-              <div key={i} style={{ background: 'var(--surface2)', border: `1px solid ${m.confirmed ? 'rgba(210,255,1,0.15)' : 'rgba(255,171,64,0.15)'}`, borderRadius: 6, padding: '10px 12px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            {(c.pressMentions || []).filter(m => m.confirmed !== false).map((m, i) => (
+              <div key={i} style={{ background: 'var(--surface2)', border: `1px solid ${m.confirmed ? 'rgba(210,255,1,0.2)' : 'rgba(255,171,64,0.15)'}`, borderRadius: 6, padding: '10px 12px', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, flexWrap: 'wrap' }}>
-                    <span style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', background: m.outlet_tier === 'national' ? 'rgba(210,255,1,0.15)' : m.outlet_tier === 'regional' ? 'rgba(177,236,240,0.15)' : 'rgba(255,255,255,0.05)', color: m.outlet_tier === 'national' ? 'var(--lime)' : m.outlet_tier === 'regional' ? 'var(--cyan)' : 'var(--muted)', padding: '1px 6px', borderRadius: 3 }}>{m.outlet_tier || 'mention'}</span>
+                    <span style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', background: m.outlet_tier === 'national' ? 'rgba(210,255,1,0.15)' : m.outlet_tier === 'regional' ? 'rgba(177,236,240,0.15)' : m.outlet_tier === 'niche' ? 'rgba(255,106,242,0.1)' : 'rgba(255,255,255,0.05)', color: m.outlet_tier === 'national' ? 'var(--lime)' : m.outlet_tier === 'regional' ? 'var(--cyan)' : m.outlet_tier === 'niche' ? 'var(--pink)' : 'var(--muted)', padding: '1px 6px', borderRadius: 3 }}>{m.outlet_tier || 'mention'}</span>
                     {m.confirmed && <span style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--lime)' }}>✓ Confirmed</span>}
                   </div>
                   <a href={m.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 12, fontWeight: 600, color: 'var(--white)', textDecoration: 'none', display: 'block', marginBottom: 2 }}>{m.title}</a>
@@ -3006,6 +2998,14 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* ── Tier strip + CTA ──────────────────────────────────────────────────── */}
+      {(role === 'brand' && !isOwnProfile) && (
+        <div style={{ background: 'var(--surface2)', borderRadius: 8, padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, border: '1px solid var(--border)' }}>
+          <TierBadge tier={c.tier || 'starter'} />
+          <button className="btn btn-lime" onClick={onRequestPartnership}>Request Partnership →</button>
         </div>
       )}
     </div>
@@ -3098,16 +3098,31 @@ function BriefDetailPage({ brief: b, onBack, role, myProfile }) {
             <div className="metric-sub">{b.budgetPeriod}</div>
           </div>
 
-          {/* Products */}
-          <div className="card p-16 mb-14">
-            <div className="section-title mb-10">What's on Offer</div>
-            {b.products.map((p, i) => (
-              <div key={i} style={{ padding: '10px 0', borderBottom: i < b.products.length - 1 ? '1px solid var(--border)' : 'none' }}>
-                <div style={{ fontSize: 13, fontWeight: 700 }}>{typeof p === 'object' ? p.name : p}</div>
-                {typeof p === 'object' && p.description && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3, lineHeight: 1.5 }}>{p.description}</div>}
-              </div>
-            ))}
-          </div>
+          {/* Deliverables */}
+          {b.deliverables && b.deliverables.length > 0 && (
+            <div className="card p-16 mb-14">
+              <div className="section-title mb-10">Deliverables</div>
+              {b.deliverables.map((d, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 0', borderBottom: i < b.deliverables.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--lime)', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontFamily: 'Barlow Condensed', fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{i + 1}</div>
+                  <div style={{ fontSize: 13, lineHeight: 1.5 }}>{d}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Support on Offer */}
+          {b.products && b.products.length > 0 && (
+            <div className="card p-16 mb-14">
+              <div className="section-title mb-10">Support on Offer</div>
+              {b.products.map((p, i) => (
+                <div key={i} style={{ padding: '10px 0', borderBottom: i < b.products.length - 1 ? '1px solid var(--border)' : 'none' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700 }}>{typeof p === 'object' ? p.name : p}</div>
+                  {typeof p === 'object' && p.description && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 3, lineHeight: 1.5 }}>{p.description}</div>}
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Timeline */}
           <div className="card p-16 mb-14">
@@ -4426,6 +4441,7 @@ function App() {
         budget: (brief.budget || '').replace(/[$,]/g, ''),
         budget_period: brief.budgetPeriod,
         products: brief.products,
+        deliverables: brief.deliverables || [],
         tags: brief.tags,
         requirements: brief.requirements || {},
         kpis: brief.kpis || [],

@@ -1327,8 +1327,8 @@ def create_brief():
         with conn.cursor() as cur:
             cur.execute("""
                 INSERT INTO briefs (id, brand_id, title, campaign_goal, partnership_type, budget, budget_period,
-                    tags, requirements, kpis, products, deadline, activation_window, goal, looking_for)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    tags, requirements, kpis, products, deliverables, deadline, activation_window, goal, looking_for)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (
                 brief_id, payload["id"],
                 data.get("title"), data.get("campaign_goal"), data.get("partnership_type"),
@@ -1337,6 +1337,7 @@ def create_brief():
                 psycopg2.extras.Json(data.get("requirements", {})),
                 psycopg2.extras.Json(data.get("kpis", [])),
                 psycopg2.extras.Json(data.get("products", [])),
+                psycopg2.extras.Json(data.get("deliverables", [])),
                 data.get("deadline"), data.get("activation_window"),
                 data.get("goal"), data.get("looking_for"),
             ))
