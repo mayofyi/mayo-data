@@ -701,19 +701,19 @@ function mapCommunity(c) {
   const csParsed = Array.isArray(c.case_studies) ? c.case_studies : [];
   // Derive coverGradient from cover_option using the COVER_OPTIONS constant
   const coverOpt = (typeof COVER_OPTIONS !== 'undefined' ? COVER_OPTIONS : []).find(o => o.id === (c.cover_option || 1));
+  const ARCHETYPE_MAP = {
+    evangelical: { label:'Evangelists', best:'Brand Awareness', color:'var(--pink)' },
+    evangelists: { label:'Evangelists', best:'Brand Awareness', color:'var(--pink)' },
+    loyalists:   { label:'Loyalists',   best:'Long-term Sponsorship', color:'var(--cyan)' },
+    buyers:      { label:'Buyers',      best:'Direct Response', color:'var(--orange)' },
+    early:       { label:'Early Adopters', best:'Product Launches', color:'var(--lime)' },
+    early_adopters: { label:'Early Adopters', best:'Product Launches', color:'var(--lime)' },
+    cultural:    { label:'Culturally Impactful', best:'Cultural Credibility', color:'var(--orange)' },
+  };
+  const archInfo = ARCHETYPE_MAP[c.archetype] || { label:'—', best:'', color:'var(--orange)' };
   return {
     id: c.id, name: c.name, tagline: c.tagline || '', description: c.description || '',
     bio: igProfile.biography || c.description || '', location: c.location || '',
-    const ARCHETYPE_MAP = {
-      evangelical: { label:'Evangelists', best:'Brand Awareness', color:'var(--pink)' },
-      evangelists: { label:'Evangelists', best:'Brand Awareness', color:'var(--pink)' },
-      loyalists:   { label:'Loyalists',   best:'Long-term Sponsorship', color:'var(--cyan)' },
-      buyers:      { label:'Buyers',      best:'Direct Response', color:'var(--orange)' },
-      early:       { label:'Early Adopters', best:'Product Launches', color:'var(--lime)' },
-      early_adopters: { label:'Early Adopters', best:'Product Launches', color:'var(--lime)' },
-      cultural:    { label:'Culturally Impactful', best:'Cultural Credibility', color:'var(--orange)' },
-    };
-    const archInfo = ARCHETYPE_MAP[c.archetype] || { label:'—', best:'', color:'var(--orange)' };
     tier, archetype: c.archetype || null, archetypeLabel: archInfo.label,
     matchScore: '—', engagement: er ? Math.round(er * 10) / 10 : '—',
     activeMembers: c.active_members || 0, members: c.active_members || 0,
