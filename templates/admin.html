@@ -435,6 +435,66 @@ function openCommunity(id) {
       </div>
     </div>
 
+    <!-- Content feed carousel -->
+    ${(() => {
+      const igPosts = (c.instagram_data?.media || []).filter(p => p.media_url || p.thumbnail_url);
+      const subPosts = c.substack_data?.posts || [];
+      const allPosts = [
+        ...igPosts.map(p => ({...p, _type:'ig'})),
+        ...subPosts.map(p => ({...p, _type:'sub'})),
+      ].sort((a,b) => new Date(b.timestamp||b.date||0) - new Date(a.timestamp||a.date||0));
+      if (!allPosts.length) return '';
+      const cards = allPosts.map(post => {
+        if (post._type === 'ig') {
+          const img = `<img src="${post.media_url||post.thumbnail_url}" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none" />`;
+          const badge = `<div style="position:absolute;bottom:0;left:0;right:0;padding:18px 7px 5px;background:linear-gradient(to top,rgba(0,0,0,0.75),transparent)"><span style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;color:#e1306c">IG</span>${post.like_count>0?` <span style="font-family:'Barlow Condensed';font-size:9px;color:#fff">${Number(post.like_count).toLocaleString()}</span>`:''}</div>`;
+          const inner = `<div style="position:relative;width:100%;height:100%">${img}${badge}</div>`;
+          return post.permalink
+            ? `<a href="${post.permalink}" target="_blank" rel="noopener noreferrer" style="flex-shrink:0;width:130px;height:190px;border-radius:8px;overflow:hidden;display:block;background:var(--surface2);text-decoration:none;scroll-snap-align:start">${inner}</a>`
+            : `<div style="flex-shrink:0;width:130px;height:190px;border-radius:8px;overflow:hidden;background:var(--surface2);scroll-snap-align:start">${inner}</div>`;
+        } else {
+          const img = post.image_url ? `<img src="${post.image_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none" />` : '';
+          const overlay = `<div style="position:absolute;inset:0;padding:10px 10px 8px;display:flex;flex-direction:column;justify-content:${post.image_url?'flex-end':'space-between'};background:${post.image_url?'linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.2) 50%,transparent 100%)':'none'}">
+            ${!post.image_url?`<div style="font-size:11px;font-weight:600;color:var(--white);line-height:1.4">${(post.title||'').slice(0,50)}</div>`:''}
+            ${post.image_url?`<div style="font-size:11px;font-weight:600;color:#fff;line-height:1.35">${(post.title||'').slice(0,50)}</div>`:''}
+            <span style="font-family:'Barlow Condensed';font-size:9px;color:#ff6719;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Substack</span>
+          </div>`;
+          const inner = `<div style="position:relative;width:100%;height:100%">${img}${overlay}</div>`;
+          return post.link
+            ? `<a href="${post.link}" target="_blank" rel="noopener noreferrer" style="flex-shrink:0;width:130px;height:190px;border-radius:8px;overflow:hidden;display:block;background:var(--surface2);border:1px solid var(--border);text-decoration:none;scroll-snap-align:start">${inner}</a>`
+            : `<div style="flex-shrink:0;width:130px;height:190px;border-radius:8px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);scroll-snap-align:start">${inner}</div>`;
+        }
+      }).join('');
+      return `
+    <div style="padding:12px 28px 0">
+      <div class="panel">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="section-label" style="margin-bottom:0">Latest Content</div>
+          <div style="display:flex;gap:8px">
+            ${igPosts.length?`<span style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;color:#e1306c">IG</span>`:''}
+            ${subPosts.length?`<span style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;color:#ff6719">Substack</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thick;scrollbar-color:rgba(255,255,255,0.25) transparent">${cards}</div>
+      </div>
+    </div>`;
+    })()}
+
+    <!-- Photos & Events -->
+    ${(() => {
+      const items = c.media_items || [];
+      if (!items.length) return '';
+      return `
+    <div style="padding:12px 28px 0">
+      <div class="panel">
+        <div class="section-label">Photos &amp; Events</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+          ${items.map(item => `<div style="aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--surface2);border:1px solid var(--border)"><img src="${item.url}" alt="${item.caption||''}" style="width:100%;height:100%;object-fit:cover;display:block" /></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+    })()}
+
     <!-- Archetype -->
     <div style="padding:12px 28px 0">
       <div class="panel">

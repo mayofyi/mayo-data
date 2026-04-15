@@ -1277,7 +1277,7 @@ def list_communities():
                        network_multiplier, cis_raw, cis_stamped, instagram_data, instagram_token,
                        notable_members, case_studies, capabilities, partnership_preferences,
                        leader_name, email, substack_url, substack_data,
-                       miq_score, miq_reasoning, press_mentions, created_at
+                       miq_score, miq_reasoning, press_mentions, media_items, created_at
                 FROM communities ORDER BY created_at DESC
             """)
             rows = cur.fetchall()

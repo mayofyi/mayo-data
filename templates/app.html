@@ -694,7 +694,8 @@ function mapCommunity(c) {
     url: igUsername ? 'https://instagram.com/' + igUsername : null, username: igUsername,
   });
   const sub = c.substack_data && typeof c.substack_data === 'object' ? c.substack_data : null;
-  if (sub && sub.url) channels.push({ name: 'Substack', color: '#ff6719', reach: null, engagement: null, vsAvg: null, engagementChannel: true, url: sub.url });
+  const substackUrl = (sub && sub.url) || c.substack_url || null;
+  if (substackUrl) channels.push({ name: 'Substack', color: '#ff6719', reach: null, engagement: null, vsAvg: null, engagementChannel: true, url: substackUrl });
   const igWebsite = igProfile.website || null;
   if (igWebsite) channels.push({ name: 'Website', color: '#7eb8ff', reach: null, engagement: null, vsAvg: null, engagementChannel: false, url: igWebsite });
   const csParsed = Array.isArray(c.case_studies) ? c.case_studies : [];
@@ -703,7 +704,17 @@ function mapCommunity(c) {
   return {
     id: c.id, name: c.name, tagline: c.tagline || '', description: c.description || '',
     bio: igProfile.biography || c.description || '', location: c.location || '',
-    tier, archetype: c.archetype || 'evangelical', archetypeLabel: ({ evangelical: 'Evangelists', loyalists: 'Loyalists', buyers: 'Buyers', early: 'Early Adopters', cultural: 'Culturally Impactful' }[c.archetype] || 'Evangelists'),
+    const ARCHETYPE_MAP = {
+      evangelical: { label:'Evangelists', best:'Brand Awareness', color:'var(--pink)' },
+      evangelists: { label:'Evangelists', best:'Brand Awareness', color:'var(--pink)' },
+      loyalists:   { label:'Loyalists',   best:'Long-term Sponsorship', color:'var(--cyan)' },
+      buyers:      { label:'Buyers',      best:'Direct Response', color:'var(--orange)' },
+      early:       { label:'Early Adopters', best:'Product Launches', color:'var(--lime)' },
+      early_adopters: { label:'Early Adopters', best:'Product Launches', color:'var(--lime)' },
+      cultural:    { label:'Culturally Impactful', best:'Cultural Credibility', color:'var(--orange)' },
+    };
+    const archInfo = ARCHETYPE_MAP[c.archetype] || { label:'—', best:'', color:'var(--orange)' };
+    tier, archetype: c.archetype || null, archetypeLabel: archInfo.label,
     matchScore: '—', engagement: er ? Math.round(er * 10) / 10 : '—',
     activeMembers: c.active_members || 0, members: c.active_members || 0,
     networkMultiplier: c.network_multiplier != null ? c.network_multiplier : '—', reach: followers || null,
@@ -713,11 +724,13 @@ function mapCommunity(c) {
     channels, notableMembers: Array.isArray(c.notable_members) ? c.notable_members : [],
     partnerships: csParsed.filter(cs => cs.mayo_verified || cs.verified),
     casestudies: csParsed,
-    archetypeBest: ({evangelical:'Brand Awareness', loyalists:'Long-term Sponsorship', buyers:'Direct Response', early:'Product Launches', cultural:'Cultural Credibility'}[c.archetype] || ''),
+    archetypeBest: archInfo.best,
+    archetypeColor: archInfo.color,
     archetypeReasoning: c.archetype_reasoning || null,
     campaignType: 'Brand Awareness', primaryKPI: 'Post Rate',
     matchRationale: 'Match rationale is calculated relative to an active brief.',
     igUsername, igFollowers: followers, igBio: igProfile.biography || '',
+    igPosts: (igData.media || []).filter(p => p.media_url || p.thumbnail_url),
     email: c.email || null, leaderName: c.leader_name || null,
     partnershipPreferences: typeof c.partnership_preferences === 'string' ? c.partnership_preferences : '',
     capabilities: Array.isArray(c.capabilities) ? c.capabilities : [],
@@ -726,9 +739,9 @@ function mapCommunity(c) {
     miqScore: c.miq_score != null ? c.miq_score : null,
     miqReasoning: c.miq_reasoning || null,
     pressMentions: Array.isArray(c.press_mentions) ? c.press_mentions : [],
-    substackUrl: (c.substack_url) || (sub && sub.url) || null,
+    substackUrl: substackUrl,
     substackPosts: sub ? (sub.posts || []) : [],
-    archetypeReasoning: c.archetype_reasoning || null,
+    mediaItems: Array.isArray(c.media_items) ? c.media_items : [],
   };
 }
 
@@ -2657,6 +2670,97 @@ function AddCaseStudyForm({ onSubmit, onCancel }) {
   );
 }
 
+function PostCarousel({ igPosts, substackPosts }) {
+  const scrollRef = React.useRef(null);
+  const drag = React.useRef({ down: false, startX: 0, scrollLeft: 0, moved: false });
+
+  React.useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onDown = e => {
+      drag.current = { down: true, startX: e.pageX - el.offsetLeft, scrollLeft: el.scrollLeft, moved: false };
+      el.style.cursor = 'grabbing';
+    };
+    const onMove = e => {
+      if (!drag.current.down) return;
+      e.preventDefault();
+      const dist = (e.pageX - el.offsetLeft) - drag.current.startX;
+      if (Math.abs(dist) > 4) drag.current.moved = true;
+      el.scrollLeft = drag.current.scrollLeft - dist;
+    };
+    const onUp = () => { drag.current.down = false; el.style.cursor = 'grab'; };
+    el.addEventListener('mousedown', onDown);
+    document.addEventListener('mousemove', onMove, { passive: false });
+    document.addEventListener('mouseup', onUp);
+    return () => {
+      el.removeEventListener('mousedown', onDown);
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+    };
+  }, []);
+
+  const onClickCapture = e => { if (drag.current.moved) { e.preventDefault(); e.stopPropagation(); drag.current.moved = false; } };
+
+  const ig = (igPosts||[]).filter(p => p.media_url||p.thumbnail_url).map(p => ({ ...p, _type:'ig' }));
+  const sub = (substackPosts||[]).map(p => ({ ...p, _type:'sub' }));
+  const all = [...ig, ...sub].sort((a,b) => {
+    const da = new Date(a.timestamp||a.date||0), db = new Date(b.timestamp||b.date||0);
+    return db - da;
+  });
+  if (!all.length) return null;
+
+  const cardStyle = { flexShrink:0, width:130, height:190, borderRadius:8, overflow:'hidden', display:'block', position:'relative', scrollSnapAlign:'start', textDecoration:'none', background:'var(--surface2)', userSelect:'none' };
+
+  return (
+    <div>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+        <div className="section-title" style={{ fontSize:10, letterSpacing:'0.1em', marginBottom:0 }}>Latest Content</div>
+        <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+          {ig.length > 0 && <span style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, color:'#e1306c' }}>IG</span>}
+          {sub.length > 0 && <span style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, color:'#ff6719' }}>Substack</span>}
+        </div>
+      </div>
+      <div ref={scrollRef} onClickCapture={onClickCapture}
+        style={{ display:'flex', gap:8, overflowX:'auto', paddingBottom:10, scrollSnapType:'x mandatory', WebkitOverflowScrolling:'touch', cursor:'grab',
+          scrollbarWidth:'thick', scrollbarColor:'rgba(255,255,255,0.25) transparent' }}>
+        {all.map((post, i) => {
+          if (post._type === 'ig') {
+            const inner = (
+              <>
+                <img src={post.media_url||post.thumbnail_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', pointerEvents:'none' }} />
+                <div style={{ position:'absolute', bottom:0, left:0, right:0, padding:'22px 8px 6px', background:'linear-gradient(to top,rgba(0,0,0,0.75),transparent)' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:3, color:'#fff' }}>
+                    <span style={{ fontSize:9, fontFamily:'Barlow Condensed', fontWeight:700, color:'#e1306c' }}>IG</span>
+                    {post.like_count > 0 && <span style={{ fontSize:10, fontFamily:'Barlow Condensed', fontWeight:700, color:'#fff' }}>{post.like_count.toLocaleString()}</span>}
+                  </div>
+                </div>
+              </>
+            );
+            return post.permalink
+              ? <a key={i} href={post.permalink} target="_blank" rel="noopener noreferrer" style={cardStyle}>{inner}</a>
+              : <div key={i} style={cardStyle}>{inner}</div>;
+          } else {
+            const inner = (
+              <>
+                {post.image_url ? <img src={post.image_url} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', pointerEvents:'none' }} /> : null}
+                <div style={{ position:'absolute', inset:0, padding:'10px 10px 8px', display:'flex', flexDirection:'column', justifyContent:post.image_url?'flex-end':'space-between', background:post.image_url?'linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.2) 50%,transparent 100%)':'none' }}>
+                  {!post.image_url && <div style={{ fontSize:11, fontWeight:600, color:'var(--white)', lineHeight:1.4 }}>{post.title}</div>}
+                  {post.image_url && <div style={{ fontSize:11, fontWeight:600, color:'#fff', lineHeight:1.35 }}>{(post.title||'').slice(0,50)}</div>}
+                  <div style={{ display:'flex', alignItems:'center', gap:4 }}>
+                    <span style={{ fontSize:9, color:'#ff6719', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.05em' }}>Substack</span>
+                  </div>
+                </div>
+              </>
+            );
+            return post.link
+              ? <a key={i} href={post.link} target="_blank" rel="noopener noreferrer" style={{ ...cardStyle, border:'1px solid var(--border)' }}>{inner}</a>
+              : <div key={i} style={{ ...cardStyle, border:'1px solid var(--border)' }}>{inner}</div>;
+          }
+        })}
+      </div>
+    </div>
+  );
+}
 
 function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership, isOwnProfile }) {
   const [activeCaseStudy, setActiveCaseStudy] = React.useState(null);
@@ -2684,13 +2788,12 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
   const substackCh = c.channels.find(ch => ch.name === 'Substack');
   const websiteCh = c.channels.find(ch => ch.name === 'Website');
 
-  const archetypeColors = { evangelical:'var(--pink)', loyalists:'var(--cyan)', early:'var(--lime)', buyers:'var(--orange)', cultural:'var(--orange)' };
-  const archetypeColor = archetypeColors[c.archetype] || 'var(--orange)';
+  const archetypeColor = c.archetypeColor || 'var(--orange)';
 
   return (
     <div>
       {/* ── Cover / Header ─────────────────────────────────────────────────── */}
-      <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 14, background: c.coverGradient || 'var(--surface3)', minHeight: 200, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+      <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 14, background: c.coverGradient || 'var(--surface3)', minHeight: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
         {c.cover && <img src={c.cover} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5, mixBlendMode: 'luminosity' }} onError={e => e.target.style.display='none'} />}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 50%, transparent 100%)' }} />
         {onBack && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, left: 14, zIndex: 2 }} onClick={onBack}>← Back</button>}
@@ -2769,22 +2872,30 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: (substackCh || websiteCh) ? '1px solid var(--border)' : 'none' }}>
               <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', flexShrink: 0, fontSize: 13 }}>IG</div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>Instagram{igCh.username ? <span style={{ color: 'var(--muted)', fontWeight: 400 }}> · @{igCh.username}</span> : ''}</div>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>
+                  Instagram
+                  {igCh.username && igCh.url
+                    ? <a href={igCh.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--muted)', fontWeight: 400, textDecoration: 'none', marginLeft: 4 }}>· @{igCh.username}</a>
+                    : igCh.username ? <span style={{ color: 'var(--muted)', fontWeight: 400 }}> · @{igCh.username}</span> : ''}
+                </div>
                 <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{[igCh.reach ? igCh.reach.toLocaleString() + ' followers' : null, igCh.engagement ? igCh.engagement + '% ER' : null].filter(Boolean).join(' · ') || 'Connected'}</div>
               </div>
               <span style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--lime)' }}>✓ Live</span>
             </div>
           )}
-          {substackCh && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: websiteCh ? '1px solid var(--border)' : 'none' }}>
-              <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#ff6719', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 14, color: '#fff', flexShrink: 0 }}>S</div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 13 }}>Substack</div>
-                {substackCh.url && <div style={{ fontSize: 11, marginTop: 2 }}><a href={substackCh.url} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)', textDecoration: 'none' }}>{substackCh.url.replace(/^https?:\/\//,'')}</a></div>}
+          {(substackCh || c.substackUrl) && (() => {
+            const sUrl = substackCh ? substackCh.url : c.substackUrl;
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0', borderBottom: websiteCh ? '1px solid var(--border)' : 'none' }}>
+                <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#ff6719', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 14, color: '#fff', flexShrink: 0 }}>S</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: 13 }}>Substack</div>
+                  {sUrl && <div style={{ fontSize: 11, marginTop: 2 }}><a href={sUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)', textDecoration: 'none' }}>{sUrl.replace(/^https?:\/\//,'')}</a></div>}
+                </div>
+                <span style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)' }}>URL saved</span>
               </div>
-              <span style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: 'var(--muted)' }}>URL saved</span>
-            </div>
-          )}
+            );
+          })()}
           {websiteCh && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 0' }}>
               <div style={{ width: 30, height: 30, borderRadius: '50%', background: 'var(--surface3)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', flexShrink: 0, fontSize: 13 }}>W</div>
@@ -2822,6 +2933,27 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
           )}
         </div>
       </div>
+
+      {/* ── Content feed carousel ────────────────────────────────────────────── */}
+      {(c.igPosts && c.igPosts.length > 0 || c.substackPosts && c.substackPosts.length > 0) && (
+        <div className="card p-16" style={{ marginBottom: 12 }}>
+          <PostCarousel igPosts={c.igPosts || []} substackPosts={c.substackPosts || []} />
+        </div>
+      )}
+
+      {/* ── Photos & Events ──────────────────────────────────────────────────── */}
+      {c.mediaItems && c.mediaItems.length > 0 && (
+        <div className="card p-16" style={{ marginBottom: 12 }}>
+          <div className="section-title mb-10" style={{ fontSize: 10, letterSpacing: '0.1em' }}>Photos &amp; Events</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
+            {c.mediaItems.map((item, i) => (
+              <div key={i} style={{ aspectRatio: '1', borderRadius: 8, overflow: 'hidden', background: 'var(--surface2)', border: '1px solid var(--border)' }}>
+                <img src={item.url} alt={item.caption || ''} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Archetype ─────────────────────────────────────────────────────────── */}
       <div className="card p-16" style={{ marginBottom: 12 }}>
@@ -2862,7 +2994,7 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
                   <div style={{ width: 36, height: 36, borderRadius: '50%', background: m.verified ? 'rgba(210,255,1,0.15)' : 'var(--surface3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 16, color: m.verified ? 'var(--lime)' : 'var(--muted)', flexShrink: 0 }}>{nm[0].toUpperCase()}</div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 600 }}>{nm}</div>
-                    {m.ig_handle && <div style={{ fontSize: 11, color: 'var(--muted)' }}>@{m.ig_handle}</div>}
+                    {m.ig_handle && <a href={`https://instagram.com/${m.ig_handle}`} target="_blank" rel="noopener noreferrer" style={{ fontSize: 11, color: 'var(--muted)', textDecoration: 'none', display: 'block', marginTop: 1 }}>@{m.ig_handle}</a>}
                     {m.role && <div style={{ fontSize: 11, color: 'var(--muted)' }}>{m.role}</div>}
                     {m.verified && hasData && (
                       <div style={{ fontSize: 10, color: 'var(--lime)', fontFamily: 'Barlow Condensed', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 2 }}>
@@ -2890,6 +3022,7 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
             {verifiedCS.map((p, idx) => (
               <div key={idx} style={{ background: 'var(--surface2)', border: '1px solid rgba(210,255,1,0.25)', borderRadius: 8, overflow: 'hidden', minWidth: 200, maxWidth: 220, flexShrink: 0, cursor: 'pointer' }} onClick={() => setActiveCaseStudy(p)}>
                 <div style={{ height: 110, position: 'relative', background: p.gradient || 'linear-gradient(135deg,#1a1a2e,#2d1b69)' }}>
+                  {(() => { const imgs = p.images?.length ? p.images : p.image_url ? [p.image_url] : []; return imgs[0] ? <img src={imgs[0]} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', opacity:0.7 }} /> : null; })()}
                   <div style={{ position: 'absolute', top: 6, right: 6 }}><span style={{ background: 'var(--lime)', color: '#000', fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '2px 6px', borderRadius: 3 }}>★ Mayo Verified</span></div>
                   {p.brandColor && <div style={{ position: 'absolute', top: 6, left: 8, width: 28, height: 28, borderRadius: 5, background: p.brandColor, color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 14 }}>{p.brandInitial || (p.brand||'?')[0]}</div>}
                 </div>
@@ -2903,6 +3036,7 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
             {selfCS.map((p, idx) => (
               <div key={'self-'+idx} style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden', minWidth: 200, maxWidth: 220, flexShrink: 0, cursor: 'pointer' }} onClick={() => setActiveCaseStudy(p)}>
                 <div style={{ height: 110, position: 'relative', background: 'linear-gradient(135deg,#1a1a2e,#2d1b69)' }}>
+                  {(() => { const imgs = p.images?.length ? p.images : p.image_url ? [p.image_url] : []; return imgs[0] ? <img src={imgs[0]} alt="" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', opacity:0.6 }} /> : null; })()}
                   <div style={{ position: 'absolute', top: 6, right: 6 }}><span style={{ background: 'rgba(136,136,136,0.85)', color: '#fff', fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '2px 6px', borderRadius: 3 }}>Self-reported</span></div>
                 </div>
                 <div style={{ padding: '10px 12px' }}>
@@ -2937,8 +3071,8 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
         </div>
       )}
 
-      {/* ── Cultural Impact Score ─────────────────────────────────────────────── */}
-      <div className="card p-16" style={{ marginBottom: 12 }}>
+      {/* ── Cultural Impact Score — admin only ───────────────────────────────── */}
+      {role === 'admin' && <div className="card p-16" style={{ marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
           <div className="section-title" style={{ fontSize: 10, letterSpacing: '0.1em', marginBottom: 0 }}>Cultural Impact Score</div>
           {c.cisStamped != null && <span style={{ fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--orange)' }}>★ Stamped</span>}
@@ -2975,10 +3109,10 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
             <div style={{ fontSize: 12, color: 'rgba(240,240,240,0.7)', lineHeight: 1.6 }}>{c.miqReasoning}</div>
           </div>
         )}
-      </div>
+      </div>}
 
-      {/* ── Press & Media Mentions ───────────────────────────────────────────── */}
-      {(c.pressMentions || []).filter(m => m.confirmed !== false).length > 0 && (
+      {/* ── Press & Media Mentions — admin only ─────────────────────────────── */}
+      {role === 'admin' && (c.pressMentions || []).filter(m => m.confirmed !== false).length > 0 && (
         <div className="card p-16">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div className="section-title" style={{ fontSize: 10, letterSpacing: '0.1em', marginBottom: 0 }}>Press & Media Mentions</div>
