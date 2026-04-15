@@ -257,6 +257,7 @@ def init_db():
                     requirements JSONB DEFAULT '{}',
                     kpis JSONB DEFAULT '[]',
                     products JSONB DEFAULT '[]',
+                    deliverables JSONB DEFAULT '[]',
                     deadline TEXT,
                     activation_window TEXT,
                     goal TEXT,
@@ -334,6 +335,7 @@ def init_db():
                 cur.execute(f"ALTER TABLE brands ADD COLUMN IF NOT EXISTS {col} {typedef}")
             # Briefs table migrations
             cur.execute("ALTER TABLE briefs ADD COLUMN IF NOT EXISTS cover_image_url TEXT")
+            cur.execute("ALTER TABLE briefs ADD COLUMN IF NOT EXISTS deliverables JSONB DEFAULT '[]'")
         conn.commit()
 
 
