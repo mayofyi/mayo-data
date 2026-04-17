@@ -41,6 +41,7 @@ body {
 .bb { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.03em; }
 .bc { font-family: 'Barlow Condensed', sans-serif; }
 .display { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.03em; }
+.profile-bio { font-size: 15px; line-height: 1.8; color: rgba(255,255,255,0.82); font-weight: 400; }
 
 /* ─── SCROLLBAR ─── */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
@@ -3004,7 +3005,7 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
           {c.description && (
             <div className="card p-16">
               <div className="section-title mb-8" style={{ fontSize: 10, letterSpacing: '0.1em' }}>About</div>
-              <p style={{ fontSize: 13, color: 'rgba(240,240,240,0.75)', lineHeight: 1.65, margin: 0 }}>{c.description}</p>
+              <p className="profile-bio" style={{ margin: 0 }}>{c.description}</p>
             </div>
           )}
           {c.location && (
@@ -3990,7 +3991,7 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
           </div>
 
           {data.bio && (
-            <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.75 }}>{data.bio}</div>
+            <div className="profile-bio">{data.bio}</div>
           )}
 
           {data.looking_for && (
@@ -4333,7 +4334,7 @@ function MyProfileModule({ userId, onEdit }) {
         {data.description && (
           <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
             <div className="text-muted text-xs mb-6" style={{ marginBottom: 6 }}>Description</div>
-            <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.7 }}>{data.description}</div>
+            <div className="profile-bio">{data.description}</div>
           </div>
         )}
       </div>
