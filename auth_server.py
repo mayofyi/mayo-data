@@ -1502,7 +1502,7 @@ def get_brand_profile(brand_id):
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT id, name, tagline, bio, website, category, color, initial,
-                       leader_name, leader_role, values, looking_for, social_links,
+                       leader_name, leader_role, "values", looking_for, social_links,
                        profile_image_url, header_image_url, past_partnerships,
                        verified, created_at
                 FROM brands WHERE id = %s
