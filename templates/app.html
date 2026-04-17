@@ -2889,6 +2889,14 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
         {c.cover && <img src={c.cover} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }} onError={e => e.target.style.display='none'} />}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.425) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.05) 100%)' }} />
         {onBack && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, left: 14, zIndex: 2 }} onClick={onBack}>← Back</button>}
+        {(role === 'brand' || role === 'admin') && c.archetype && (
+          <div style={{ position: 'absolute', top: 14, left: onBack ? 80 : 14, zIndex: 2 }}>
+            <div style={{ background: archetypeColor, color: '#000', fontFamily: 'Barlow Condensed', fontWeight: 800, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '5px 12px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              {c.archetypeLabel}
+              {c.archetypeBest && <span style={{ opacity: 0.65, fontWeight: 600 }}>· {c.archetypeBest}</span>}
+            </div>
+          </div>
+        )}
         {isOwnProfile && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, right: 14, zIndex: 2 }}>Edit Profile</button>}
         {!isOwnProfile && (role === 'brand' || role === 'admin') && c.email && (
           <a href={`mailto:${c.email}?subject=Partnership enquiry - ${encodeURIComponent(c.name)}`}
@@ -3026,6 +3034,31 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
         </div>
       </div>
 
+      {/* ── Archetype (brand/admin only) ──────────────────────────────────────── */}
+      {(role === 'brand' || role === 'admin') && (
+        <div className="card p-16" style={{ marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div className="section-title" style={{ fontSize: 10, letterSpacing: '0.1em', marginBottom: 0 }}>Community Archetype</div>
+            {c.archetype && <span style={{ fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--lime)' }}>★ Mayo assigned</span>}
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 12 }}>Platform-assigned — never self-selected.</div>
+          {c.archetype ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: c.archetypeReasoning ? 14 : 0 }}>
+              <span style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: archetypeColor }}>{c.archetypeLabel}</span>
+              {c.archetypeBest && <span style={{ background: archetypeColor + '22', border: '1px solid ' + archetypeColor + '44', color: archetypeColor, fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '2px 8px', borderRadius: 3 }}>{c.archetypeBest}</span>}
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>Not yet assigned</div>
+          )}
+          {c.archetypeReasoning && (
+            <div style={{ background: 'var(--surface2)', border: '1px solid var(--border2)', borderRadius: 8, padding: '12px 14px' }}>
+              <div style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 6 }}>Why this archetype</div>
+              <div style={{ fontSize: 12, color: 'rgba(240,240,240,0.65)', lineHeight: 1.6 }}>{c.archetypeReasoning}</div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── Content feed carousel ────────────────────────────────────────────── */}
       {(c.igPosts && c.igPosts.length > 0 || c.substackPosts && c.substackPosts.length > 0) && (
         <div className="card p-16" style={{ marginBottom: 12 }}>
@@ -3046,29 +3079,6 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
           </div>
         </div>
       )}
-
-      {/* ── Archetype ─────────────────────────────────────────────────────────── */}
-      <div className="card p-16" style={{ marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-          <div className="section-title" style={{ fontSize: 10, letterSpacing: '0.1em', marginBottom: 0 }}>Community Archetype</div>
-          {c.archetype && <span style={{ fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--lime)' }}>★ Mayo assigned</span>}
-        </div>
-        <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 12 }}>Platform-assigned — never self-selected.</div>
-        {c.archetype ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: c.archetypeReasoning ? 14 : 0 }}>
-            <span style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: archetypeColor }}>{c.archetypeLabel}</span>
-            {c.archetypeBest && <span style={{ background: archetypeColor + '22', border: '1px solid ' + archetypeColor + '44', color: archetypeColor, fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '2px 8px', borderRadius: 3 }}>{c.archetypeBest}</span>}
-          </div>
-        ) : (
-          <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>Not yet assigned</div>
-        )}
-        {c.archetypeReasoning && (
-          <div style={{ background: 'var(--surface2)', border: '1px solid var(--border2)', borderRadius: 8, padding: '12px 14px' }}>
-            <div style={{ fontFamily: 'Barlow Condensed', fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 6 }}>Why this archetype</div>
-            <div style={{ fontSize: 12, color: 'rgba(240,240,240,0.65)', lineHeight: 1.6 }}>{c.archetypeReasoning}</div>
-          </div>
-        )}
-      </div>
 
       {/* ── Notable Members ──────────────────────────────────────────────────── */}
       {c.notableMembers.length > 0 && (
@@ -3961,7 +3971,7 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
   return (
     <div>
       {/* ── Top: 3:4 facecard (2× size) + brand identity ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: 20, marginBottom: 16, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 16, alignItems: 'start' }}>
 
         {/* 3:4 portrait facecard */}
         <div style={{ aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden', position: 'relative', background: 'var(--surface2)' }}>
