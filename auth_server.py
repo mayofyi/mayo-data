@@ -334,6 +334,7 @@ def init_db():
             ]:
                 cur.execute(f"ALTER TABLE brands ADD COLUMN IF NOT EXISTS {col} {typedef}")
             # Briefs table migrations
+            cur.execute("ALTER TABLE brands ADD COLUMN IF NOT EXISTS past_partnerships JSONB DEFAULT '[]'")
             cur.execute("ALTER TABLE briefs ADD COLUMN IF NOT EXISTS cover_image_url TEXT")
             cur.execute("ALTER TABLE briefs ADD COLUMN IF NOT EXISTS deliverables JSONB DEFAULT '[]'")
         conn.commit()
@@ -1493,6 +1494,58 @@ def upload_brand_profile_image(brand_id):
             cur.execute("UPDATE brands SET profile_image_url = %s WHERE id = %s", (url, brand_id))
         conn.commit()
     return jsonify({"url": url})
+
+
+@app.route("/api/brand/<brand_id>", methods=["GET"])
+def get_brand_profile(brand_id):
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, name, tagline, bio, website, category, color, initial,
+                       leader_name, leader_role, values, looking_for, social_links,
+                       profile_image_url, header_image_url, past_partnerships,
+                       verified, created_at
+                FROM brands WHERE id = %s
+            """, (brand_id,))
+            row = cur.fetchone()
+            if not row:
+                return jsonify({"error": "Not found"}), 404
+            keys = ["id", "name", "tagline", "bio", "website", "category", "color", "initial",
+                    "leader_name", "leader_role", "values", "looking_for", "social_links",
+                    "profile_image_url", "header_image_url", "past_partnerships",
+                    "verified", "created_at"]
+            brand = dict(zip(keys, row))
+            brand["past_partnerships"] = brand["past_partnerships"] or []
+            brand["social_links"] = brand["social_links"] or {}
+            if brand["created_at"]:
+                brand["created_at"] = brand["created_at"].isoformat()
+            # Attach briefs
+            cur.execute("""
+                SELECT id, title, partnership_type, budget, budget_period, status,
+                       tags, cover_image_url, response_count
+                FROM briefs WHERE brand_id = %s ORDER BY created_at DESC
+            """, (brand_id,))
+            brief_cols = ["id", "title", "partnership_type", "budget", "budget_period",
+                          "status", "tags", "cover_image_url", "response_count"]
+            brand["briefs"] = [dict(zip(brief_cols, r)) for r in cur.fetchall()]
+    return jsonify(brand)
+
+
+@app.route("/api/brand/<brand_id>/past-partnerships", methods=["PUT"])
+def update_past_partnerships(brand_id):
+    auth = require_auth(request)
+    if not auth or (auth.get("id") != brand_id and auth.get("role") != "admin"):
+        return jsonify({"error": "Unauthorized"}), 403
+    data = request.json or {}
+    partnerships = data.get("past_partnerships", [])
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE brands SET past_partnerships = %s WHERE id = %s",
+                (_json_stdlib.dumps(partnerships), brand_id)
+            )
+        conn.commit()
+    return jsonify({"ok": True})
 
 
 @app.route("/api/admin/briefs/<brief_id>", methods=["DELETE"])
