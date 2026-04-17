@@ -1515,11 +1515,8 @@ def get_brand_profile(brand_id):
                 row = cur.fetchone()
                 if not row:
                     return jsonify({"error": "Not found"}), 404
-                keys = ["id", "name", "tagline", "bio", "website", "category", "color", "initial",
-                        "leader_name", "leader_role", "values", "looking_for", "social_links",
-                        "profile_image_url", "header_image_url", "past_partnerships",
-                        "verified", "created_at"]
-                brand = dict(zip(keys, row))
+                # RealDictCursor already returns a dict — no zip needed
+                brand = dict(row)
                 brand["past_partnerships"] = brand["past_partnerships"] or []
                 brand["social_links"] = brand["social_links"] or {}
                 if brand["created_at"]:
@@ -1530,9 +1527,7 @@ def get_brand_profile(brand_id):
                            tags, cover_image_url, response_count
                     FROM briefs WHERE brand_id = %s ORDER BY created_at DESC
                 """, (brand_id,))
-                brief_cols = ["id", "title", "partnership_type", "budget", "budget_period",
-                              "status", "tags", "cover_image_url", "response_count"]
-                brand["briefs"] = [dict(zip(brief_cols, r)) for r in cur.fetchall()]
+                brand["briefs"] = [dict(r) for r in cur.fetchall()]
         return jsonify(brand)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
