@@ -49,7 +49,7 @@ body {
 .content-feed::-webkit-scrollbar { height: 8px; }
 .content-feed::-webkit-scrollbar-track { background: var(--surface2); border-radius: 4px; }
 .content-feed::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
-.content-feed::-webkit-scrollbar-thumb:hover { background: #444; }
+.content-feed::-webkit-scrollbar-thumb:hover { background: var(--surface3); }
 .content-feed { scrollbar-width: thin; scrollbar-color: var(--border2) var(--surface2); }
 
 /* ─── BUTTONS ─── */
@@ -911,19 +911,6 @@ function calcMatchScore(brief, community) {
 let COMMUNITIES = [];
 
 // ─── BRAND PROFILE ──────────────────────────────────────────────────────────
-// In production this would be pulled from the authenticated brand's profile.
-// For the prototype, Hyperice is the logged-in brand.
-
-const BRAND_PROFILE = {
-  name: "Hyperice",
-  tagline: "Move better.",
-  initial: "H",
-  color: "#ff6b6b",
-  gradient: "linear-gradient(135deg, #1a0505 0%, #3d0a0a 40%, #7a1515 70%, #c43030 100%)",
-  bio: "Hyperice is a recovery technology company on a mission to help the world move better. Our products — from percussive therapy devices to thermal compression systems — are used by the world's best athletes and teams to warm up faster, recover harder, and perform at their peak. We believe movement is for everyone, not just elite athletes, and we partner with communities that share that belief.",
-  website: "hyperice.com",
-  category: "Health & Fitness Technology",
-};
 
 const CAMPAIGN_GOALS = [
   { id: 'awareness', label: 'Brand Awareness', desc: 'Reach new audiences and build recognition through community advocacy', icon: '📣', archetypes: ['Evangelists', 'Early Adopters', 'Culturally Impactful'] },
@@ -1046,7 +1033,6 @@ const archetypeClass = (a) => ({ evangelical:"evangelical", loyalists:"loyalists
 const statusColor = { complete:"#b3ff9e", active:"#d2ff01", shipped:"#b1ecf0", pending:"" };
 const statusDot = { complete:"status-complete", active:"status-active", shipped:"status-shipped", pending:"status-pending" };
 
-const Icon = ({ n, style }) => <span style={{ fontSize: 14, ...style }}>{n}</span>;
 
 // ─── COMPONENTS ─────────────────────────────────────────────────────────────
 
