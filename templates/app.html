@@ -2889,14 +2889,6 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
         {c.cover && <img src={c.cover} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }} onError={e => e.target.style.display='none'} />}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.425) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.05) 100%)' }} />
         {onBack && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, left: 14, zIndex: 2 }} onClick={onBack}>← Back</button>}
-        {(role === 'brand' || role === 'admin') && c.archetype && (
-          <div style={{ position: 'absolute', top: 14, left: onBack ? 80 : 14, zIndex: 2 }}>
-            <div style={{ background: archetypeColor, color: '#000', fontFamily: 'Barlow Condensed', fontWeight: 800, fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '5px 12px', borderRadius: 6, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-              {c.archetypeLabel}
-              {c.archetypeBest && <span style={{ opacity: 0.65, fontWeight: 600 }}>· {c.archetypeBest}</span>}
-            </div>
-          </div>
-        )}
         {isOwnProfile && <button className="btn btn-ghost btn-sm" style={{ position: 'absolute', top: 14, right: 14, zIndex: 2 }}>Edit Profile</button>}
         {!isOwnProfile && (role === 'brand' || role === 'admin') && c.email && (
           <a href={`mailto:${c.email}?subject=Partnership enquiry - ${encodeURIComponent(c.name)}`}
@@ -2917,7 +2909,14 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
               {c.tags.map(t => <span key={t} style={{ padding: '3px 10px', borderRadius: 4, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{t}</span>)}
             </div>
           )}
-          <TierBadge tier={c.tier || 'starter'} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <TierBadge tier={c.tier || 'starter'} />
+            {(role === 'brand' || role === 'admin') && c.archetype && (
+              <span style={{ background: archetypeColor, color: '#000', fontFamily: 'Barlow Condensed', fontWeight: 800, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', padding: '3px 10px', borderRadius: 4 }}>
+                {c.archetypeLabel}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
@@ -3043,9 +3042,8 @@ function CommunityProfilePage({ community: c, onBack, role, onRequestPartnership
           </div>
           <div style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 12 }}>Platform-assigned — never self-selected.</div>
           {c.archetype ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: c.archetypeReasoning ? 14 : 0 }}>
+            <div style={{ marginBottom: c.archetypeReasoning ? 14 : 0 }}>
               <span style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: archetypeColor }}>{c.archetypeLabel}</span>
-              {c.archetypeBest && <span style={{ background: archetypeColor + '22', border: '1px solid ' + archetypeColor + '44', color: archetypeColor, fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '2px 8px', borderRadius: 3 }}>{c.archetypeBest}</span>}
             </div>
           ) : (
             <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 14 }}>Not yet assigned</div>
@@ -3970,48 +3968,37 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
 
   return (
     <div>
-      {/* ── Top: 3:4 facecard (2× size) + brand identity ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 16, alignItems: 'start' }}>
-
-        {/* 3:4 portrait facecard */}
-        <div style={{ aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden', position: 'relative', background: 'var(--surface2)' }}>
-          {data.header_image_url
-            ? <img src={data.header_image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
-            : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ width: 96, height: 96, borderRadius: 18, background: data.color || '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 52, color: '#000' }}>
-                  {data.initial || (data.name || '?')[0].toUpperCase()}
-                </div>
+      {/* ── Header ── */}
+      <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 14, background: 'var(--surface2)', minHeight: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+        {data.header_image_url
+          ? <img src={data.header_image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.9 }} onError={e => e.target.style.display='none'} />
+          : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ width: 96, height: 96, borderRadius: 18, background: data.color || '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 52, color: '#000' }}>
+                {data.initial || (data.name || '?')[0].toUpperCase()}
               </div>
-          }
-          {data.header_image_url && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.8) 100%)' }} />}
-          {data.header_image_url && (
-            <div style={{ position: 'absolute', bottom: 16, left: 16, right: 16 }}>
-              <div style={{ fontFamily: 'Bebas Neue', fontSize: 26, color: '#fff', lineHeight: 1, textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>{data.name}</div>
-              {data.category && <div style={{ fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.6)', marginTop: 3 }}>{data.category}</div>}
+            </div>
+        }
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.425) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.05) 100%)' }} />
+        <div style={{ position: 'relative', zIndex: 1, padding: '24px 22px 22px' }}>
+          <div style={{ fontFamily: 'Bebas Neue', fontSize: 44, lineHeight: 1, textShadow: '0 2px 12px rgba(0,0,0,0.6)', marginBottom: 4 }}>{data.name}</div>
+          {(data.tagline || data.category) && (
+            <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
+              {[data.tagline, data.category].filter(Boolean).join(' · ')}
             </div>
           )}
         </div>
+      </div>
 
-        {/* Brand identity */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div>
-            <div className="display" style={{ fontSize: 38, lineHeight: 1, marginBottom: 4 }}>{data.name}</div>
-            {data.tagline && <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 10 }}>{data.tagline}</div>}
-            {data.category && <span className="tag tag-ghost" style={{ fontSize: 11 }}>{data.category}</span>}
-          </div>
-
-          {data.bio && (
-            <div className="profile-bio">{data.bio}</div>
-          )}
-
+      {/* ── Bio + Looking For + Channels ── */}
+      {(data.bio || data.looking_for || data.website || socialChannels.length > 0) && (
+        <div className="card p-20" style={{ marginBottom: 14, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {data.bio && <div className="profile-bio">{data.bio}</div>}
           {data.looking_for && (
             <div style={{ borderLeft: '2px solid var(--lime)', paddingLeft: 14 }}>
               <div className="text-muted text-xs mb-6">What We Look For in Partners</div>
               <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.7, fontStyle: 'italic' }}>"{data.looking_for}"</div>
             </div>
           )}
-
-          {/* Channels block */}
           {(data.website || socialChannels.length > 0) && (
             <div>
               <div className="text-muted text-xs mb-8" style={{ letterSpacing: '0.08em', textTransform: 'uppercase', fontFamily: 'Barlow Condensed', fontWeight: 700 }}>Channels</div>
@@ -4034,7 +4021,7 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
             </div>
           )}
         </div>
-      </div>
+      )}
 
       {/* ── Open Briefs — admin-panel table style ── */}
       <div className="card p-20 mb-14">
