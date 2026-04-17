@@ -3948,121 +3948,113 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
 
   const pastPartnerships = data.past_partnerships || [];
   const socialLinks = data.social_links || {};
-  const igData = data.instagram_data || {};
-  const igProfile = igData.profile || {};
-  const igPosts = ((igData.media || []).filter(p => p.media_url || p.thumbnail_url)).slice(0, 5);
-  const igHandle = igProfile.username || (socialLinks.instagram || '').replace(/.*instagram\.com\//, '').replace(/\/$/, '') || null;
-
-  // Normalise social link URLs for display
+  const igHandle = (socialLinks.instagram || '').replace(/.*instagram\.com\//, '').replace(/\/$/, '') || null;
   const socialChannels = [
     socialLinks.instagram && { label: 'Instagram', url: socialLinks.instagram.startsWith('http') ? socialLinks.instagram : `https://instagram.com/${socialLinks.instagram}`, display: igHandle ? `@${igHandle}` : socialLinks.instagram, color: '#e1306c' },
     socialLinks.tiktok    && { label: 'TikTok',    url: socialLinks.tiktok.startsWith('http') ? socialLinks.tiktok : `https://tiktok.com/@${socialLinks.tiktok}`, display: socialLinks.tiktok, color: '#fff' },
-    socialLinks.twitter   && { label: 'X / Twitter', url: socialLinks.twitter.startsWith('http') ? socialLinks.twitter : `https://x.com/${socialLinks.twitter}`, display: socialLinks.twitter, color: '#fff' },
+    socialLinks.twitter   && { label: 'X',         url: socialLinks.twitter.startsWith('http') ? socialLinks.twitter : `https://x.com/${socialLinks.twitter}`, display: socialLinks.twitter, color: '#fff' },
     socialLinks.linkedin  && { label: 'LinkedIn',  url: socialLinks.linkedin.startsWith('http') ? socialLinks.linkedin : `https://linkedin.com/company/${socialLinks.linkedin}`, display: socialLinks.linkedin, color: '#0a66c2' },
     socialLinks.youtube   && { label: 'YouTube',   url: socialLinks.youtube, display: 'YouTube', color: '#ff0000' },
   ].filter(Boolean);
 
   return (
     <div>
-      {/* Face card — mirrors community profile face card layout */}
-      <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 16, background: 'var(--surface2)', aspectRatio: '16/9' }}>
-        {data.header_image_url
-          ? <img src={data.header_image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.85 }} onError={e => e.target.style.display='none'} />
-          : <div style={{ position: 'absolute', inset: 0, background: 'var(--surface3)' }} />
-        }
-        {/* Overlay for text legibility */}
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.0) 30%, rgba(0,0,0,0.65) 65%, rgba(0,0,0,0.88) 100%)' }} />
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '0 20px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginBottom: 10 }}>
-            {/* Brand avatar */}
-            <div style={{ width: 52, height: 52, borderRadius: 10, flexShrink: 0, background: data.color || '#333', color: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 26, border: '2px solid rgba(255,255,255,0.15)' }}>
-              {data.initial || (data.name || '?')[0].toUpperCase()}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="bb" style={{ fontSize: 38, color: '#fff', lineHeight: 1, textShadow: '0 1px 6px rgba(0,0,0,0.5)', marginBottom: 3 }}>{data.name}</div>
-              {data.tagline && <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>{data.tagline}</div>}
-            </div>
-            {data.category && <span className="tag tag-ghost" style={{ fontSize: 11, flexShrink: 0 }}>{data.category}</span>}
-          </div>
-        </div>
-      </div>
+      {/* ── Top: 3:4 facecard + brand identity side by side ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr', gap: 16, marginBottom: 16, alignItems: 'start' }}>
 
-      {/* Info card — website, social channels, bio */}
-      <div className="card p-20 mb-14">
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px 28px' }}>
-          {data.website && (
-            <div>
-              <div className="text-muted text-xs mb-4">Website</div>
-              <a href={data.website.startsWith('http') ? data.website : 'https://' + data.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: 'var(--cyan)', textDecoration: 'none' }}>{data.website.replace(/^https?:\/\//, '')}</a>
-            </div>
-          )}
-          {socialChannels.map(ch => (
-            <div key={ch.label}>
-              <div className="text-muted text-xs mb-4">{ch.label}</div>
-              <a href={ch.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: 13, color: ch.color, textDecoration: 'none' }}>{ch.display} ↗</a>
-            </div>
-          ))}
-          {data.leader_name && (
-            <div>
-              <div className="text-muted text-xs mb-4">Contact</div>
-              <div style={{ fontSize: 13 }}>{data.leader_name}{data.leader_role ? `, ${data.leader_role}` : ''}</div>
+        {/* 3:4 portrait facecard */}
+        <div style={{ aspectRatio: '3/4', borderRadius: 12, overflow: 'hidden', position: 'relative', background: 'var(--surface2)', flexShrink: 0 }}>
+          {data.header_image_url
+            ? <img src={data.header_image_url} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} onError={e => e.target.style.display='none'} />
+            : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 80, height: 80, borderRadius: 16, background: data.color || '#333', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'Bebas Neue', fontSize: 42, color: '#000' }}>
+                  {data.initial || (data.name || '?')[0].toUpperCase()}
+                </div>
+              </div>
+          }
+          {/* Bottom fade for text if image present */}
+          {data.header_image_url && <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 50%, rgba(0,0,0,0.75) 100%)' }} />}
+          {data.header_image_url && (
+            <div style={{ position: 'absolute', bottom: 14, left: 14, right: 14 }}>
+              <div style={{ fontFamily: 'Bebas Neue', fontSize: 22, color: '#fff', lineHeight: 1, textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>{data.name}</div>
+              {data.category && <div style={{ fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.6)', marginTop: 3 }}>{data.category}</div>}
             </div>
           )}
         </div>
-        {data.bio && (
-          <div style={{ marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-            <div className="text-muted text-xs mb-6">About</div>
+
+        {/* Brand identity — name, values, what we look for */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Name + tagline */}
+          <div>
+            <div className="display" style={{ fontSize: 36, lineHeight: 1, marginBottom: 4 }}>{data.name}</div>
+            {data.tagline && <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8 }}>{data.tagline}</div>}
+            {data.category && <span className="tag tag-ghost" style={{ fontSize: 11 }}>{data.category}</span>}
+          </div>
+
+          {/* Bio */}
+          {data.bio && (
             <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.75 }}>{data.bio}</div>
-          </div>
-        )}
-      </div>
+          )}
 
-      {/* What we look for */}
-      {data.looking_for && (
-        <div className="card p-20 mb-14">
-          <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 10 }}>What We Look For in Partners</div>
-          <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.75, fontStyle: 'italic', borderLeft: '2px solid var(--lime)', paddingLeft: 14 }}>"{data.looking_for}"</div>
-        </div>
-      )}
+          {/* What we look for — primary message */}
+          {data.looking_for && (
+            <div style={{ borderLeft: '2px solid var(--lime)', paddingLeft: 14 }}>
+              <div className="text-muted text-xs mb-6">What We Look For in Partners</div>
+              <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.7, fontStyle: 'italic' }}>"{data.looking_for}"</div>
+            </div>
+          )}
 
-      {/* Latest content — only shown when posts are available or channels are linked */}
-      {(igPosts.length > 0 || igHandle) && (
-        <div className="card p-20 mb-14">
-          <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 12 }}>Latest Content</div>
-          {igPosts.length > 0 ? (
-            <div className="content-feed" style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 12 }}>
-              {igPosts.map((post, i) => (
-                <a key={i} href={post.permalink || `https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer"
-                  style={{ flexShrink: 0, width: 220, height: 220, borderRadius: 8, overflow: 'hidden', display: 'block', textDecoration: 'none', background: 'var(--surface2)', position: 'relative' }}>
-                  <img src={post.media_url || post.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} onError={e => e.target.style.display='none'} />
-                  <div style={{ position: 'absolute', bottom: 8, left: 8, width: 20, height: 20, borderRadius: 5, background: '#e1306c', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-                  </div>
+          {/* Links */}
+          {(data.website || socialChannels.length > 0) && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 20px', paddingTop: 4 }}>
+              {data.website && (
+                <a href={data.website.startsWith('http') ? data.website : 'https://' + data.website} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: 12, color: 'var(--cyan)', textDecoration: 'none', fontFamily: 'Barlow Condensed', fontWeight: 700 }}>
+                  ↗ {data.website.replace(/^https?:\/\//, '')}
+                </a>
+              )}
+              {socialChannels.map(ch => (
+                <a key={ch.label} href={ch.url} target="_blank" rel="noopener noreferrer"
+                  style={{ fontSize: 12, color: ch.color, textDecoration: 'none', fontFamily: 'Barlow Condensed', fontWeight: 700 }}>
+                  ↗ {ch.label}
                 </a>
               ))}
             </div>
-          ) : (
-            <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-              Connect your Instagram via OAuth to display your latest posts.{' '}
-              <a href={`https://instagram.com/${igHandle}`} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--cyan)', textDecoration: 'none' }}>View @{igHandle} ↗</a>
-            </div>
           )}
         </div>
-      )}
+      </div>
 
-      {/* Open briefs */}
+      {/* ── Open Briefs — clickable list rows ── */}
       <div className="card p-20 mb-14">
         <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase', marginBottom: 12 }}>Open Briefs</div>
         {myBriefs.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {myBriefs.map(b => <BriefCard key={b.id} b={b} onClick={onViewBrief} isBrandOwner={true} />)}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {myBriefs.map(b => {
+              const budget = b.budget ? `$${parseInt(b.budget).toLocaleString()}` : null;
+              return (
+                <div key={b.id} onClick={() => onViewBrief(b)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', transition: 'border-color 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--border2)'}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontFamily: 'Barlow Condensed', fontWeight: 800, fontSize: 15, textTransform: 'uppercase', letterSpacing: '0.04em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.title}</div>
+                    {(b.deadline || b.activationWindow) && (
+                      <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2, fontFamily: 'Barlow Condensed' }}>{b.deadline || b.activationWindow}</div>
+                    )}
+                  </div>
+                  <span className={`tag tag-${b.partnershipTypeColor}`} style={{ fontSize: 10, padding: '2px 8px', flexShrink: 0 }}>{b.partnershipType}</span>
+                  {budget && <div style={{ fontFamily: 'Bebas Neue', fontSize: 17, letterSpacing: '0.03em', color: 'var(--lime)', flexShrink: 0 }}>{budget}</div>}
+                  <div style={{ color: 'var(--muted)', fontSize: 14, flexShrink: 0 }}>→</div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div style={{ fontSize: 13, color: 'var(--muted)' }}>No open briefs yet.</div>
         )}
       </div>
 
-      {/* Past partnerships gallery */}
+      {/* ── Past Partnerships gallery ── */}
       <div className="card p-20 mb-14">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
           <div className="bc" style={{ fontSize: 15, fontWeight: 800, textTransform: 'uppercase' }}>Past Partnerships</div>
