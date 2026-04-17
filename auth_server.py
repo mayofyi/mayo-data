@@ -1498,37 +1498,44 @@ def upload_brand_profile_image(brand_id):
 
 @app.route("/api/brand/<brand_id>", methods=["GET"])
 def get_brand_profile(brand_id):
-    with get_db() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT id, name, tagline, bio, website, category, color, initial,
-                       leader_name, leader_role, "values", looking_for, social_links,
-                       profile_image_url, header_image_url, past_partnerships,
-                       verified, created_at
-                FROM brands WHERE id = %s
-            """, (brand_id,))
-            row = cur.fetchone()
-            if not row:
-                return jsonify({"error": "Not found"}), 404
-            keys = ["id", "name", "tagline", "bio", "website", "category", "color", "initial",
-                    "leader_name", "leader_role", "values", "looking_for", "social_links",
-                    "profile_image_url", "header_image_url", "past_partnerships",
-                    "verified", "created_at"]
-            brand = dict(zip(keys, row))
-            brand["past_partnerships"] = brand["past_partnerships"] or []
-            brand["social_links"] = brand["social_links"] or {}
-            if brand["created_at"]:
-                brand["created_at"] = brand["created_at"].isoformat()
-            # Attach briefs
-            cur.execute("""
-                SELECT id, title, partnership_type, budget, budget_period, status,
-                       tags, cover_image_url, response_count
-                FROM briefs WHERE brand_id = %s ORDER BY created_at DESC
-            """, (brand_id,))
-            brief_cols = ["id", "title", "partnership_type", "budget", "budget_period",
-                          "status", "tags", "cover_image_url", "response_count"]
-            brand["briefs"] = [dict(zip(brief_cols, r)) for r in cur.fetchall()]
-    return jsonify(brand)
+    try:
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                # Ensure past_partnerships column exists
+                cur.execute("ALTER TABLE brands ADD COLUMN IF NOT EXISTS past_partnerships JSONB DEFAULT '[]'")
+                conn.commit()
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id, name, tagline, bio, website, category, color, initial,
+                           leader_name, leader_role, "values", looking_for, social_links,
+                           profile_image_url, header_image_url, past_partnerships,
+                           verified, created_at
+                    FROM brands WHERE id = %s
+                """, (brand_id,))
+                row = cur.fetchone()
+                if not row:
+                    return jsonify({"error": "Not found"}), 404
+                keys = ["id", "name", "tagline", "bio", "website", "category", "color", "initial",
+                        "leader_name", "leader_role", "values", "looking_for", "social_links",
+                        "profile_image_url", "header_image_url", "past_partnerships",
+                        "verified", "created_at"]
+                brand = dict(zip(keys, row))
+                brand["past_partnerships"] = brand["past_partnerships"] or []
+                brand["social_links"] = brand["social_links"] or {}
+                if brand["created_at"]:
+                    brand["created_at"] = brand["created_at"].isoformat()
+                # Attach briefs
+                cur.execute("""
+                    SELECT id, title, partnership_type, budget, budget_period, status,
+                           tags, cover_image_url, response_count
+                    FROM briefs WHERE brand_id = %s ORDER BY created_at DESC
+                """, (brand_id,))
+                brief_cols = ["id", "title", "partnership_type", "budget", "budget_period",
+                              "status", "tags", "cover_image_url", "response_count"]
+                brand["briefs"] = [dict(zip(brief_cols, r)) for r in cur.fetchall()]
+        return jsonify(brand)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route("/api/brand/<brand_id>/past-partnerships", methods=["PUT"])
