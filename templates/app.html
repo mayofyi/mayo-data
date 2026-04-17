@@ -4643,20 +4643,22 @@ function App() {
     } else {
       setScreen('login');
     }
-    // Fetch public data regardless of auth
-    apiFetch('/api/communities')
-      .then(data => {
-        const mapped = data.map(mapCommunity);
-        setCommunities(mapped);
-        COMMUNITIES = mapped; // update global for components still using it
-      })
-      .catch(() => {});
-    apiFetch('/api/briefs')
-      .then(data => {
-        const mapped = data.map(mapBrief);
-        if (mapped.length > 0) setBriefs(mapped);
-      })
-      .catch(() => {});
+    // Fetch public data — retry once after 4s to handle Render cold-start 502s
+    const fetchWithRetry = (path, onSuccess, delay = 0) => {
+      const attempt = () => apiFetch(path).then(onSuccess).catch(() => {
+        if (delay === 0) setTimeout(() => fetchWithRetry(path, onSuccess, 4000), 4000);
+      });
+      if (delay) setTimeout(attempt, delay); else attempt();
+    };
+    fetchWithRetry('/api/communities', data => {
+      const mapped = data.map(mapCommunity);
+      setCommunities(mapped);
+      COMMUNITIES = mapped;
+    });
+    fetchWithRetry('/api/briefs', data => {
+      const mapped = data.map(mapBrief);
+      if (mapped.length > 0) setBriefs(mapped);
+    });
   }, []);
 
   const handleLogin = (r, userData) => {
