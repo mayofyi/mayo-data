@@ -171,6 +171,10 @@ body {
   font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px;
   font-family: 'Barlow Condensed', sans-serif;
 }
+.nav-badge-dot {
+  margin-left: auto; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--orange); flex-shrink: 0;
+}
 
 .sidenav-bottom {
   margin-top: auto; padding: 12px 10px;
@@ -3911,7 +3915,7 @@ function Lightbox({ items, startIndex, onClose }) {
 
 // ─── BRAND PROFILE PAGE ──────────────────────────────────────────────────────
 
-function BrandProfilePage({ user, briefs, onViewBrief }) {
+function BrandProfilePage({ user, briefs, onViewBrief, onProfileLoaded }) {
   const [data, setData] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [addingPartnership, setAddingPartnership] = React.useState(false);
@@ -3927,7 +3931,7 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
     if (!user?.id) return;
     fetch(`/api/brand/${user.id}`)
       .then(r => r.json())
-      .then(d => { setData(d); setLoading(false); })
+      .then(d => { setData(d); setLoading(false); if (onProfileLoaded) onProfileLoaded(d); })
       .catch(() => setLoading(false));
   }, [user?.id]);
 
@@ -3995,7 +3999,11 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
         }),
       });
       if (!res.ok) { setEditError('Save failed. Please try again.'); return; }
-      setData(d => ({ ...d, tagline: editForm.tagline, bio: editForm.bio, values: editForm.values, looking_for: editForm.looking_for, social_links }));
+      setData(d => {
+        const updated = { ...d, tagline: editForm.tagline, bio: editForm.bio, values: editForm.values, looking_for: editForm.looking_for, social_links };
+        if (onProfileLoaded) onProfileLoaded(updated);
+        return updated;
+      });
       setEditing(false);
     } catch { setEditError('Save failed. Please try again.'); }
     finally { setEditSaving(false); }
@@ -4114,7 +4122,12 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
       {/* ── Profile completion prompts ── */}
       {incomplete.length > 0 && (
         <div style={{ marginBottom: 14, padding: '16px 20px', background: 'rgba(177,236,240,0.05)', border: '1px solid rgba(177,236,240,0.18)', borderRadius: 10 }}>
-          <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cyan)', marginBottom: 10 }}>Complete your profile — {incomplete.length} item{incomplete.length > 1 ? 's' : ''} remaining</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 12 }}>
+            <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cyan)' }}>Complete your profile — {5 - incomplete.length}/5</div>
+            <div style={{ flex: 1, maxWidth: 160, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)' }}>
+              <div style={{ height: '100%', borderRadius: 2, background: 'var(--cyan)', width: `${((5 - incomplete.length) / 5) * 100}%`, transition: 'width 0.3s' }} />
+            </div>
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {incomplete.map(item => (
               <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -4392,6 +4405,7 @@ function MyProfileModule({ userId, onEdit }) {
 
       {/* ── Profile completion prompts ── */}
       {(() => {
+        const total = 5;
         const missing = [
           !data.description && { label: 'Add a community bio', action: 'Edit Profile' },
           !igConnected && !data.substack_url && { label: 'Connect a channel to unlock Verified status and appear in brand searches', action: 'Connect channels' },
@@ -4399,10 +4413,16 @@ function MyProfileModule({ userId, onEdit }) {
           !data.active_members && { label: 'Set your active member count — brands filter by this', action: 'Edit Profile' },
           !(data.tags || []).length && { label: 'Add interest tags so brands can find you', action: 'Edit Profile' },
         ].filter(Boolean);
+        const done = total - missing.length;
         if (!missing.length) return null;
         return (
           <div style={{ marginBottom: 16, padding: '14px 18px', background: 'rgba(177,236,240,0.05)', border: '1px solid rgba(177,236,240,0.18)', borderRadius: 10 }}>
-            <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cyan)', marginBottom: 8 }}>Complete your profile — {missing.length} item{missing.length > 1 ? 's' : ''} to go</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10, gap: 12 }}>
+              <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cyan)' }}>Complete your profile — {done}/{total}</div>
+              <div style={{ flex: 1, maxWidth: 160, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.08)' }}>
+                <div style={{ height: '100%', borderRadius: 2, background: 'var(--cyan)', width: `${(done / total) * 100}%`, transition: 'width 0.3s' }} />
+              </div>
+            </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {missing.map((item, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -5059,6 +5079,7 @@ function App() {
   const [selectedBrief, setSelectedBrief] = useState(null);
   const [creatingBrief, setCreatingBrief] = useState(false);
   const [activeBriefFilter, setActiveBriefFilter] = useState(null);
+  const [brandProfile, setBrandProfile] = useState(null);
 
   useEffect(() => {
     // Check stored auth
@@ -5181,8 +5202,22 @@ function App() {
     { id: 'project', label: 'Projects', icon: '◷' },
     { id: 'measure', label: 'Reporting', icon: '◈' },
   ];
+  // Profile completion badge logic
+  const myProfile = role === 'community' && user ? communities.find(c => c.id === user.id) || null : null;
+  const profileIncomplete = (() => {
+    if (isBrand && brandProfile) {
+      const sl = brandProfile.social_links || {};
+      return [brandProfile.bio, brandProfile.tagline, brandProfile.header_image_url, brandProfile.looking_for, Object.values(sl).some(Boolean)].some(v => !v);
+    }
+    if (!isBrand && myProfile) {
+      const igConnected = !!(myProfile.instagram_data && myProfile.instagram_data.profile);
+      return [myProfile.description, igConnected || !!myProfile.substack_url, myProfile.active_members, (myProfile.tags||[]).length].some(v => !v);
+    }
+    return false;
+  })();
+
   const navBottom = [
-    { id: 'profile', label: 'My Profile', icon: '◯' },
+    { id: 'profile', label: 'My Profile', icon: '◯', incomplete: profileIncomplete },
     { id: 'settings', label: 'Settings', icon: '⊙' },
   ];
 
@@ -5217,7 +5252,7 @@ function App() {
           return <MyProfileModule userId={user.id} onEdit={() => navigate('edit-profile')} />;
         }
         if (isBrand && user) {
-          return <BrandProfilePage user={user} briefs={briefs} onViewBrief={setSelectedBrief} />;
+          return <BrandProfilePage user={user} briefs={briefs} onViewBrief={setSelectedBrief} onProfileLoaded={setBrandProfile} />;
         }
         return null;
       }
@@ -5307,6 +5342,7 @@ function App() {
             <button key={n.id} className={"nav-item " + (activePage === n.id ? 'active' : '')} onClick={() => navigate(n.id)}>
               <span className="nav-icon">{n.icon}</span>
               {n.label}
+              {n.incomplete && <span className="nav-badge-dot" title="Complete your profile" />}
             </button>
           ))}
           <button className="nav-item" onClick={handleLogout} style={{ color: 'var(--muted)' }}>
