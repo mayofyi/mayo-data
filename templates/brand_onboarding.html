@@ -41,13 +41,11 @@ html, body { height:100%; background:var(--black); color:var(--white); font-fami
 .input.error { border-color:rgba(255,80,80,0.5); }
 select.input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23888' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:32px; cursor:pointer; }
 select.input option { background:#1a1a1a; color:#f0f0f0; }
-textarea.input { resize:none; }
 .label { display:block; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
 .form-group { margin-bottom:18px; }
 .field-hint { font-size:11px; color:var(--muted); margin-top:4px; }
 .field-error { font-size:11px; color:rgba(255,80,80,0.85); margin-top:4px; }
 .field-ok { font-size:11px; color:var(--lime); margin-top:4px; }
-.char-count { font-size:11px; color:var(--muted); text-align:right; margin-top:4px; }
 
 .onboarding-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
 .onboarding-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; width:100%; max-width:500px; overflow:hidden; }
@@ -59,25 +57,24 @@ textarea.input { resize:none; }
 .step-dot.active { background:var(--lime); width:20px; }
 .step-dot.done { background:var(--lime); opacity:0.4; }
 
-.upload-zone { border:1px dashed var(--border2); border-radius:8px; cursor:pointer; overflow:hidden; transition:border-color 0.15s; }
-.upload-zone:hover { border-color:rgba(255,255,255,0.25); }
-
-.social-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-.social-icon { width:32px; height:32px; border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:14px; }
-
 .review-block { background:var(--surface2); border-radius:10px; border:1px solid var(--border); overflow:hidden; margin-bottom:12px; }
 .review-row { display:flex; gap:12px; padding:10px 16px; border-bottom:1px solid var(--border); }
 .review-row:last-child { border-bottom:none; }
-.review-label { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); min-width:110px; padding-top:1px; }
+.review-label { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); min-width:90px; padding-top:1px; }
 .review-val { font-size:13px; color:var(--white); flex:1; line-height:1.55; }
+
+.defer-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px 16px; }
+.defer-item { display:flex; align-items:center; gap:10px; padding:7px 0; border-bottom:1px solid var(--border); }
+.defer-item:last-child { border-bottom:none; }
+.defer-dot { width:6px; height:6px; border-radius:50%; background:var(--border2); flex-shrink:0; }
 </style>
 </head>
 <body>
 <div id="root"></div>
 {% raw %}<script type="text/babel">
-const { useState, useRef } = React;
+const { useState } = React;
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 3;
 
 const INDUSTRIES = [
   'Activewear & Performance',
@@ -93,24 +90,6 @@ const INDUSTRIES = [
   'Travel & Hospitality',
   'Wellness & Supplements',
   'Other',
-];
-
-const SOCIAL_CHANNELS = [
-  { key:'instagram', label:'Instagram', placeholder:'https://instagram.com/yourbrand', color:'#e1306c', icon:(
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-  )},
-  { key:'tiktok', label:'TikTok', placeholder:'https://tiktok.com/@yourbrand', color:'#69c9d0', icon:(
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.3 6.3 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.69a8.18 8.18 0 0 0 4.78 1.52V6.76a4.85 4.85 0 0 1-1.01-.07z"/></svg>
-  )},
-  { key:'linkedin', label:'LinkedIn', placeholder:'https://linkedin.com/company/yourbrand', color:'#0077b5', icon:(
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-  )},
-  { key:'twitter', label:'X / Twitter', placeholder:'https://x.com/yourbrand', color:'#fff', icon:(
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.629 5.905-5.629zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-  )},
-  { key:'youtube', label:'YouTube', placeholder:'https://youtube.com/@yourbrand', color:'#ff0000', icon:(
-    <svg width="16" height="12" viewBox="0 0 24 17" fill="currentColor"><path d="M23.495 2.205a3.02 3.02 0 0 0-2.088-2.088C19.396 0 12 0 12 0s-7.396 0-9.407.117A3.02 3.02 0 0 0 .505 2.205 31.247 31.247 0 0 0 0 8.47a31.247 31.247 0 0 0 .505 6.265 3.02 3.02 0 0 0 2.088 2.088C4.604 17 12 17 12 17s7.396 0 9.407-.117a3.02 3.02 0 0 0 2.088-2.088A31.247 31.247 0 0 0 24 8.47a31.247 31.247 0 0 0-.505-6.265zM9.545 12.065V4.935l6.272 3.565-6.272 3.565z"/></svg>
-  )},
 ];
 
 function extractDomain(url) {
@@ -143,40 +122,9 @@ function StepDots({ current }) {
   );
 }
 
-// ── Image upload helper ────────────────────────────────────────────────────────
+// ── Step 1: Create your account ────────────────────────────────────────────────
 
-function ImageUpload({ label, hint, preview, onFile, aspectRatio, height }) {
-  const ref = useRef(null);
-  return (
-    <div className="form-group">
-      <label className="label">{label}</label>
-      <div className="upload-zone" style={{ height: height || 120, position:'relative' }}
-        onClick={() => ref.current.click()}>
-        {preview
-          ? <img src={preview} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }} />
-          : (
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', height:'100%', gap:6, color:'var(--muted)' }}>
-              <div style={{ fontSize:22 }}>+</div>
-              <div style={{ fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, letterSpacing:'0.06em', textTransform:'uppercase' }}>Upload image</div>
-              {hint && <div style={{ fontSize:10, color:'var(--muted)', opacity:0.7 }}>{hint}</div>}
-            </div>
-          )}
-        {preview && (
-          <div style={{ position:'absolute', inset:0, background:'rgba(0,0,0,0)', display:'flex', alignItems:'center', justifyContent:'center', opacity:0, transition:'all 0.15s' }}
-            onMouseEnter={e=>e.currentTarget.style.opacity=1} onMouseLeave={e=>e.currentTarget.style.opacity=0}>
-            <div style={{ background:'rgba(0,0,0,0.7)', borderRadius:6, padding:'5px 12px', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'#fff' }}>Change</div>
-          </div>
-        )}
-        <input ref={ref} type="file" accept="image/*" style={{ display:'none' }}
-          onChange={e => { if (e.target.files[0]) onFile(e.target.files[0]); }} />
-      </div>
-    </div>
-  );
-}
-
-// ── Step 1: You ────────────────────────────────────────────────────────────────
-
-function Step1You({ form, setForm, onNext }) {
+function Step1Account({ form, setForm, onNext }) {
   const [showPw, setShowPw] = useState(false);
   const pwMismatch = form.confirmPassword && form.password !== form.confirmPassword;
 
@@ -249,7 +197,7 @@ function Step2Brand({ form, setForm, onNext, onBack }) {
   const websiteOk = form.website && match === true;
   const websiteWarn = form.website && match === false;
 
-  const canContinue = form.name.trim() && form.website.trim() && form.industry && form.tagline.trim() && match !== false;
+  const canContinue = form.name.trim() && form.website.trim() && form.industry && match !== false;
 
   return (
     <div className="onboarding-screen">
@@ -257,7 +205,7 @@ function Step2Brand({ form, setForm, onNext, onBack }) {
         <div className="onboarding-header">
           <StepDots current={2} />
           <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Your brand</div>
-          <div style={{ fontSize:13, color:'var(--muted)' }}>The basics communities will see when they find your briefs.</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>The basics we need to set you up. You can add your story, images, and social links from your profile once you're in.</div>
         </div>
         <div className="onboarding-body">
           <div className="form-group">
@@ -271,19 +219,13 @@ function Step2Brand({ form, setForm, onNext, onBack }) {
             {websiteWarn && <div className="field-error">Email domain ({emailDomain(form.email)}) must match website domain ({extractDomain(form.website)}). Use a brand email to continue.</div>}
             {!websiteWarn && !websiteOk && <div className="field-hint">Must match the domain of your email address.</div>}
           </div>
-          <div className="form-group">
+          <div className="form-group" style={{ marginBottom:0 }}>
             <label className="label">Industry *</label>
             <select className="input" value={form.industry} onChange={e=>setForm(f=>({...f,industry:e.target.value}))}>
               <option value="">Select an industry...</option>
               {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
             </select>
           </div>
-          <div className="form-group" style={{ marginBottom:0 }}>
-            <label className="label">Tagline *</label>
-            <input className="input" placeholder="e.g. Built for the way you move." maxLength={80}
-              value={form.tagline} onChange={e=>setForm(f=>({...f,tagline:e.target.value}))} />
-            <div className="char-count">{form.tagline.length}/80</div>
-          </div>
         </div>
         <div className="onboarding-footer">
           <button className="btn btn-ghost btn-sm" onClick={onBack}>Back</button>
@@ -294,147 +236,16 @@ function Step2Brand({ form, setForm, onNext, onBack }) {
   );
 }
 
-// ── Step 3: Your story ─────────────────────────────────────────────────────────
+// ── Step 3: Review + Submit ────────────────────────────────────────────────────
 
-function Step3Story({ form, setForm, onNext, onBack }) {
-  const canContinue = form.bio.trim().length >= 50 && form.values.trim() && form.lookingFor.trim();
-
-  return (
-    <div className="onboarding-screen">
-      <div className="onboarding-box">
-        <div className="onboarding-header">
-          <StepDots current={3} />
-          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Your story</div>
-          <div style={{ fontSize:13, color:'var(--muted)' }}>Communities read this before they pitch you. Be direct — what you stand for, who you serve, what you want from a partner.</div>
-        </div>
-        <div className="onboarding-body" style={{ maxHeight:'58vh', overflowY:'auto' }}>
-          <div className="form-group">
-            <label className="label">Brand bio *</label>
-            <textarea className="input" rows={5} placeholder="Who are you and who do you serve? Write how you'd talk to a potential partner — not a press release." maxLength={600}
-              value={form.bio} onChange={e=>setForm(f=>({...f,bio:e.target.value}))} />
-            <div className="char-count">{form.bio.length}/600 {form.bio.length<50&&form.bio.length>0&&<span style={{color:'rgba(255,80,80,0.7)'}}>— 50 characters minimum</span>}</div>
-          </div>
-          <div className="form-group">
-            <label className="label">Brand values and mission *</label>
-            <textarea className="input" rows={3} placeholder="e.g. We believe fitness belongs to everyone, not just elite athletes. We build for people who show up every day." maxLength={400}
-              value={form.values} onChange={e=>setForm(f=>({...f,values:e.target.value}))} />
-            <div className="char-count">{form.values.length}/400</div>
-          </div>
-          <div className="form-group" style={{ marginBottom:0 }}>
-            <label className="label">What we look for in a partner *</label>
-            <textarea className="input" rows={3} placeholder="e.g. Communities with regular in-person events, an engaged core group, and a leader who communicates consistently. Follower count is secondary to culture fit." maxLength={400}
-              value={form.lookingFor} onChange={e=>setForm(f=>({...f,lookingFor:e.target.value}))} />
-            <div className="char-count">{form.lookingFor.length}/400</div>
-          </div>
-        </div>
-        <div className="onboarding-footer">
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>Back</button>
-          <button className="btn btn-lime" disabled={!canContinue} onClick={onNext}>Continue →</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Step 4: Presence ───────────────────────────────────────────────────────────
-
-function Step4Presence({ form, setForm, onNext, onBack }) {
-  const [headerPreview, setHeaderPreview] = useState(form._headerPreview || null);
-  const [profilePreview, setProfilePreview] = useState(form._profilePreview || null);
-
-  function handleFile(key, previewKey, file) {
-    const url = URL.createObjectURL(file);
-    if (key === 'headerFile') {
-      setHeaderPreview(url);
-      setForm(f => ({ ...f, headerFile: file, _headerPreview: url }));
-    } else {
-      setProfilePreview(url);
-      setForm(f => ({ ...f, profileFile: file, _profilePreview: url }));
-    }
-  }
-
-  function updateSocial(key, val) {
-    setForm(f => ({ ...f, socialLinks: { ...f.socialLinks, [key]: val } }));
-  }
-
-  return (
-    <div className="onboarding-screen">
-      <div className="onboarding-box">
-        <div className="onboarding-header">
-          <StepDots current={4} />
-          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Your presence</div>
-          <div style={{ fontSize:13, color:'var(--muted)' }}>Images and social links. Both optional — you can add them later from your profile.</div>
-        </div>
-        <div className="onboarding-body" style={{ maxHeight:'62vh', overflowY:'auto' }}>
-
-          {/* Images */}
-          <ImageUpload label="Header image" hint="Recommended: 1200 x 400px" height={110}
-            preview={headerPreview}
-            onFile={f => handleFile('headerFile', '_headerPreview', f)} />
-
-          <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:16, alignItems:'start', marginBottom:18 }}>
-            {/* Profile picture preview */}
-            <div>
-              <label className="label">Profile picture</label>
-              <div style={{ position:'relative', cursor:'pointer' }}
-                onClick={() => document.getElementById('profile-upload').click()}>
-                <div style={{ width:72, height:72, borderRadius:12, overflow:'hidden', background:'var(--surface2)', border:'1px solid var(--border2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
-                  {profilePreview
-                    ? <img src={profilePreview} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                    : <span style={{ fontFamily:'Bebas Neue', fontSize:28, color:'var(--muted)' }}>{(form.name||'B')[0].toUpperCase()}</span>
-                  }
-                </div>
-                <div style={{ position:'absolute', bottom:-4, right:-4, width:20, height:20, borderRadius:'50%', background:'var(--lime)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'#000', fontWeight:700 }}>+</div>
-                <input id="profile-upload" type="file" accept="image/*" style={{ display:'none' }}
-                  onChange={e => { if (e.target.files[0]) handleFile('profileFile', '_profilePreview', e.target.files[0]); }} />
-              </div>
-            </div>
-            <div style={{ paddingTop:20 }}>
-              <div style={{ fontSize:13, fontWeight:600 }}>{form.name || 'Your Brand'}</div>
-              <div style={{ fontSize:11, color:'var(--muted)', fontFamily:'Barlow Condensed', textTransform:'uppercase', letterSpacing:'0.05em' }}>{form.industry || 'Industry'}</div>
-              <div style={{ fontSize:12, color:'var(--muted)', marginTop:4, lineHeight:1.5 }}>{form.tagline}</div>
-            </div>
-          </div>
-
-          {/* Social channels */}
-          <div>
-            <label className="label">Social channels</label>
-            <div style={{ fontSize:11, color:'var(--muted)', marginBottom:10 }}>Paste links to any channels you want communities to see. All optional.</div>
-            {SOCIAL_CHANNELS.map(ch => (
-              <div key={ch.key} className="social-row">
-                <div className="social-icon" style={{ background: ch.color+'18', color: ch.color }}>
-                  {ch.icon}
-                </div>
-                <input className="input" placeholder={ch.placeholder}
-                  value={form.socialLinks[ch.key] || ''}
-                  onChange={e => updateSocial(ch.key, e.target.value.trim())} />
-              </div>
-            ))}
-          </div>
-
-        </div>
-        <div className="onboarding-footer">
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>Back</button>
-          <button className="btn btn-lime" onClick={onNext}>Continue →</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── Step 5: Review + Submit ────────────────────────────────────────────────────
-
-function Step5Review({ form, onBack, onDone }) {
+function Step3Review({ form, onBack, onDone }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const filledSocials = SOCIAL_CHANNELS.filter(ch => form.socialLinks[ch.key]);
 
   async function handleSubmit() {
     setLoading(true);
     setError('');
     try {
-      // 1. Register brand account
       const res = await fetch('/api/register/brand', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -444,13 +255,8 @@ function Step5Review({ form, onBack, onDone }) {
           password: form.password,
           leader_name: `${form.firstName} ${form.lastName}`.trim(),
           leader_role: form.role,
-          tagline: form.tagline,
-          bio: form.bio,
-          values: form.values,
-          looking_for: form.lookingFor,
           website: form.website,
           industry: form.industry,
-          social_links: form.socialLinks,
           initial: (form.name||'B')[0].toUpperCase(),
         }),
       });
@@ -459,30 +265,11 @@ function Step5Review({ form, onBack, onDone }) {
         setError(data.error || 'Something went wrong. Please try again.');
         return;
       }
-
       const { token, user } = data;
       if (token) {
         sessionStorage.setItem('mayo_token', token);
         sessionStorage.setItem('mayo_user', JSON.stringify(user));
       }
-
-      const brandId = user.id;
-      const authHeader = { 'Authorization': `Bearer ${token}` };
-
-      // 2. Upload header image if provided
-      if (form.headerFile) {
-        const fd = new FormData();
-        fd.append('file', form.headerFile);
-        await fetch(`/api/brand/${brandId}/header`, { method:'POST', headers: authHeader, body: fd }).catch(() => {});
-      }
-
-      // 3. Upload profile picture if provided
-      if (form.profileFile) {
-        const fd = new FormData();
-        fd.append('file', form.profileFile);
-        await fetch(`/api/brand/${brandId}/profile-image`, { method:'POST', headers: authHeader, body: fd }).catch(() => {});
-      }
-
       onDone();
     } catch (e) {
       setError('Something went wrong. Please try again.');
@@ -495,57 +282,42 @@ function Step5Review({ form, onBack, onDone }) {
     <div className="onboarding-screen">
       <div className="onboarding-box">
         <div className="onboarding-header">
-          <StepDots current={5} />
-          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Ready to go</div>
-          <div style={{ fontSize:13, color:'var(--muted)' }}>Check everything looks right before we create your account.</div>
+          <StepDots current={3} />
+          <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Looks good?</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>Quick check before we create your account.</div>
         </div>
-        <div className="onboarding-body" style={{ maxHeight:'60vh', overflowY:'auto' }}>
-
-          {/* Profile preview */}
-          {form._headerPreview && (
-            <div style={{ borderRadius:8, overflow:'hidden', marginBottom:12, height:90 }}>
-              <img src={form._headerPreview} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-            </div>
-          )}
-          <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20 }}>
-            <div style={{ width:52, height:52, borderRadius:10, overflow:'hidden', background:'var(--surface2)', border:'1px solid var(--border2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-              {form._profilePreview
-                ? <img src={form._profilePreview} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
-                : <span style={{ fontFamily:'Bebas Neue', fontSize:24, color:'var(--muted)' }}>{(form.name||'B')[0].toUpperCase()}</span>
-              }
-            </div>
-            <div>
-              <div style={{ fontFamily:'Bebas Neue', fontSize:20, letterSpacing:'0.03em' }}>{form.name}</div>
-              <div style={{ fontSize:11, color:'var(--muted)', fontFamily:'Barlow Condensed', textTransform:'uppercase', letterSpacing:'0.05em' }}>{form.industry}</div>
-            </div>
-          </div>
-
-          {/* Data summary */}
-          <div className="review-block">
+        <div className="onboarding-body">
+          <div className="review-block" style={{ marginBottom:20 }}>
             {[
-              { label:'Contact', val:`${form.firstName} ${form.lastName}, ${form.role}` },
+              { label:'Name', val:`${form.firstName} ${form.lastName}` },
+              { label:'Role', val:form.role },
               { label:'Email', val:form.email },
+              { label:'Brand', val:form.name },
               { label:'Website', val:form.website },
-              { label:'Tagline', val:form.tagline },
-              { label:'Bio', val:form.bio },
-              { label:'Values', val:form.values },
-              { label:'Looking for', val:form.lookingFor },
+              { label:'Industry', val:form.industry },
             ].map(row => (
               <div key={row.label} className="review-row">
                 <div className="review-label">{row.label}</div>
                 <div className="review-val">{row.val}</div>
               </div>
             ))}
-            {filledSocials.length > 0 && (
-              <div className="review-row">
-                <div className="review-label">Socials</div>
-                <div className="review-val">{filledSocials.map(ch => ch.label).join(', ')}</div>
-              </div>
-            )}
+          </div>
+
+          {/* What comes next */}
+          <div style={{ marginBottom:16 }}>
+            <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--muted)', marginBottom:10 }}>You can add these after you're in</div>
+            <div className="defer-card">
+              {['Brand bio & story', 'What you look for in a partner', 'Header image & logo', 'Social channel links'].map(item => (
+                <div key={item} className="defer-item">
+                  <div className="defer-dot" />
+                  <div style={{ fontSize:13, color:'rgba(240,240,240,0.6)' }}>{item}</div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {error && (
-            <div style={{ marginTop:12, padding:'10px 14px', background:'rgba(255,80,80,0.1)', border:'1px solid rgba(255,80,80,0.3)', borderRadius:6, fontSize:13, color:'rgba(255,100,100,0.9)' }}>
+            <div style={{ padding:'10px 14px', background:'rgba(255,80,80,0.1)', border:'1px solid rgba(255,80,80,0.3)', borderRadius:6, fontSize:13, color:'rgba(255,100,100,0.9)' }}>
               {error}
             </div>
           )}
@@ -575,16 +347,16 @@ function StepDone({ form }) {
           </div>
           <div className="bb" style={{ fontSize:36, color:'var(--lime)', marginBottom:8 }}>You're in.</div>
           <div style={{ fontSize:14, color:'var(--muted)', lineHeight:1.6 }}>
-            Account created for <strong style={{ color:'var(--white)' }}>{form.name}</strong>. Head to the platform to post your first brief.
+            Account created for <strong style={{ color:'var(--white)' }}>{form.name}</strong>. Head to the platform to explore communities and post your first brief.
           </div>
         </div>
         <div className="onboarding-body">
           <div style={{ padding:'14px 16px', background:'rgba(210,255,1,0.06)', border:'1px solid rgba(210,255,1,0.2)', borderRadius:10, marginBottom:16, fontSize:13, color:'var(--muted)', lineHeight:1.65 }}>
             <strong style={{ color:'var(--lime)', fontFamily:'Barlow Condensed', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', fontSize:11 }}>Account under review</strong><br />
-            We verify brand accounts before they go live. Most approvals happen within 24 hours. You can log in now and draft a brief while you wait.
+            We verify brand accounts before they go live. Most approvals happen within 24 hours. You can browse communities and draft a brief while you wait.
           </div>
           <a href="/app" className="btn btn-lime btn-lg" style={{ width:'100%', textDecoration:'none', justifyContent:'center' }}>
-            Go to platform →
+            Explore communities →
           </a>
         </div>
       </div>
@@ -597,34 +369,17 @@ function StepDone({ form }) {
 function BrandOnboarding() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    role: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    name: '',
-    website: '',
-    industry: '',
-    tagline: '',
-    bio: '',
-    values: '',
-    lookingFor: '',
-    socialLinks: {},
-    headerFile: null,
-    profileFile: null,
-    _headerPreview: null,
-    _profilePreview: null,
+    firstName: '', lastName: '', role: '', email: '',
+    password: '', confirmPassword: '',
+    name: '', website: '', industry: '',
   });
 
   const next = () => setStep(s => s + 1);
   const back = () => setStep(s => s - 1);
 
-  if (step === 1) return <Step1You form={form} setForm={setForm} onNext={next} />;
+  if (step === 1) return <Step1Account form={form} setForm={setForm} onNext={next} />;
   if (step === 2) return <Step2Brand form={form} setForm={setForm} onNext={next} onBack={back} />;
-  if (step === 3) return <Step3Story form={form} setForm={setForm} onNext={next} onBack={back} />;
-  if (step === 4) return <Step4Presence form={form} setForm={setForm} onNext={next} onBack={back} />;
-  if (step === 5) return <Step5Review form={form} onBack={back} onDone={next} />;
+  if (step === 3) return <Step3Review form={form} onBack={back} onDone={next} />;
   return <StepDone form={form} />;
 }
 

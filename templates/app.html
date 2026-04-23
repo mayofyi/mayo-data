@@ -1313,9 +1313,9 @@ function CommunityOnboarding({ onComplete }) {
   const tier = connectedCount >= 2 ? 'fully-verified' : connectedCount >= 1 ? 'verified' : 'starter';
 
   const tierMsg = {
-    starter: { text: 'Connect at least one channel to unlock Verified status and get better matches.', color: 'var(--muted)' },
-    verified: { text: 'Connect one more channel to unlock Fully Verified status.', color: 'var(--cyan)' },
-    'fully-verified': { text: "You're Fully Verified — brands can see the full picture.", color: 'var(--lime)' },
+    starter: { text: 'Connect a channel to show brands verified data — not just what you tell us.', color: 'var(--muted)' },
+    verified: { text: 'One more channel unlocks Fully Verified — the tier brands filter for first.', color: 'var(--cyan)' },
+    'fully-verified': { text: "Fully Verified — brands see real data and you rank higher in matches.", color: 'var(--lime)' },
   }[tier];
 
   const StepDots = () => (
@@ -1354,7 +1354,7 @@ function CommunityOnboarding({ onComplete }) {
         <div className="onboarding-header">
           <StepDots />
           <div className="onboarding-title">Tell us about your community</div>
-          <div className="onboarding-subtitle">This is what brands see when they find you. Make it count.</div>
+          <div className="onboarding-subtitle">Brands search by location, size, and interests. The more specific you are, the better your matches.</div>
         </div>
         <div className="onboarding-body">
           <div className="form-group"><label className="label">Community Name</label><input className="input" placeholder="e.g. Southbound 400" value={name} onChange={e => setName(e.target.value)} /></div>
@@ -1393,7 +1393,7 @@ function CommunityOnboarding({ onComplete }) {
         <div className="onboarding-header">
           <StepDots />
           <div className="onboarding-title">Connect your channels</div>
-          <div className="onboarding-subtitle">Connected channels power your match score and show brands the real data behind your community. The more you connect, the better your matches.</div>
+          <div className="onboarding-subtitle">Brands filter by engagement rate — this is how they find you. Connected channels replace self-reported numbers with real data and unlock better matches.</div>
         </div>
         <div className="onboarding-body">
           {/* Tier progress bar */}
@@ -1420,8 +1420,8 @@ function CommunityOnboarding({ onComplete }) {
           ))}
 
           <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(177,236,240,0.06)', border: '1px solid rgba(177,236,240,0.15)', borderRadius: 8 }}>
-            <div style={{ fontSize: 12, color: 'var(--cyan)', lineHeight: 1.6 }}>
-              💡 <strong>Not ready to connect yet?</strong> You can skip this and connect your channels any time from your profile settings.
+            <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
+              Skipping this? Your profile will be visible as Starter tier — brands can find you but won't see verified data. You can connect channels any time from your profile.
             </div>
           </div>
         </div>
@@ -4784,6 +4784,19 @@ function DashboardHome({ role, user, communities: COMMUNITIES = [], briefs: BRIE
           </div>
         ))}
       </div>
+
+      {/* Profile completion banner for brands with incomplete profiles */}
+      {isBrand && myProfile && !myProfile.bio && (
+        <div style={{ marginBottom: 20, padding: '16px 20px', background: 'rgba(177,236,240,0.05)', border: '1px solid rgba(177,236,240,0.2)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div>
+            <div style={{ fontFamily: 'Barlow Condensed', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cyan)', marginBottom: 3 }}>Complete your profile</div>
+            <div style={{ fontSize: 13, color: 'rgba(240,240,240,0.6)', lineHeight: 1.5 }}>Add your brand bio, values, and images so communities know who they're pitching to.</div>
+          </div>
+          <button className="btn btn-ghost btn-sm" style={{ flexShrink: 0, borderColor: 'rgba(177,236,240,0.3)', color: 'var(--cyan)' }} onClick={() => onNavigate('my-profile')}>
+            Complete profile →
+          </button>
+        </div>
+      )}
 
       {/* Discover CTA for community users */}
       {!isBrand && (
