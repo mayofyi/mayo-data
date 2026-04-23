@@ -1533,6 +1533,34 @@ def get_brand_profile(brand_id):
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/api/brand/<brand_id>", methods=["PUT"])
+def update_brand(brand_id):
+    auth = require_auth(request)
+    if not auth or (auth.get("id") != brand_id and auth.get("role") != "admin"):
+        return jsonify({"error": "Unauthorized"}), 403
+    data = request.json or {}
+    allowed = ["name", "tagline", "bio", "values", "looking_for", "website", "category", "social_links"]
+    fields, values = [], []
+    for field in allowed:
+        if field in data:
+            val = data[field]
+            if field == "social_links":
+                val = _json_stdlib.dumps(val) if isinstance(val, dict) else val
+            fields.append(f"{field} = %s")
+            values.append(val if val != "" else None)
+    if not fields:
+        return jsonify({"error": "Nothing to update"}), 400
+    values.append(brand_id)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"UPDATE brands SET {', '.join(fields)}, updated_at = NOW() WHERE id = %s",
+                values
+            )
+        conn.commit()
+    return jsonify({"ok": True})
+
+
 @app.route("/api/brand/<brand_id>/past-partnerships", methods=["PUT"])
 def update_past_partnerships(brand_id):
     auth = require_auth(request)

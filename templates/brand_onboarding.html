@@ -190,14 +190,37 @@ function Step1Account({ form, setForm, onNext }) {
   );
 }
 
+const SOCIAL_CHANNELS = [
+  { key:'instagram', label:'Instagram', placeholder:'https://instagram.com/yourbrand' },
+  { key:'tiktok',   label:'TikTok',    placeholder:'https://tiktok.com/@yourbrand' },
+  { key:'linkedin', label:'LinkedIn',  placeholder:'https://linkedin.com/company/yourbrand' },
+  { key:'twitter',  label:'X',         placeholder:'https://x.com/yourbrand' },
+  { key:'youtube',  label:'YouTube',   placeholder:'https://youtube.com/@yourbrand' },
+];
+
 // ── Step 2: Your brand ─────────────────────────────────────────────────────────
 
 function Step2Brand({ form, setForm, onNext, onBack }) {
+  const profileRef = React.useRef(null);
+  const [profilePreview, setProfilePreview] = React.useState(form._profilePreview || null);
+  const [showChannels, setShowChannels] = React.useState(
+    Object.values(form.socialLinks || {}).some(Boolean)
+  );
+
   const match = domainMatch(form.email, form.website);
   const websiteOk = form.website && match === true;
   const websiteWarn = form.website && match === false;
-
   const canContinue = form.name.trim() && form.website.trim() && form.industry && match !== false;
+
+  function handleProfilePic(file) {
+    const url = URL.createObjectURL(file);
+    setProfilePreview(url);
+    setForm(f => ({ ...f, profileFile: file, _profilePreview: url }));
+  }
+
+  function updateSocial(key, val) {
+    setForm(f => ({ ...f, socialLinks: { ...f.socialLinks, [key]: val } }));
+  }
 
   return (
     <div className="onboarding-screen">
@@ -205,13 +228,32 @@ function Step2Brand({ form, setForm, onNext, onBack }) {
         <div className="onboarding-header">
           <StepDots current={2} />
           <div className="bb" style={{ fontSize:30, marginBottom:6 }}>Your brand</div>
-          <div style={{ fontSize:13, color:'var(--muted)' }}>The basics we need to set you up. You can add your story, images, and social links from your profile once you're in.</div>
+          <div style={{ fontSize:13, color:'var(--muted)' }}>The basics we need to set you up. You can add your story and images from your profile once you're in.</div>
         </div>
-        <div className="onboarding-body">
-          <div className="form-group">
-            <label className="label">Brand name *</label>
-            <input className="input" placeholder="e.g. FORM Athletic" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
+        <div className="onboarding-body" style={{ maxHeight:'62vh', overflowY:'auto' }}>
+
+          {/* Profile pic + name row */}
+          <div style={{ display:'grid', gridTemplateColumns:'auto 1fr', gap:16, alignItems:'start', marginBottom:18 }}>
+            <div>
+              <label className="label">Logo / Pic</label>
+              <div style={{ position:'relative', cursor:'pointer' }} onClick={() => profileRef.current.click()}>
+                <div style={{ width:64, height:64, borderRadius:10, overflow:'hidden', background:'var(--surface2)', border:'1px solid var(--border2)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  {profilePreview
+                    ? <img src={profilePreview} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                    : <span style={{ fontFamily:'Bebas Neue', fontSize:26, color:'var(--muted)' }}>{(form.name||'B')[0].toUpperCase()}</span>
+                  }
+                </div>
+                <div style={{ position:'absolute', bottom:-4, right:-4, width:18, height:18, borderRadius:'50%', background:'var(--lime)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, color:'#000', fontWeight:700 }}>+</div>
+                <input ref={profileRef} type="file" accept="image/*" style={{ display:'none' }}
+                  onChange={e => { if (e.target.files[0]) handleProfilePic(e.target.files[0]); }} />
+              </div>
+            </div>
+            <div className="form-group" style={{ marginBottom:0, paddingTop:20 }}>
+              <label className="label">Brand name *</label>
+              <input className="input" placeholder="e.g. FORM Athletic" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} />
+            </div>
           </div>
+
           <div className="form-group">
             <label className="label">Website *</label>
             <input className="input" placeholder="https://yourbrand.com" value={form.website} onChange={e=>setForm(f=>({...f,website:e.target.value.trim()}))} />
@@ -219,13 +261,36 @@ function Step2Brand({ form, setForm, onNext, onBack }) {
             {websiteWarn && <div className="field-error">Email domain ({emailDomain(form.email)}) must match website domain ({extractDomain(form.website)}). Use a brand email to continue.</div>}
             {!websiteWarn && !websiteOk && <div className="field-hint">Must match the domain of your email address.</div>}
           </div>
-          <div className="form-group" style={{ marginBottom:0 }}>
+
+          <div className="form-group">
             <label className="label">Industry *</label>
             <select className="input" value={form.industry} onChange={e=>setForm(f=>({...f,industry:e.target.value}))}>
               <option value="">Select an industry...</option>
               {INDUSTRIES.map(i => <option key={i} value={i}>{i}</option>)}
             </select>
           </div>
+
+          {/* Social channels — optional, collapsible */}
+          <div style={{ borderTop:'1px solid var(--border)', paddingTop:16 }}>
+            <button type="button"
+              style={{ background:'none', border:'none', cursor:'pointer', display:'flex', alignItems:'center', gap:8, color:'var(--muted)', fontFamily:'Barlow Condensed', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom: showChannels ? 12 : 0 }}
+              onClick={() => setShowChannels(v => !v)}>
+              <span>{showChannels ? '▾' : '▸'}</span> Add social channels <span style={{ color:'var(--surface3)', fontWeight:400 }}>— optional</span>
+            </button>
+            {showChannels && (
+              <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                {SOCIAL_CHANNELS.map(ch => (
+                  <div key={ch.key} style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <div style={{ fontFamily:'Barlow Condensed', fontSize:10, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.06em', color:'var(--muted)', width:60, flexShrink:0 }}>{ch.label}</div>
+                    <input className="input" placeholder={ch.placeholder}
+                      value={form.socialLinks[ch.key] || ''}
+                      onChange={e => updateSocial(ch.key, e.target.value.trim())} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
         </div>
         <div className="onboarding-footer">
           <button className="btn btn-ghost btn-sm" onClick={onBack}>Back</button>
@@ -257,6 +322,7 @@ function Step3Review({ form, onBack, onDone }) {
           leader_role: form.role,
           website: form.website,
           industry: form.industry,
+          social_links: form.socialLinks,
           initial: (form.name||'B')[0].toUpperCase(),
         }),
       });
@@ -269,6 +335,15 @@ function Step3Review({ form, onBack, onDone }) {
       if (token) {
         sessionStorage.setItem('mayo_token', token);
         sessionStorage.setItem('mayo_user', JSON.stringify(user));
+      }
+      if (form.profileFile && token) {
+        const fd = new FormData();
+        fd.append('file', form.profileFile);
+        await fetch(`/api/brand/${user.id}/profile-image`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: fd,
+        }).catch(() => {});
       }
       onDone();
     } catch (e) {
@@ -287,14 +362,26 @@ function Step3Review({ form, onBack, onDone }) {
           <div style={{ fontSize:13, color:'var(--muted)' }}>Quick check before we create your account.</div>
         </div>
         <div className="onboarding-body">
+          {/* Profile pic preview */}
+          <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:16 }}>
+            <div style={{ width:52, height:52, borderRadius:10, overflow:'hidden', background:'var(--surface2)', border:'1px solid var(--border2)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+              {form._profilePreview
+                ? <img src={form._profilePreview} alt="" style={{ width:'100%', height:'100%', objectFit:'cover' }} />
+                : <span style={{ fontFamily:'Bebas Neue', fontSize:22, color:'var(--muted)' }}>{(form.name||'B')[0].toUpperCase()}</span>
+              }
+            </div>
+            <div>
+              <div style={{ fontFamily:'Bebas Neue', fontSize:20, letterSpacing:'0.03em' }}>{form.name}</div>
+              <div style={{ fontSize:11, color:'var(--muted)', fontFamily:'Barlow Condensed', textTransform:'uppercase', letterSpacing:'0.05em' }}>{form.industry}</div>
+            </div>
+          </div>
+
           <div className="review-block" style={{ marginBottom:20 }}>
             {[
-              { label:'Name', val:`${form.firstName} ${form.lastName}` },
-              { label:'Role', val:form.role },
+              { label:'Contact', val:`${form.firstName} ${form.lastName}, ${form.role}` },
               { label:'Email', val:form.email },
-              { label:'Brand', val:form.name },
               { label:'Website', val:form.website },
-              { label:'Industry', val:form.industry },
+              ...(Object.entries(form.socialLinks||{}).filter(([,v])=>v).map(([k,v]) => ({ label: k.charAt(0).toUpperCase()+k.slice(1), val: v }))),
             ].map(row => (
               <div key={row.label} className="review-row">
                 <div className="review-label">{row.label}</div>
@@ -372,6 +459,7 @@ function BrandOnboarding() {
     firstName: '', lastName: '', role: '', email: '',
     password: '', confirmPassword: '',
     name: '', website: '', industry: '',
+    socialLinks: {}, profileFile: null, _profilePreview: null,
   });
 
   const next = () => setStep(s => s + 1);

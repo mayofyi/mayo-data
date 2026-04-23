@@ -3917,6 +3917,11 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
   const [addingPartnership, setAddingPartnership] = React.useState(false);
   const [newPartner, setNewPartner] = React.useState({ name: '', url: '', type: 'Sponsorship', year: '', description: '', image_url: '' });
   const [saving, setSaving] = React.useState(false);
+  const [editing, setEditing] = React.useState(false);
+  const [editForm, setEditForm] = React.useState({});
+  const [editSaving, setEditSaving] = React.useState(false);
+  const [editError, setEditError] = React.useState('');
+  const headerRef = React.useRef(null);
 
   React.useEffect(() => {
     if (!user?.id) return;
@@ -3952,6 +3957,59 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
     savePartnerships((data.past_partnerships || []).filter((_, i) => i !== idx));
   }
 
+  function openEdit() {
+    const sl = data.social_links || {};
+    setEditForm({
+      tagline: data.tagline || '',
+      bio: data.bio || '',
+      values: data.values || '',
+      looking_for: data.looking_for || '',
+      instagram: sl.instagram || '',
+      tiktok: sl.tiktok || '',
+      twitter: sl.twitter || '',
+      linkedin: sl.linkedin || '',
+      youtube: sl.youtube || '',
+    });
+    setEditError('');
+    setEditing(true);
+  }
+
+  async function saveEdit() {
+    setEditSaving(true);
+    setEditError('');
+    const token = getToken();
+    try {
+      const social_links = {};
+      ['instagram','tiktok','twitter','linkedin','youtube'].forEach(k => {
+        if (editForm[k]) social_links[k] = editForm[k];
+      });
+      const res = await fetch(`/api/brand/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({
+          tagline: editForm.tagline,
+          bio: editForm.bio,
+          values: editForm.values,
+          looking_for: editForm.looking_for,
+          social_links,
+        }),
+      });
+      if (!res.ok) { setEditError('Save failed. Please try again.'); return; }
+      setData(d => ({ ...d, tagline: editForm.tagline, bio: editForm.bio, values: editForm.values, looking_for: editForm.looking_for, social_links }));
+      setEditing(false);
+    } catch { setEditError('Save failed. Please try again.'); }
+    finally { setEditSaving(false); }
+  }
+
+  async function uploadHeader(file) {
+    const token = getToken();
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch(`/api/brand/${user.id}/header`, { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd });
+    const d = await res.json();
+    if (d.url) setData(prev => ({ ...prev, header_image_url: d.url }));
+  }
+
   if (loading) return <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)', fontFamily: 'Barlow Condensed', fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Loading profile…</div>;
   if (!data || data.error) return <div style={{ padding: 60, textAlign: 'center', color: 'var(--muted)' }}>Profile not found.</div>;
 
@@ -3966,8 +4024,61 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
     socialLinks.youtube   && { label: 'YouTube',   url: socialLinks.youtube, display: 'YouTube', color: '#ff0000' },
   ].filter(Boolean);
 
+  // Completion checklist
+  const incomplete = [
+    !data.bio && { key: 'bio', label: 'Add a brand bio' },
+    !data.looking_for && { key: 'looking_for', label: 'Describe what you look for in a partner' },
+    !data.tagline && { key: 'tagline', label: 'Add a tagline' },
+    !data.header_image_url && { key: 'header', label: 'Upload a header image' },
+    !socialChannels.length && { key: 'socials', label: 'Add social channel links' },
+  ].filter(Boolean);
+
   return (
     <div>
+      {/* ── Edit Modal ── */}
+      {editing && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border2)', borderRadius: 12, width: '100%', maxWidth: 520, maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ fontFamily: 'Bebas Neue', fontSize: 22 }}>Edit Profile</div>
+              <button onClick={() => setEditing(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: 20, lineHeight: 1 }}>×</button>
+            </div>
+            <div style={{ padding: '20px 24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[
+                { key: 'tagline', label: 'Tagline', placeholder: 'e.g. Built for the way you move.', rows: 1 },
+                { key: 'bio', label: 'Brand Bio', placeholder: 'Who you are and who you serve…', rows: 4 },
+                { key: 'values', label: 'Brand Values & Mission', placeholder: 'What you stand for…', rows: 3 },
+                { key: 'looking_for', label: 'What We Look For in Partners', placeholder: 'The kind of communities you want to work with…', rows: 3 },
+              ].map(f => (
+                <div key={f.key}>
+                  <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 6 }}>{f.label}</div>
+                  {f.rows === 1
+                    ? <input className="input" placeholder={f.placeholder} value={editForm[f.key]} onChange={e => setEditForm(ef => ({ ...ef, [f.key]: e.target.value }))} />
+                    : <textarea className="input" rows={f.rows} placeholder={f.placeholder} style={{ resize: 'none' }} value={editForm[f.key]} onChange={e => setEditForm(ef => ({ ...ef, [f.key]: e.target.value }))} />
+                  }
+                </div>
+              ))}
+              <div>
+                <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted)', marginBottom: 8 }}>Social Channels</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {[{k:'instagram',l:'Instagram'},{k:'tiktok',l:'TikTok'},{k:'linkedin',l:'LinkedIn'},{k:'twitter',l:'X'},{k:'youtube',l:'YouTube'}].map(ch => (
+                    <div key={ch.k} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{ fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--muted)', width: 64, flexShrink: 0 }}>{ch.l}</div>
+                      <input className="input" placeholder={`https://...`} value={editForm[ch.k]} onChange={e => setEditForm(ef => ({ ...ef, [ch.k]: e.target.value }))} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {editError && <div style={{ fontSize: 13, color: 'rgba(255,100,100,0.9)', padding: '8px 12px', background: 'rgba(255,80,80,0.08)', borderRadius: 6 }}>{editError}</div>}
+            </div>
+            <div style={{ padding: '14px 24px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button className="btn btn-ghost btn-sm" onClick={() => setEditing(false)} disabled={editSaving}>Cancel</button>
+              <button className="btn btn-lime btn-sm" onClick={saveEdit} disabled={editSaving}>{editSaving ? 'Saving…' : 'Save changes'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Header ── */}
       <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 14, background: 'var(--surface2)', minHeight: 400, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
         {data.header_image_url
@@ -3979,6 +4090,17 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
             </div>
         }
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.425) 0%, rgba(0,0,0,0.3) 50%, rgba(0,0,0,0.05) 100%)' }} />
+        {/* Edit + upload header buttons */}
+        <div style={{ position: 'absolute', top: 14, right: 14, zIndex: 2, display: 'flex', gap: 8 }}>
+          <label style={{ cursor: 'pointer' }}>
+            <span className="btn btn-ghost btn-sm" style={{ display: 'inline-flex' }}>
+              {data.header_image_url ? 'Change image' : '+ Header image'}
+            </span>
+            <input ref={headerRef} type="file" accept="image/*" style={{ display: 'none' }}
+              onChange={e => { if (e.target.files[0]) uploadHeader(e.target.files[0]); }} />
+          </label>
+          <button className="btn btn-lime btn-sm" onClick={openEdit}>Edit profile</button>
+        </div>
         <div style={{ position: 'relative', zIndex: 1, padding: '24px 22px 22px' }}>
           <div style={{ fontFamily: 'Bebas Neue', fontSize: 44, lineHeight: 1, textShadow: '0 2px 12px rgba(0,0,0,0.6)', marginBottom: 4 }}>{data.name}</div>
           {(data.tagline || data.category) && (
@@ -3988,6 +4110,24 @@ function BrandProfilePage({ user, briefs, onViewBrief }) {
           )}
         </div>
       </div>
+
+      {/* ── Profile completion prompts ── */}
+      {incomplete.length > 0 && (
+        <div style={{ marginBottom: 14, padding: '16px 20px', background: 'rgba(177,236,240,0.05)', border: '1px solid rgba(177,236,240,0.18)', borderRadius: 10 }}>
+          <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cyan)', marginBottom: 10 }}>Complete your profile — {incomplete.length} item{incomplete.length > 1 ? 's' : ''} remaining</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {incomplete.map(item => (
+              <div key={item.key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(177,236,240,0.4)', flexShrink: 0 }} />
+                <span style={{ fontSize: 13, color: 'rgba(240,240,240,0.6)' }}>{item.label}</span>
+                {item.key !== 'header' && (
+                  <button onClick={openEdit} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--cyan)', padding: 0 }}>Add →</button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Bio + Looking For + Channels ── */}
       {(data.bio || data.looking_for || data.website || socialChannels.length > 0) && (
@@ -4249,6 +4389,32 @@ function MyProfileModule({ userId, onEdit }) {
           <button className="btn btn-lime btn-sm" onClick={onEdit}>Edit Profile</button>
         </div>
       </div>
+
+      {/* ── Profile completion prompts ── */}
+      {(() => {
+        const missing = [
+          !data.description && { label: 'Add a community bio', action: 'Edit Profile' },
+          !igConnected && !data.substack_url && { label: 'Connect a channel to unlock Verified status and appear in brand searches', action: 'Connect channels' },
+          igConnected && !data.substack_url && tier === 'verified' && { label: 'Connect a second channel (e.g. Substack) to reach Fully Verified', action: null },
+          !data.active_members && { label: 'Set your active member count — brands filter by this', action: 'Edit Profile' },
+          !(data.tags || []).length && { label: 'Add interest tags so brands can find you', action: 'Edit Profile' },
+        ].filter(Boolean);
+        if (!missing.length) return null;
+        return (
+          <div style={{ marginBottom: 16, padding: '14px 18px', background: 'rgba(177,236,240,0.05)', border: '1px solid rgba(177,236,240,0.18)', borderRadius: 10 }}>
+            <div style={{ fontFamily: 'Barlow Condensed', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--cyan)', marginBottom: 8 }}>Complete your profile — {missing.length} item{missing.length > 1 ? 's' : ''} to go</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {missing.map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(177,236,240,0.4)', flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, color: 'rgba(240,240,240,0.6)' }}>{item.label}</span>
+                  {item.action && <button onClick={onEdit} style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Barlow Condensed', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--cyan)', padding: 0 }}>{item.action} →</button>}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Face card — 16:9, cover image + info overlaid at bottom */}
       <div style={{ borderRadius: 12, overflow: 'hidden', position: 'relative', marginBottom: 16, background: coverBg, aspectRatio: '16/9' }}>
