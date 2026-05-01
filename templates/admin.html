@@ -3,122 +3,331 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mayo Admin — Communities</title>
+<title>Mayo Admin Panel</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --lime: #d2ff01; --black: #080808; --surface: #111; --surface2: #1a1a1a;
-  --surface3: #222; --white: #f0f0f0; --muted: #888;
-  --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
-  --cyan: #b1ecf0; --pink: #ff6ef2; --green: #b3ff9e; --red: #ff6b6b;
-  --orange: #ffab40; --yellow: #ffea12;
+  --lime: #d2ff01; --cyan: #b1ecf0; --pink: #ff6ef2; --orange: #ffab40;
+  --yellow: #ffea12; --green: #b3ff9e; --red: #ff6b6b;
+  --muted: #666; --surface: #080808; --surface2: #111; --surface3: #1a1a1a;
+  --border: #222; --border2: #2a2a2a; --white: #f0f0f0;
+  --nav-w: 216px;
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:var(--black); color:var(--white); font-family:'Barlow',sans-serif; font-size:14px; min-height:100vh; }
+body { background:var(--surface); color:var(--white); font-family:'Barlow',sans-serif; font-size:14px; min-height:100vh; }
 .bb { font-family:'Bebas Neue',sans-serif; letter-spacing:0.03em; }
 .bc { font-family:'Barlow Condensed',sans-serif; }
-::-webkit-scrollbar { width:4px; height:6px; } ::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:3px; } ::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar { width:4px; height:6px; }
+::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:3px; }
+::-webkit-scrollbar-track { background:transparent; }
 
-header { padding:20px 32px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:10; background:var(--black); }
-.logo { font-family:'Bebas Neue'; font-size:28px; letter-spacing:0.05em; }
-.logo span { color:var(--lime); }
+/* ── LAYOUT ── */
+.admin-app { display:flex; min-height:100vh; }
+
+/* ── SIDENAV ── */
+.sidenav {
+  width:var(--nav-w); min-width:var(--nav-w);
+  background:var(--surface2); border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  height:100vh; overflow-y:auto; position:sticky; top:0; flex-shrink:0;
+}
+.sidenav-logo {
+  padding:20px 20px 16px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.logo-text { font-family:'Bebas Neue'; font-size:28px; letter-spacing:0.05em; }
+.logo-dot { color:var(--lime); }
+.role-badge {
+  font-family:'Barlow Condensed'; font-size:10px; font-weight:700;
+  letter-spacing:0.1em; text-transform:uppercase; padding:3px 7px; border-radius:3px;
+}
+.sidenav-user {
+  padding:14px 16px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:10px;
+}
+.avatar {
+  width:34px; height:34px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Barlow Condensed'; font-weight:700; font-size:13px; flex-shrink:0;
+}
+.user-name { font-weight:600; font-size:13px; }
+.user-org { font-size:11px; color:var(--muted); }
+.nav-section { padding:10px 10px 4px; }
+.nav-section-label {
+  font-family:'Barlow Condensed'; font-size:10px; font-weight:700;
+  letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); padding:0 8px 6px;
+}
+.nav-item {
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:6px; cursor:pointer;
+  font-size:13px; font-weight:500; color:var(--muted);
+  transition:all 0.12s; margin-bottom:1px; border:none;
+  background:transparent; width:100%; text-align:left;
+}
+.nav-item:hover { background:var(--surface3); color:var(--white); }
+.nav-item.active { background:var(--surface3); color:var(--white); }
+.nav-item.active .nav-icon { color:var(--lime); }
+.nav-icon { font-size:14px; width:18px; text-align:center; flex-shrink:0; }
+.nav-badge {
+  margin-left:auto; background:var(--lime); color:#000;
+  font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px;
+  font-family:'Barlow Condensed';
+}
+
+/* ── MAIN ── */
+.main { flex:1; display:flex; flex-direction:column; min-width:0; overflow:hidden; }
+.topbar {
+  padding:0 28px; height:56px; min-height:56px;
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  background:var(--surface2);
+}
+.topbar-title { font-family:'Barlow Condensed'; font-size:18px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; }
+.topbar-actions { display:flex; align-items:center; gap:10px; }
+.page { flex:1; overflow-y:auto; padding:24px 28px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 16px; border-radius:6px; border:none; cursor:pointer;
+  font-family:'Barlow Condensed'; font-size:13px; font-weight:700;
+  letter-spacing:0.06em; text-transform:uppercase; transition:all 0.12s;
+}
+.btn-primary { background:var(--lime); color:#000; }
+.btn-primary:hover { background:#bde500; }
+.btn-ghost { background:transparent; border:1px solid var(--border2); color:var(--white); }
+.btn-ghost:hover { background:var(--surface3); }
+.btn-sm { padding:5px 11px; font-size:12px; }
+.btn-danger { background:transparent; border:1px solid var(--red); color:var(--red); }
+.btn-danger:hover { background:rgba(255,107,107,0.1); }
+
+/* ── CARDS & STATS ── */
+.stats-row { display:grid; gap:16px; margin-bottom:24px; }
+.stat-card { background:var(--surface3); border:1px solid var(--border); border-radius:10px; padding:16px 20px; }
+.stat-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
+.stat-value { font-family:'Bebas Neue'; font-size:36px; line-height:1; }
+.stat-sub { font-size:11px; color:var(--muted); margin-top:4px; }
+.panel { background:var(--surface3); border:1px solid var(--border); border-radius:10px; padding:20px; }
+.card { background:var(--surface3); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+
+/* ── TABLE ── */
+table { width:100%; border-collapse:collapse; }
+thead th { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); padding:10px 14px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+tbody tr { border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s; }
+tbody tr:hover { background:var(--surface3); }
+tbody td { padding:12px 14px; vertical-align:middle; font-size:13px; }
+tbody tr:last-child { border-bottom:none; }
+
+/* ── BADGES ── */
 .badge { display:inline-block; padding:3px 9px; border-radius:3px; font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
 .badge-lime { background:var(--lime); color:#000; }
 .badge-cyan { background:var(--cyan); color:#000; }
-.badge-muted { background:var(--surface3); color:var(--muted); border:1px solid var(--border); }
 .badge-green { background:var(--green); color:#000; }
-.badge-red { color:var(--red); font-family:'Barlow Condensed'; font-size:12px; font-weight:700; }
+.badge-orange { background:var(--orange); color:#000; }
+.badge-muted { background:var(--surface3); color:var(--muted); border:1px solid var(--border2); }
+.badge-red { background:rgba(255,107,107,0.15); color:var(--red); border:1px solid rgba(255,107,107,0.3); }
 
-main { padding:32px; }
-.page-title { font-family:'Bebas Neue'; font-size:36px; letter-spacing:0.03em; margin-bottom:6px; }
-.page-sub { font-size:13px; color:var(--muted); margin-bottom:28px; }
-.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:32px; }
-.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px 20px; }
-.stat-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
-.stat-value { font-family:'Bebas Neue'; font-size:36px; line-height:1; }
+/* Status pipeline */
+.status-scoping  { background:var(--surface3); color:var(--muted); border:1px solid var(--border2); }
+.status-contracted { background:rgba(177,236,240,0.15); color:var(--cyan); border:1px solid rgba(177,236,240,0.3); }
+.status-active   { background:rgba(210,255,1,0.15); color:var(--lime); border:1px solid rgba(210,255,1,0.3); }
+.status-wrapup   { background:rgba(255,171,64,0.15); color:var(--orange); border:1px solid rgba(255,171,64,0.3); }
+.status-complete { background:rgba(179,255,158,0.15); color:var(--green); border:1px solid rgba(179,255,158,0.3); }
 
-table { width:100%; border-collapse:collapse; }
-thead th { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); padding:10px 14px; text-align:left; border-bottom:1px solid var(--border); }
-tbody tr { border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s; }
-tbody tr:hover { background:var(--surface2); }
-tbody td { padding:14px; vertical-align:top; font-size:13px; }
-.community-name { font-weight:600; font-size:14px; margin-bottom:2px; }
-.community-sub { font-size:11px; color:var(--muted); }
-.tags-list { display:flex; flex-wrap:wrap; gap:4px; }
-.tag { display:inline-block; padding:2px 6px; border-radius:3px; font-family:'Barlow Condensed'; font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; border:1px solid var(--border2); color:var(--muted); }
-.metric { font-family:'Barlow Condensed'; font-size:16px; font-weight:700; }
-.metric-label { font-size:10px; color:var(--muted); font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:0.05em; }
+/* ── TABS ── */
+.tab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:20px; }
+.tab-btn { background:none; border:none; border-bottom:2px solid transparent; color:var(--muted); font-family:'Barlow Condensed'; font-size:13px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:10px 16px 10px 0; cursor:pointer; margin-right:4px; transition:color 0.12s; }
+.tab-btn:hover { color:var(--white); }
+.tab-btn.active { border-bottom-color:var(--lime); color:var(--white); }
+
+/* ── FORMS ── */
+.form-grid { display:grid; gap:16px; }
+.form-grid-2 { grid-template-columns:1fr 1fr; }
+.form-group { display:flex; flex-direction:column; gap:6px; }
+.form-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); }
+.form-input, .form-select, .form-textarea {
+  background:var(--surface2); border:1px solid var(--border2); border-radius:6px;
+  padding:9px 12px; color:var(--white); font-family:'Barlow'; font-size:13px;
+  outline:none; transition:border-color 0.15s; width:100%;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--lime); }
+.form-select option { background:var(--surface2); }
+.form-textarea { resize:vertical; min-height:80px; }
+.form-hint { font-size:11px; color:var(--muted); }
+
+/* ── MISC ── */
+.section-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
 .empty { text-align:center; padding:60px 20px; color:var(--muted); }
 .loading { text-align:center; padding:60px; color:var(--muted); font-family:'Barlow Condensed'; font-size:16px; letter-spacing:0.06em; text-transform:uppercase; }
+.metric { font-family:'Barlow Condensed'; font-size:16px; font-weight:700; }
+.metric-label { font-size:10px; color:var(--muted); font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:0.05em; }
+.tag { display:inline-block; padding:2px 6px; border-radius:3px; font-family:'Barlow Condensed'; font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; border:1px solid var(--border2); color:var(--muted); }
+.divider { border:none; border-top:1px solid var(--border); margin:20px 0; }
 
-/* Modal */
-#modal { position:fixed; inset:0; z-index:200; overflow-y:auto; background:var(--black); display:none; }
-.modal-inner { max-width:980px; margin:0 auto; padding-bottom:80px; }
+/* ── SLIDE PANEL ── */
+#slide-panel {
+  position:fixed; top:0; right:0; bottom:0; width:480px;
+  background:var(--surface2); border-left:1px solid var(--border);
+  z-index:200; overflow-y:auto; padding:28px;
+  transform:translateX(100%); transition:transform 0.2s ease;
+}
+#slide-panel.open { transform:translateX(0); }
+#panel-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:199;
+  display:none;
+}
+
+/* ── COMMUNITY MODAL ── */
+#comm-modal { position:fixed; inset:0; z-index:300; overflow-y:auto; background:var(--surface); display:none; }
+.comm-modal-inner { max-width:980px; margin:0 auto; padding-bottom:80px; }
 .back-btn { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); color:var(--white); font-family:'Barlow Condensed'; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:7px 14px; border-radius:5px; cursor:pointer; transition:background 0.15s; }
 .back-btn:hover { background:rgba(255,255,255,0.18); }
-.section-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
-.metric-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px 16px; position:relative; }
-.metric-card .tip, .subscore .tip { display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#1c1c1c; border:1px solid var(--border2); border-radius:7px; padding:10px 12px; width:200px; font-size:11px; color:rgba(240,240,240,0.75); line-height:1.55; z-index:100; pointer-events:none; white-space:normal; }
-.metric-card .tip::after, .subscore .tip::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:6px solid transparent; border-top-color:#1c1c1c; }
-.metric-card:hover .tip, .subscore:hover .tip { display:block; }
-.subscore { position:relative; background:var(--surface2); border:1px solid var(--border2); border-radius:6px; padding:10px; text-align:center; cursor:default; }
-.chip { display:inline-block; padding:4px 10px; border-radius:4px; font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; background:var(--surface3); border:1px solid var(--border2); color:var(--white); margin:2px; }
-.member-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
-.cs-card { background:var(--surface2); border:1px solid var(--border); border-radius:8px; overflow:hidden; min-width:200px; max-width:220px; flex-shrink:0; }
-.panel { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:20px; }
+.metric-card { background:var(--surface3); border:1px solid var(--border); border-radius:10px; padding:18px 16px; position:relative; }
+
+/* ── MEDIA GRID ── */
+.media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; margin-top:16px; }
+.media-item { background:var(--surface3); border:1px solid var(--border); border-radius:8px; overflow:hidden; position:relative; }
+.media-item img { width:100%; height:100px; object-fit:cover; display:block; }
+.media-item-cap { padding:6px 8px; font-size:11px; color:var(--muted); }
+.media-item-del { position:absolute; top:6px; right:6px; background:rgba(0,0,0,0.7); border:none; color:var(--red); border-radius:4px; padding:2px 6px; cursor:pointer; font-size:11px; }
+
+/* ── PIPELINE PILLS ── */
+.pipeline-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
+.pipeline-pill {
+  padding:6px 14px; border-radius:20px; cursor:pointer;
+  font-family:'Barlow Condensed'; font-size:12px; font-weight:700;
+  letter-spacing:0.06em; text-transform:uppercase; border:1px solid var(--border2);
+  background:transparent; color:var(--muted); transition:all 0.12s;
+}
+.pipeline-pill:hover { border-color:var(--border2); color:var(--white); }
+.pipeline-pill.active { background:var(--surface3); color:var(--white); border-color:var(--lime); }
+
+/* ── QUOTE SLOTS ── */
+.quote-slot { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:14px; margin-bottom:12px; }
+
+/* ── PROGRESS BAR ── */
+.progress-bar { height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+.progress-fill { height:100%; background:var(--lime); border-radius:2px; transition:width 0.3s; }
 </style>
 </head>
 <body>
 
-<header>
-  <div class="logo">mayo<span>.</span></div>
-  <div style="font-family:'Barlow Condensed';font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">Admin Panel</div>
-</header>
+<div class="admin-app">
+  <!-- Sidebar -->
+  <nav class="sidenav">
+    <div class="sidenav-logo">
+      <div class="logo-text">mayo<span class="logo-dot">.</span></div>
+      <span class="role-badge" style="background:var(--orange);color:#000">Admin</span>
+    </div>
+    <div class="sidenav-user">
+      <div class="avatar" style="background:var(--lime);color:#000">A</div>
+      <div>
+        <div class="user-name">Admin Panel</div>
+        <div class="user-org">mayo.fyi</div>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Overview</div>
+      <button class="nav-item" id="nav-dashboard" onclick="navigate('dashboard')">
+        <span class="nav-icon">⊞</span> Dashboard
+      </button>
+      <button class="nav-item" id="nav-projects" onclick="navigate('projects')">
+        <span class="nav-icon">◈</span> Projects
+        <span class="nav-badge" id="badge-projects" style="display:none">0</span>
+      </button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Management</div>
+      <button class="nav-item" id="nav-briefs" onclick="navigate('briefs')">
+        <span class="nav-icon">◻</span> Briefs
+      </button>
+      <button class="nav-item" id="nav-communities" onclick="navigate('communities')">
+        <span class="nav-icon">◉</span> Communities
+      </button>
+      <button class="nav-item" id="nav-brands" onclick="navigate('brands')">
+        <span class="nav-icon">◈</span> Brands
+      </button>
+    </div>
+  </nav>
 
-<main id="main-view">
-  <!-- Tabs -->
-  <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:28px;">
-    <button id="tab-communities" onclick="switchTab('communities')" style="background:none;border:none;border-bottom:2px solid var(--lime);color:var(--white);font-family:'Barlow Condensed';font-size:14px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:10px 20px 10px 0;cursor:pointer;margin-right:20px;">Communities</button>
-    <button id="tab-briefs" onclick="switchTab('briefs')" style="background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'Barlow Condensed';font-size:14px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:10px 20px 10px 0;cursor:pointer;">Briefs</button>
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-actions" id="topbar-actions"></div>
+    </div>
+    <div class="page" id="content">
+      <div class="loading">Loading…</div>
+    </div>
   </div>
+</div>
 
-  <!-- Communities view -->
-  <div id="view-communities">
-    <div class="page-sub" id="last-updated">Loading…</div>
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Total Profiles</div><div class="stat-value" id="stat-total">—</div></div>
-      <div class="stat-card"><div class="stat-label">Instagram Connected</div><div class="stat-value" id="stat-ig">—</div></div>
-      <div class="stat-card"><div class="stat-label">Fully Verified</div><div class="stat-value" id="stat-fv">—</div></div>
-      <div class="stat-card"><div class="stat-label">Avg. ER</div><div class="stat-value" id="stat-er">—</div></div>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
-      <div id="table-container" class="loading">Loading communities…</div>
-    </div>
-  </div>
+<!-- Slide panel -->
+<div id="panel-overlay" onclick="closePanel()"></div>
+<div id="slide-panel" id="slide-panel"></div>
 
-  <!-- Briefs view -->
-  <div id="view-briefs" style="display:none;">
-    <div class="page-sub" id="briefs-sub">Loading…</div>
-    <div class="stats-row" style="grid-template-columns:repeat(2,1fr);">
-      <div class="stat-card"><div class="stat-label">Total Briefs</div><div class="stat-value" id="stat-briefs-total">—</div></div>
-      <div class="stat-card"><div class="stat-label">Brands</div><div class="stat-value" id="stat-briefs-brands">—</div></div>
-    </div>
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;">
-      <div id="briefs-container" class="loading">Loading briefs…</div>
-    </div>
-  </div>
-</main>
-
-<div id="modal">
-  <div class="modal-inner" id="modal-inner"></div>
+<!-- Community detail modal -->
+<div id="comm-modal">
+  <div class="comm-modal-inner" id="comm-modal-inner"></div>
 </div>
 
 <div id="admin-token" style="display:none">{{ admin_token }}</div>
 
 <script>
 const ADMIN_TOKEN = document.getElementById('admin-token').textContent.trim();
-const archetypeResults = {}; // keyed by communityId — persists across modal re-renders
 
+// ── State ────────────────────────────────────────────────────────────────────
+const S = {
+  page: 'dashboard',
+  projectFilter: 'all',
+  projectTab: 'overview',
+  selectedProject: null,
+  communities: [], brands: [], briefs: [], projects: [],
+};
+
+// ── API ──────────────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const sep = path.includes('?') ? '&' : '?';
+  const res = await fetch(`${path}${sep}token=${ADMIN_TOKEN}`, {
+    headers: { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_TOKEN, ...opts.headers },
+    ...opts
+  });
+  return res.json();
+}
+
+async function apiUpload(path, formData) {
+  const sep = path.includes('?') ? '&' : '?';
+  const res = await fetch(`${path}${sep}token=${ADMIN_TOKEN}`, {
+    method: 'POST',
+    headers: { 'X-Admin-Token': ADMIN_TOKEN },
+    body: formData
+  });
+  return res.json();
+}
+
+async function loadAll() {
+  try {
+    const [communities, brands, briefs, projects] = await Promise.all([
+      api('/api/admin/communities'),
+      api('/api/admin/brands'),
+      api('/api/admin/briefs'),
+      api('/api/admin/projects'),
+    ]);
+    S.communities = Array.isArray(communities) ? communities : [];
+    S.brands = Array.isArray(brands) ? brands : [];
+    S.briefs = Array.isArray(briefs) ? briefs : [];
+    S.projects = Array.isArray(projects) ? projects : [];
+
+    // Update active projects badge
+    const active = S.projects.filter(p => p.status === 'active').length;
+    const badge = document.getElementById('badge-projects');
+    if (badge) { badge.textContent = active; badge.style.display = active ? '' : 'none'; }
+  } catch (e) {
+    console.error('Load error', e);
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
 const COVER_OPTIONS = [
   { id:1, gradient:'linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 70%,#533483 100%)' },
   { id:2, gradient:'linear-gradient(135deg,#0d0d0d 0%,#1a0a00 40%,#3d1c00 70%,#c43a00 100%)' },
@@ -126,15 +335,6 @@ const COVER_OPTIONS = [
   { id:4, gradient:'linear-gradient(135deg,#1a0a00 0%,#3d2b1f 40%,#8a6a40 70%,#c4a060 100%)' },
   { id:5, gradient:'linear-gradient(135deg,#0d0d1a 0%,#1a1a3e 40%,#2d1b69 70%,#6b2d8b 100%)' },
   { id:6, gradient:'linear-gradient(135deg,#001a0a 0%,#003d1a 40%,#006b2d 70%,#00a844 100%)' },
-  { id:7, gradient:'linear-gradient(135deg,#1a0010 0%,#3d0028 40%,#7a0050 70%,#c40080 100%)' },
-  { id:8, gradient:'linear-gradient(135deg,#0a0a00 0%,#1a1a00 40%,#3d3d00 70%,#7a7a00 100%)' },
-];
-
-const ARCHETYPES = [
-  { id:'evangelists',    label:'Evangelists',    color:'#ff6ef2', best:'Brand Awareness' },
-  { id:'early_adopters', label:'Early Adopters',  color:'#d2ff01', best:'Product Launches' },
-  { id:'loyalists',      label:'Loyalists',       color:'#b1ecf0', best:'Long-term Sponsorship' },
-  { id:'buyers',         label:'Buyers',          color:'#ffab40', best:'Direct Response' },
 ];
 
 const AVATAR_COLORS = [
@@ -154,15 +354,19 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
 }
 
+function formatCurrency(n) {
+  if (!n) return '—';
+  return '$' + Number(n).toLocaleString();
+}
+
 function getER(c) {
-  // Recalculate live from raw media so it always reflects the current formula,
-  // regardless of when the pipeline ran or which formula was active at the time.
   const media = c.instagram_data?.media || [];
   const followers = c.instagram_data?.profile?.followers_count || 0;
   if (!media.length || !followers) return null;
   const total = media.reduce((sum, p) => sum + (p.like_count||0) + (p.comments_count||0), 0);
   return Math.round(total / media.length / followers * 10000) / 100;
 }
+
 function getFollowers(c) { return c.instagram_data?.profile?.followers_count ?? null; }
 
 function getTier(c) {
@@ -178,916 +382,1066 @@ function tierBadge(tier) {
   return '<span class="badge badge-muted">Starter</span>';
 }
 
-function linkedChannels(c) {
-  const icons = [];
-  if (c.instagram_token) {
-    const hasData = !!c.instagram_data;
-    icons.push(`<span title="Instagram${hasData ? ' (data collected)' : ' (connected)'}" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285aeb 90%);opacity:${hasData?1:0.5};flex-shrink:0;">
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="white"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-    </span>`);
-  }
-  const substack = (c.substack_data && c.substack_data.url) || (c.channels || []).find(ch => ch.name === 'Substack');
-  if (substack) {
-    icons.push(`<span title="Substack" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#FF6719;flex-shrink:0;">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="white"><path d="M22.539 8.242H1.46V5.406h21.08v2.836zM1.46 10.812V24L12 18.11 22.54 24V10.812H1.46zM22.54 0H1.46v2.836h21.08V0z"/></svg>
-    </span>`);
-  }
-  if (!c.instagram_token && !substack) {
-    return '<span style="color:var(--muted);font-size:12px">—</span>';
-  }
-  return `<div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap">${icons.join('')}</div>`;
+const STATUS_LABELS = {
+  scoping:'Scoping', contracted:'Contracted', active:'Active', wrapup:'Wrap-up', complete:'Complete'
+};
+
+function statusBadge(status) {
+  const label = STATUS_LABELS[status] || status || '—';
+  return `<span class="badge status-${status||'scoping'}">${label}</span>`;
 }
 
-let communities = [];
+// ── Navigation ───────────────────────────────────────────────────────────────
+function navigate(page, extra = {}) {
+  S.page = page;
+  Object.assign(S, extra);
+  ['dashboard','projects','briefs','communities','brands'].forEach(p => {
+    const el = document.getElementById(`nav-${p}`);
+    if (el) el.classList.toggle('active', page === p);
+  });
+  const titles = { dashboard:'Dashboard', projects:'Projects', briefs:'Briefs', communities:'Communities', brands:'Brands' };
+  document.getElementById('topbar-title').textContent = titles[page] || page;
+  renderTopbarActions();
+  render();
+}
 
-// ── Table ─────────────────────────────────────────────────────────────────────
-
-function renderTable() {
-  if (!communities.length) {
-    document.getElementById('table-container').innerHTML = '<div class="empty">No communities yet. Share the onboarding link to get started.</div>';
-    return;
+function renderTopbarActions() {
+  const el = document.getElementById('topbar-actions');
+  if (S.page === 'projects' && !S.selectedProject) {
+    el.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openCreateProject()">+ New Project</button>`;
+  } else if (S.page === 'briefs') {
+    el.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openCreateBrief()">+ New Brief</button>`;
+  } else {
+    el.innerHTML = '';
   }
-  const igConnected = communities.filter(c => c.instagram_token).length;
-  const fullyVerified = communities.filter(c => getTier(c) === 'fully-verified').length;
-  const ers = communities.map(getER).filter(v => v !== null);
-  const avgER = ers.length ? (ers.reduce((a,b)=>a+b,0)/ers.length).toFixed(1) : '—';
+}
 
-  document.getElementById('stat-total').textContent = communities.length;
-  document.getElementById('stat-ig').textContent = igConnected;
-  document.getElementById('stat-fv').textContent = fullyVerified;
-  document.getElementById('stat-er').textContent = avgER + (ers.length ? '%' : '');
-  document.getElementById('last-updated').textContent = `Last refreshed ${new Date().toLocaleTimeString()}`;
+function render() {
+  const c = document.getElementById('content');
+  switch (S.page) {
+    case 'dashboard':   c.innerHTML = renderDashboard(); break;
+    case 'projects':    c.innerHTML = S.selectedProject ? renderProjectDetail() : renderProjects(); break;
+    case 'briefs':      c.innerHTML = renderBriefs(); break;
+    case 'communities': c.innerHTML = renderCommunities(); break;
+    case 'brands':      c.innerHTML = renderBrands(); break;
+  }
+}
 
-  document.getElementById('table-container').innerHTML = `
-    <div style="overflow-x:auto;">
-    <table style="min-width:900px;">
-      <thead><tr>
-        <th>Community</th>
-        <th>Tier</th>
-        <th>Linked Channels</th>
-        <th>Active Members</th>
-        <th>Reach</th>
-        <th>ER</th>
-        <th>Partnerships</th>
-        <th>CIS</th>
-        <th>Archetype</th>
-        <th>Tags</th>
-        <th>Joined</th>
-      </tr></thead>
-      <tbody>
-        ${communities.map(c => {
-          const er = getER(c), followers = getFollowers(c), tier = getTier(c);
-          const cis = c.cis_stamped != null ? c.cis_stamped : (c.cis_raw != null ? c.cis_raw : null);
-          const cisStamped = c.cis_stamped != null;
-          const verifiedCS = (c.case_studies || []).filter(cs => cs.verified === true || cs.mayo_verified === true);
-          const partnershipsCell = verifiedCS.length
-            ? `<div class="metric">${verifiedCS.length}</div><div class="metric-label" style="line-height:1.3">${verifiedCS.slice(0,2).map(cs=>cs.brand||'').filter(Boolean).join(', ')}${verifiedCS.length>2?' +more':''}</div>`
-            : '<span style="color:var(--muted)">—</span>';
-          const archetypeColors = {evangelists:'var(--pink)',early_adopters:'var(--cyan)',loyalists:'var(--lime)',buyers:'var(--orange)'};
-          const archetypeLabels = {evangelists:'Evangelists',early_adopters:'Early Adopters',loyalists:'Loyalists',buyers:'Buyers'};
-          const archCell = c.archetype
-            ? `<span style="font-family:\'Barlow Condensed\';font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${archetypeColors[c.archetype]||'var(--white)'}">${archetypeLabels[c.archetype]||c.archetype}</span>`
-            : '<span style="color:var(--muted)">—</span>';
-          return `<tr onclick="openCommunity('${c.id}')">
-            <td>
-              <div class="community-name">${c.name}</div>
-              <div class="community-sub">${c.location || '—'}</div>
-              ${c.tagline ? `<div class="community-sub" style="margin-top:2px;font-style:italic">${c.tagline}</div>` : ''}
-            </td>
-            <td>${tierBadge(tier)}</td>
-            <td>${linkedChannels(c)}</td>
-            <td>${c.active_members != null ? `<div class="metric">${Number(c.active_members).toLocaleString()}</div>` : '<span style="color:var(--muted)">—</span>'}</td>
-            <td>${followers !== null ? `<div class="metric">${followers.toLocaleString()}</div>` : '<span style="color:var(--muted)">—</span>'}</td>
-            <td>${er !== null ? `<div class="metric">${er}%</div>` : '<span style="color:var(--muted)">—</span>'}</td>
-            <td>${partnershipsCell}</td>
-            <td>${cis !== null ? `<div class="metric">${Math.round(cis)}<span style="font-size:10px;font-weight:400;color:var(--muted)">/100</span></div>${cisStamped ? '<div class="metric-label" style="color:var(--lime)">★ stamped</div>' : ''}` : '<span style="color:var(--muted)">—</span>'}</td>
-            <td>${archCell}</td>
-            <td><div class="tags-list">
-              ${(c.tags||[]).slice(0,3).map(t=>`<span class="tag">${t}</span>`).join('')}
-              ${(c.tags||[]).length>3?`<span class="tag">+${c.tags.length-3}</span>`:''}
-            </div></td>
-            <td style="color:var(--muted);font-size:12px">${formatDate(c.created_at)}</td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const activeProjects = S.projects.filter(p => p.status === 'active');
+  const openBriefs = S.briefs.filter(b => b.status === 'open');
+  const byStatus = {};
+  S.projects.forEach(p => { const s = p.status || 'scoping'; byStatus[s] = (byStatus[s]||0)+1; });
+
+  const recentProjects = S.projects.slice(0, 6);
+
+  return `
+    <div style="max-width:1100px">
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card">
+          <div class="stat-label">Communities</div>
+          <div class="stat-value">${S.communities.length}</div>
+          <div class="stat-sub">${S.communities.filter(c=>getTier(c)==='fully-verified').length} fully verified</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Brands</div>
+          <div class="stat-value">${S.brands.length}</div>
+          <div class="stat-sub">${S.briefs.length} briefs total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Active Projects</div>
+          <div class="stat-value" style="color:var(--lime)">${activeProjects.length}</div>
+          <div class="stat-sub">${S.projects.length} total</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Open Briefs</div>
+          <div class="stat-value">${openBriefs.length}</div>
+          <div class="stat-sub">${S.brands.length} brands</div>
+        </div>
+      </div>
+
+      <!-- Pipeline summary -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+        <div class="panel">
+          <div class="section-label">Project Pipeline</div>
+          ${['scoping','contracted','active','wrapup','complete'].map(s => {
+            const count = byStatus[s] || 0;
+            const pct = S.projects.length ? Math.round(count/S.projects.length*100) : 0;
+            return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <div style="width:90px">${statusBadge(s)}</div>
+              <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:${pct}%;background:${s==='active'?'var(--lime)':s==='complete'?'var(--green)':s==='wrapup'?'var(--orange)':s==='contracted'?'var(--cyan)':'var(--border2)'}"></div></div>
+              <div style="font-family:'Barlow Condensed';font-size:13px;font-weight:700;width:20px;text-align:right">${count}</div>
+            </div>`;
+          }).join('')}
+        </div>
+
+        <div class="panel">
+          <div class="section-label">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn btn-primary" onclick="navigate('projects');openCreateProject()" style="justify-content:center">+ Create Project</button>
+            <button class="btn btn-ghost" onclick="navigate('briefs');openCreateBrief()" style="justify-content:center">+ Create Brief</button>
+            <button class="btn btn-ghost" onclick="navigate('communities')" style="justify-content:center">View Communities →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent projects -->
+      ${recentProjects.length ? `
+      <div class="section-label">Recent Projects</div>
+      <div class="card">
+        <div style="overflow-x:auto">
+        <table style="min-width:700px">
+          <thead><tr>
+            <th>Community</th><th>Brand</th><th>Status</th><th>Budget</th><th>Created</th>
+          </tr></thead>
+          <tbody>
+            ${recentProjects.map(p => `
+              <tr onclick="navigate('projects',{selectedProject:'${p.id}',projectTab:'overview'})">
+                <td><div style="font-weight:600">${p.community_name||'—'}</div><div style="font-size:11px;color:var(--muted)">${p.brief_title||''}</div></td>
+                <td>${p.brand_name||'—'}</td>
+                <td>${statusBadge(p.status)}</td>
+                <td>${formatCurrency(p.budget)}</td>
+                <td style="color:var(--muted)">${formatDate(p.created_at)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        </div>
+      </div>
+      ` : `<div class="panel"><div class="empty" style="padding:30px">No projects yet. <button class="btn btn-primary btn-sm" onclick="openCreateProject()" style="margin-left:8px">Create first project →</button></div></div>`}
     </div>`;
 }
 
-// ── Modal ─────────────────────────────────────────────────────────────────────
+// ── PROJECTS LIST ─────────────────────────────────────────────────────────────
+function renderProjects() {
+  const statuses = ['all','scoping','contracted','active','wrapup','complete'];
+  const filtered = S.projectFilter === 'all'
+    ? S.projects
+    : S.projects.filter(p => (p.status||'scoping') === S.projectFilter);
 
-function openCommunity(id) {
-  const c = communities.find(x => x.id === id);
+  return `
+    <div style="max-width:1100px">
+      <div class="pipeline-bar">
+        ${statuses.map(s => `
+          <button class="pipeline-pill${S.projectFilter===s?' active':''}" onclick="filterProjects('${s}')">
+            ${s==='all'?`All (${S.projects.length})`:STATUS_LABELS[s]+' ('+S.projects.filter(p=>(p.status||'scoping')===s).length+')'}
+          </button>
+        `).join('')}
+      </div>
+      <div class="card">
+        <div style="overflow-x:auto">
+        <table style="min-width:800px">
+          <thead><tr>
+            <th>Community</th><th>Brand</th><th>Brief</th><th>Status</th><th>Budget</th><th>Start</th><th>End</th>
+          </tr></thead>
+          <tbody>
+            ${filtered.length ? filtered.map(p => `
+              <tr onclick="navigate('projects',{selectedProject:'${p.id}',projectTab:'overview'})">
+                <td>
+                  <div style="font-weight:600">${p.community_name||'—'}</div>
+                  <div style="font-size:11px;color:var(--muted)">${p.title||''}</div>
+                </td>
+                <td>${p.brand_name||'—'}</td>
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.brief_title||'—'}</td>
+                <td>${statusBadge(p.status)}</td>
+                <td>${formatCurrency(p.budget)}</td>
+                <td style="color:var(--muted)">${formatDate(p.start_date)}</td>
+                <td style="color:var(--muted)">${formatDate(p.end_date)}</td>
+              </tr>
+            `).join('') : `<tr><td colspan="7"><div class="empty">No ${S.projectFilter==='all'?'':''+STATUS_LABELS[S.projectFilter]+' '}projects yet.</div></td></tr>`}
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+function filterProjects(status) {
+  S.projectFilter = status;
+  render();
+}
+
+// ── PROJECT DETAIL ────────────────────────────────────────────────────────────
+function renderProjectDetail() {
+  const p = S.projects.find(x => x.id === S.selectedProject);
+  if (!p) return `<div class="empty">Project not found. <button class="btn btn-ghost btn-sm" onclick="navigate('projects')">← Back</button></div>`;
+
+  const tabs = ['overview','media','measurement','recap','team'];
+  const tabLabels = { overview:'Overview', media:'Media Library', measurement:'Measurement', recap:'Recap Report', team:'Team' };
+
+  return `
+    <div style="max-width:1000px">
+      <!-- Header -->
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+        <div>
+          <button class="btn btn-ghost btn-sm" onclick="navigate('projects')" style="margin-bottom:12px">← Back to Projects</button>
+          <div class="bb" style="font-size:32px;line-height:1">${p.community_name||'Project'}</div>
+          <div style="color:var(--muted);margin-top:4px">${p.brand_name||''} ${p.brief_title?'· '+p.brief_title:''}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:32px">
+          ${statusBadge(p.status)}
+        </div>
+      </div>
+
+      <!-- Status pipeline -->
+      <div class="panel" style="margin-bottom:20px">
+        <div class="section-label">Update Status</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${['scoping','contracted','active','wrapup','complete'].map(s => `
+            <button
+              class="btn btn-sm${(p.status||'scoping')===s?' btn-primary':' btn-ghost'}"
+              style="${(p.status||'scoping')===s?'':'opacity:0.6'}"
+              onclick="updateProjectStatus('${p.id}','${s}')">
+              ${STATUS_LABELS[s]}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-bar">
+        ${tabs.map(t => `<button class="tab-btn${S.projectTab===t?' active':''}" onclick="switchProjectTab('${t}')">${tabLabels[t]}</button>`).join('')}
+      </div>
+
+      <!-- Tab content -->
+      <div id="project-tab-content">
+        ${renderProjectTab(p)}
+      </div>
+    </div>`;
+}
+
+function renderProjectTab(p) {
+  switch (S.projectTab) {
+    case 'overview':    return renderProjectOverview(p);
+    case 'media':       return renderProjectMedia(p);
+    case 'measurement': return renderProjectMeasurement(p);
+    case 'recap':       return renderProjectRecap(p);
+    case 'team':        return renderProjectTeam(p);
+    default: return '';
+  }
+}
+
+function switchProjectTab(tab) {
+  S.projectTab = tab;
+  const p = S.projects.find(x => x.id === S.selectedProject);
+  if (p) document.getElementById('project-tab-content').innerHTML = renderProjectTab(p);
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.toLowerCase().replace(/ /g,'') === tab.replace(/ /g,'') ||
+      btn.onclick?.toString().includes(`'${tab}'`));
+  });
+  // Simpler: re-render the tab bar
+  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+    const tabMap = ['overview','media','measurement','recap','team'];
+    btn.classList.toggle('active', tabMap[i] === tab);
+  });
+}
+
+function renderProjectOverview(p) {
+  return `
+    <div class="form-grid form-grid-2" style="margin-bottom:20px">
+      <div class="panel">
+        <div class="section-label">Details</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${[
+            ['Community', p.community_name||'—'],
+            ['Brand', p.brand_name||'—'],
+            ['Brief', p.brief_title||'—'],
+            ['Type', p.type||'—'],
+            ['Budget', formatCurrency(p.budget)],
+            ['Start Date', formatDate(p.start_date)],
+            ['End Date', formatDate(p.end_date)],
+            ['Created', formatDate(p.created_at)],
+          ].map(([label,val]) => `
+            <div style="display:flex;justify-content:space-between;gap:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">
+              <div style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">${label}</div>
+              <div style="font-size:13px;text-align:right">${val}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="panel">
+        <div class="section-label">Notes</div>
+        <textarea class="form-textarea" id="proj-notes" style="min-height:120px" placeholder="Internal notes…">${p.notes||''}</textarea>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="saveProjectNotes('${p.id}')">Save Notes</button>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="section-label">Milestones</div>
+      <div id="milestones-list">
+        ${renderMilestones(p.milestones||[])}
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input class="form-input" style="flex:1" id="milestone-text" placeholder="Add milestone…">
+        <input class="form-input" style="width:140px" type="date" id="milestone-date">
+        <button class="btn btn-ghost btn-sm" onclick="addMilestone('${p.id}')">Add</button>
+      </div>
+    </div>`;
+}
+
+function renderMilestones(milestones) {
+  if (!milestones.length) return '<div style="color:var(--muted);font-size:13px">No milestones yet.</div>';
+  return milestones.map((m, i) => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+      <input type="checkbox" ${m.done?'checked':''} onchange="toggleMilestone('${S.selectedProject}',${i},this.checked)" style="accent-color:var(--lime)">
+      <div style="flex:1;font-size:13px;${m.done?'text-decoration:line-through;color:var(--muted)':''}">${m.text}</div>
+      ${m.date ? `<div style="font-size:11px;color:var(--muted)">${formatDate(m.date)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderProjectMedia(p) {
+  const items = p.media_items || [];
+  return `
+    <div>
+      <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center">
+        <label class="btn btn-primary btn-sm" style="cursor:pointer">
+          Upload Image <input type="file" accept="image/*" style="display:none" onchange="uploadMediaFile('${p.id}',this)">
+        </label>
+        <button class="btn btn-ghost btn-sm" onclick="addVideoUrl('${p.id}')">+ Add Video URL</button>
+      </div>
+      ${items.length ? `
+        <div class="media-grid">
+          ${items.map(item => `
+            <div class="media-item">
+              ${item.type==='image'
+                ? `<img src="${item.url}" alt="${item.caption||''}" loading="lazy">`
+                : `<div style="height:100px;display:flex;align-items:center;justify-content:center;background:var(--surface2)">
+                    <a href="${item.url}" target="_blank" style="color:var(--cyan);font-size:11px;text-decoration:none">▶ Video Link</a>
+                  </div>`
+              }
+              <div class="media-item-cap">${item.caption||'No caption'}</div>
+              <button class="media-item-del" onclick="deleteMediaItem('${p.id}','${item.id}')">✕</button>
+            </div>
+          `).join('')}
+        </div>
+      ` : `<div class="panel"><div class="empty" style="padding:30px">No media yet. Upload images or add video links to build the partnership record.</div></div>`}
+    </div>`;
+}
+
+function renderProjectMeasurement(p) {
+  const r = p.report || {};
+  const emv = r.impressions && r.cpm_benchmark ? Math.round(r.impressions * (r.cpm_benchmark||25) / 1000) : 0;
+  return `
+    <div>
+      <div class="form-grid form-grid-2" style="margin-bottom:16px">
+        <div class="form-group">
+          <label class="form-label">Attendance</label>
+          <input class="form-input" type="number" id="rpt-attendance" value="${r.attendance||''}" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Post Count (hashtag)</label>
+          <input class="form-input" type="number" id="rpt-posts" value="${r.post_count||''}" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Impressions</label>
+          <input class="form-input" type="number" id="rpt-impressions" value="${r.impressions||''}" placeholder="0" oninput="updateEMV()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CPM Benchmark ($)</label>
+          <input class="form-input" type="number" id="rpt-cpm" value="${r.cpm_benchmark||25}" oninput="updateEMV()">
+        </div>
+      </div>
+
+      <!-- EMV preview -->
+      <div class="panel" style="margin-bottom:16px;background:rgba(210,255,1,0.05);border-color:rgba(210,255,1,0.2)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div class="section-label" style="margin-bottom:4px">Estimated Media Value</div>
+            <div style="font-size:11px;color:var(--muted)">Impressions × CPM ÷ 1000. Methodology disclosed to brands.</div>
+          </div>
+          <div class="bb" style="font-size:36px;color:var(--lime)" id="emv-display">${emv?'$'+emv.toLocaleString():'—'}</div>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px">
+        <label class="form-label">Campaign Hashtag</label>
+        <input class="form-input" id="rpt-hashtag" value="${r.hashtag||''}" placeholder="#CampaignHashtag">
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label class="form-label">Engagement Summary</label>
+        <textarea class="form-textarea" id="rpt-summary" placeholder="Describe key engagement moments, audience response…">${r.engagement_summary||''}</textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label class="form-label">Methodology Note</label>
+        <textarea class="form-textarea" id="rpt-methodology" placeholder="Data sources, calculation notes…">${r.methodology||''}</textarea>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn btn-ghost" onclick="saveMeasurementReport('${p.id}','draft')">Save Draft</button>
+        <button class="btn btn-primary" onclick="saveMeasurementReport('${p.id}','published')">Publish Report</button>
+        ${r.status==='published'?`<span class="badge badge-lime" style="align-self:center">Published</span>`:''}
+      </div>
+    </div>`;
+}
+
+function renderProjectRecap(p) {
+  const rc = p.recap || {};
+  const quotes = rc.quotes || [{text:'',author:''},{text:'',author:''},{text:'',author:''}];
+  while (quotes.length < 3) quotes.push({text:'',author:''});
+  return `
+    <div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label class="form-label">Report Title</label>
+        <input class="form-input" id="recap-title" value="${rc.title||''}" placeholder="e.g. Southbound 400 × Hyperice Partnership">
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label class="form-label">Executive Summary</label>
+        <textarea class="form-textarea" id="recap-summary" style="min-height:100px" placeholder="2–3 sentence overview of the partnership and outcomes…">${rc.summary||''}</textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label class="form-label">Key Wins</label>
+        <textarea class="form-textarea" id="recap-wins" placeholder="Bullet-point the headline results…">${rc.key_wins||''}</textarea>
+      </div>
+      <div class="form-group" style="margin-bottom:16px">
+        <label class="form-label">Campaign Hashtag</label>
+        <input class="form-input" id="recap-hashtag" value="${rc.hashtag||''}" placeholder="#CampaignHashtag">
+      </div>
+
+      <div class="section-label" style="margin-bottom:12px">Quotes (up to 3)</div>
+      ${quotes.slice(0,3).map((q, i) => `
+        <div class="quote-slot">
+          <div class="form-group" style="margin-bottom:8px">
+            <label class="form-label">Quote ${i+1}</label>
+            <textarea class="form-textarea" id="recap-quote-${i}" style="min-height:60px" placeholder="Quote text…">${q.text||''}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Attribution</label>
+            <input class="form-input" id="recap-author-${i}" value="${q.author||''}" placeholder="Name, Title">
+          </div>
+        </div>
+      `).join('')}
+
+      <div style="display:flex;gap:10px;margin-top:8px">
+        <button class="btn btn-ghost" onclick="saveRecapReport('${p.id}','draft')">Save Draft</button>
+        <button class="btn btn-primary" onclick="saveRecapReport('${p.id}','published')">Publish as Case Study</button>
+        ${rc.status==='published'?`<span class="badge badge-lime" style="align-self:center">Published</span>`:''}
+      </div>
+    </div>`;
+}
+
+function renderProjectTeam(p) {
+  const team = p.team || [];
+  return `
+    <div>
+      ${team.length ? `
+        <div class="card" style="margin-bottom:16px">
+          <table>
+            <thead><tr><th>Name</th><th>Role</th><th>Email</th><th></th></tr></thead>
+            <tbody>
+              ${team.map((m, i) => `
+                <tr>
+                  <td><div style="font-weight:600">${m.name||'—'}</div></td>
+                  <td style="color:var(--muted)">${m.role||'—'}</td>
+                  <td>${m.email ? `<a href="mailto:${m.email}" style="color:var(--cyan)">${m.email}</a>` : '—'}</td>
+                  <td><button class="btn btn-danger btn-sm" onclick="removeTeamMember('${p.id}',${i})">Remove</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : `<div class="panel" style="margin-bottom:16px"><div class="empty" style="padding:20px">No team members added yet.</div></div>`}
+
+      <div class="panel">
+        <div class="section-label">Add Team Member</div>
+        <div class="form-grid form-grid-2" style="margin-bottom:12px">
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input class="form-input" id="team-name" placeholder="Full name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Role</label>
+            <input class="form-input" id="team-role" placeholder="e.g. Account Manager">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-input" id="team-email" placeholder="email@example.com">
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="addTeamMember('${p.id}')">Add Member</button>
+      </div>
+    </div>`;
+}
+
+// ── PROJECT ACTIONS ───────────────────────────────────────────────────────────
+async function updateProjectStatus(id, status) {
+  const res = await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ status }) });
+  if (res.ok) {
+    const p = S.projects.find(x => x.id === id);
+    if (p) p.status = status;
+    render();
+  }
+}
+
+async function saveProjectNotes(id) {
+  const notes = document.getElementById('proj-notes').value;
+  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ notes }) });
+  const p = S.projects.find(x => x.id === id);
+  if (p) p.notes = notes;
+  showToast('Notes saved');
+}
+
+async function addMilestone(id) {
+  const text = document.getElementById('milestone-text').value.trim();
+  const date = document.getElementById('milestone-date').value;
+  if (!text) return;
+  const p = S.projects.find(x => x.id === id);
+  const milestones = [...(p.milestones||[]), { text, date: date||null, done: false }];
+  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ milestones }) });
+  p.milestones = milestones;
+  document.getElementById('milestones-list').innerHTML = renderMilestones(milestones);
+  document.getElementById('milestone-text').value = '';
+  document.getElementById('milestone-date').value = '';
+}
+
+async function toggleMilestone(id, idx, done) {
+  const p = S.projects.find(x => x.id === id);
+  const milestones = [...(p.milestones||[])];
+  milestones[idx] = { ...milestones[idx], done };
+  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ milestones }) });
+  p.milestones = milestones;
+}
+
+async function uploadMediaFile(id, input) {
+  const file = input.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await apiUpload(`/api/admin/projects/${id}/media`, fd);
+  if (res.ok) {
+    await refreshProject(id);
+    switchProjectTab('media');
+  } else {
+    alert('Upload failed: ' + (res.error||'Unknown error'));
+  }
+}
+
+async function addVideoUrl(id) {
+  const url = prompt('Enter video URL (YouTube, Vimeo, etc.):');
+  if (!url) return;
+  const caption = prompt('Caption (optional):') || '';
+  const p = S.projects.find(x => x.id === id);
+  const items = [...(p.media_items||[]), {
+    id: Math.random().toString(36).slice(2,10), type:'video', url, caption,
+    uploaded_at: new Date().toISOString()
+  }];
+  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ media_items: items }) });
+  p.media_items = items;
+  switchProjectTab('media');
+}
+
+async function deleteMediaItem(id, itemId) {
+  if (!confirm('Remove this item?')) return;
+  const p = S.projects.find(x => x.id === id);
+  const items = (p.media_items||[]).filter(m => m.id !== itemId);
+  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ media_items: items }) });
+  p.media_items = items;
+  switchProjectTab('media');
+}
+
+function updateEMV() {
+  const imp = parseInt(document.getElementById('rpt-impressions')?.value||0);
+  const cpm = parseInt(document.getElementById('rpt-cpm')?.value||25);
+  const emv = imp && cpm ? Math.round(imp * cpm / 1000) : 0;
+  const el = document.getElementById('emv-display');
+  if (el) el.textContent = emv ? '$'+emv.toLocaleString() : '—';
+}
+
+async function saveMeasurementReport(id, status) {
+  const attendance = parseInt(document.getElementById('rpt-attendance').value||0);
+  const post_count = parseInt(document.getElementById('rpt-posts').value||0);
+  const impressions = parseInt(document.getElementById('rpt-impressions').value||0);
+  const cpm_benchmark = parseInt(document.getElementById('rpt-cpm').value||25);
+  const engagement_summary = document.getElementById('rpt-summary').value;
+  const methodology = document.getElementById('rpt-methodology').value;
+  const hashtag = document.getElementById('rpt-hashtag').value;
+  const emv = impressions && cpm_benchmark ? Math.round(impressions * cpm_benchmark / 1000) : 0;
+  const report = { attendance, post_count, impressions, cpm_benchmark, emv, engagement_summary, methodology, hashtag, status };
+  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ report }) });
+  const p = S.projects.find(x => x.id === id);
+  if (p) p.report = report;
+  showToast(status === 'published' ? 'Report published' : 'Draft saved');
+  render();
+}
+
+async function saveRecapReport(id, status) {
+  const title = document.getElementById('recap-title').value;
+  const summary = document.getElementById('recap-summary').value;
+  const key_wins = document.getElementById('recap-wins').value;
+  const hashtag = document.getElementById('recap-hashtag').value;
+  const quotes = [0,1,2].map(i => ({
+    text: document.getElementById(`recap-quote-${i}`)?.value||'',
+    author: document.getElementById(`recap-author-${i}`)?.value||''
+  })).filter(q => q.text);
+  const recap = { title, summary, key_wins, hashtag, quotes, status };
+  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ recap }) });
+  const p = S.projects.find(x => x.id === id);
+  if (p) p.recap = recap;
+  showToast(status === 'published' ? 'Case study published' : 'Draft saved');
+  render();
+}
+
+async function addTeamMember(id) {
+  const name = document.getElementById('team-name').value.trim();
+  const role = document.getElementById('team-role').value.trim();
+  const email = document.getElementById('team-email').value.trim();
+  if (!name) return;
+  const p = S.projects.find(x => x.id === id);
+  const team = [...(p.team||[]), { name, role, email }];
+  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ team }) });
+  p.team = team;
+  switchProjectTab('team');
+}
+
+async function removeTeamMember(id, idx) {
+  const p = S.projects.find(x => x.id === id);
+  const team = (p.team||[]).filter((_,i) => i !== idx);
+  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ team }) });
+  p.team = team;
+  switchProjectTab('team');
+}
+
+async function refreshProject(id) {
+  const projects = await api('/api/admin/projects');
+  S.projects = Array.isArray(projects) ? projects : S.projects;
+}
+
+// ── BRIEFS ────────────────────────────────────────────────────────────────────
+function renderBriefs() {
+  return `
+    <div style="max-width:1100px">
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+        <div class="stat-card"><div class="stat-label">Total Briefs</div><div class="stat-value">${S.briefs.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value" style="color:var(--lime)">${S.briefs.filter(b=>b.status==='open').length}</div></div>
+        <div class="stat-card"><div class="stat-label">Brands</div><div class="stat-value">${new Set(S.briefs.map(b=>b.brand_id)).size}</div></div>
+      </div>
+      <div class="card">
+        <div style="overflow-x:auto">
+        <table style="min-width:700px">
+          <thead><tr>
+            <th>Title</th><th>Brand</th><th>Goal</th><th>Type</th><th>Budget</th><th>Status</th><th>Created</th><th></th>
+          </tr></thead>
+          <tbody>
+            ${S.briefs.length ? S.briefs.map(b => `
+              <tr>
+                <td style="font-weight:600">${b.title||'Untitled'}</td>
+                <td>${b.brand_name||'—'}</td>
+                <td style="color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.campaign_goal||b.goal||'—'}</td>
+                <td>${b.partnership_type||'—'}</td>
+                <td>${b.budget||'—'}</td>
+                <td><span class="badge ${b.status==='open'?'badge-lime':'badge-muted'}">${b.status||'open'}</span></td>
+                <td style="color:var(--muted)">${formatDate(b.created_at)}</td>
+                <td><button class="btn btn-danger btn-sm" onclick="deleteBrief('${b.id}')">Delete</button></td>
+              </tr>
+            `).join('') : `<tr><td colspan="8"><div class="empty">No briefs yet.</div></td></tr>`}
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function deleteBrief(id) {
+  if (!confirm('Delete this brief? This cannot be undone.')) return;
+  await api(`/api/admin/briefs/${id}`, { method:'DELETE' });
+  S.briefs = S.briefs.filter(b => b.id !== id);
+  render();
+}
+
+// ── COMMUNITIES ───────────────────────────────────────────────────────────────
+function renderCommunities() {
+  const igConnected = S.communities.filter(c => c.instagram_token).length;
+  const fullyVerified = S.communities.filter(c => getTier(c) === 'fully-verified').length;
+  const ers = S.communities.map(getER).filter(v => v !== null);
+  const avgER = ers.length ? (ers.reduce((a,b)=>a+b,0)/ers.length).toFixed(1) : '—';
+
+  return `
+    <div style="max-width:1100px">
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat-card"><div class="stat-label">Total Profiles</div><div class="stat-value">${S.communities.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Instagram Connected</div><div class="stat-value">${igConnected}</div></div>
+        <div class="stat-card"><div class="stat-label">Fully Verified</div><div class="stat-value">${fullyVerified}</div></div>
+        <div class="stat-card"><div class="stat-label">Avg. ER</div><div class="stat-value">${avgER}${ers.length?'%':''}</div></div>
+      </div>
+      <div class="card">
+        <div style="overflow-x:auto">
+        <table style="min-width:900px">
+          <thead><tr>
+            <th>Community</th><th>Tier</th><th>Members</th><th>Reach</th><th>ER</th><th>Archetype</th><th>Tags</th><th>Joined</th>
+          </tr></thead>
+          <tbody>
+            ${S.communities.map(c => {
+              const er = getER(c), followers = getFollowers(c), tier = getTier(c);
+              const archetypeColors = {evangelists:'var(--pink)',early_adopters:'var(--cyan)',loyalists:'var(--lime)',buyers:'var(--orange)'};
+              const archetypeLabels = {evangelists:'Evangelists',early_adopters:'Early Adopters',loyalists:'Loyalists',buyers:'Buyers'};
+              return `
+              <tr onclick="openCommunityModal('${c.id}')">
+                <td>
+                  <div style="font-weight:600">${c.name}</div>
+                  <div style="font-size:11px;color:var(--muted)">${c.location||''}</div>
+                </td>
+                <td>${tierBadge(tier)}</td>
+                <td>${c.active_members!=null?Number(c.active_members).toLocaleString():'—'}</td>
+                <td>${followers!==null?followers.toLocaleString():'—'}</td>
+                <td>${er!==null?er+'%':'—'}</td>
+                <td>${c.archetype?`<span style="font-family:'Barlow Condensed';font-size:12px;font-weight:700;text-transform:uppercase;color:${archetypeColors[c.archetype]||'var(--white)'}">${archetypeLabels[c.archetype]||c.archetype}</span>`:'—'}</td>
+                <td><div style="display:flex;flex-wrap:wrap;gap:3px">${(c.tags||[]).slice(0,3).map(t=>`<span class="tag">${t}</span>`).join('')}</div></td>
+                <td style="color:var(--muted);font-size:12px">${formatDate(c.created_at)}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── BRANDS ────────────────────────────────────────────────────────────────────
+function renderBrands() {
+  return `
+    <div style="max-width:1100px">
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+        <div class="stat-card"><div class="stat-label">Total Brands</div><div class="stat-value">${S.brands.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Total Briefs</div><div class="stat-value">${S.briefs.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Avg Briefs/Brand</div><div class="stat-value">${S.brands.length?Math.round(S.briefs.length/S.brands.length*10)/10:'—'}</div></div>
+      </div>
+      <div class="card">
+        <div style="overflow-x:auto">
+        <table style="min-width:700px">
+          <thead><tr>
+            <th>Brand</th><th>Category</th><th>Website</th><th>Briefs</th><th>Joined</th>
+          </tr></thead>
+          <tbody>
+            ${S.brands.length ? S.brands.map(b => {
+              const ac = avatarColor(b.name||'');
+              return `
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div class="avatar" style="background:${b.color||ac.bg};color:${b.color?'#000':ac.text};font-size:13px;width:32px;height:32px;flex-shrink:0">
+                      ${b.profile_image_url?`<img src="${b.profile_image_url}" style="width:100%;height:100%;object-fit:cover">`:(b.initial||(b.name||'?')[0].toUpperCase())}
+                    </div>
+                    <div>
+                      <div style="font-weight:600">${b.name}</div>
+                      <div style="font-size:11px;color:var(--muted)">${b.email}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="color:var(--muted)">${b.category||'—'}</td>
+                <td>${b.website?`<a href="${b.website}" target="_blank" style="color:var(--cyan)">${b.website.replace(/^https?:\/\//,'')}</a>`:'—'}</td>
+                <td><span class="metric">${b.brief_count||0}</span></td>
+                <td style="color:var(--muted)">${formatDate(b.created_at)}</td>
+              </tr>`;
+            }).join('') : `<tr><td colspan="5"><div class="empty">No brands yet.</div></td></tr>`}
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ── SLIDE PANEL ───────────────────────────────────────────────────────────────
+function openPanel(html) {
+  const panel = document.getElementById('slide-panel');
+  const overlay = document.getElementById('panel-overlay');
+  panel.innerHTML = html;
+  panel.classList.add('open');
+  overlay.style.display = 'block';
+}
+
+function closePanel() {
+  document.getElementById('slide-panel').classList.remove('open');
+  document.getElementById('panel-overlay').style.display = 'none';
+}
+
+function openCreateBrief() {
+  const brandOptions = S.brands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  openPanel(`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="bb" style="font-size:24px">New Brief</div>
+      <button class="btn btn-ghost btn-sm" onclick="closePanel()">✕</button>
+    </div>
+    <div class="form-grid" style="gap:14px">
+      <div class="form-group">
+        <label class="form-label">Brand *</label>
+        <select class="form-select" id="brief-brand">
+          <option value="">Select brand…</option>
+          ${brandOptions}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Title *</label>
+        <input class="form-input" id="brief-title" placeholder="e.g. Summer Activation Campaign">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Campaign Goal</label>
+        <input class="form-input" id="brief-goal" placeholder="e.g. Brand Awareness">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Partnership Type</label>
+        <select class="form-select" id="brief-type">
+          <option value="">Select…</option>
+          <option>Event Sponsorship</option>
+          <option>Content Partnership</option>
+          <option>Product Seeding</option>
+          <option>Ambassador Programme</option>
+          <option>Community Activation</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Budget Range</label>
+        <select class="form-select" id="brief-budget">
+          <option value="">Select…</option>
+          <option>Under $5K</option>
+          <option>$5K–$15K</option>
+          <option>$15K–$50K</option>
+          <option>$50K+</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Looking For</label>
+        <textarea class="form-textarea" id="brief-looking" placeholder="Describe the ideal community partner…"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tags (comma-separated)</label>
+        <input class="form-input" id="brief-tags" placeholder="fitness, outdoor, community">
+      </div>
+      <div id="brief-err" style="color:var(--red);font-size:12px;display:none"></div>
+      <button class="btn btn-primary" onclick="submitCreateBrief()">Create Brief</button>
+    </div>
+  `);
+}
+
+async function submitCreateBrief() {
+  const brand_id = document.getElementById('brief-brand').value;
+  const title = document.getElementById('brief-title').value.trim();
+  const err = document.getElementById('brief-err');
+  if (!brand_id || !title) { err.textContent = 'Brand and title are required.'; err.style.display=''; return; }
+  err.style.display = 'none';
+  const tags = document.getElementById('brief-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const res = await api('/api/admin/briefs', {
+    method: 'POST',
+    body: JSON.stringify({
+      brand_id, title,
+      campaign_goal: document.getElementById('brief-goal').value,
+      partnership_type: document.getElementById('brief-type').value,
+      budget: document.getElementById('brief-budget').value,
+      looking_for: document.getElementById('brief-looking').value,
+      tags,
+    })
+  });
+  if (res.ok) {
+    const briefs = await api('/api/admin/briefs');
+    S.briefs = Array.isArray(briefs) ? briefs : S.briefs;
+    closePanel();
+    navigate('briefs');
+    showToast('Brief created');
+  } else {
+    err.textContent = res.error || 'Failed to create brief.';
+    err.style.display = '';
+  }
+}
+
+function openCreateProject() {
+  const brandOptions = S.brands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+  const communityOptions = S.communities.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  const briefOptions = S.briefs.map(b => `<option value="${b.id}">${b.title} (${b.brand_name||'?'})</option>`).join('');
+  openPanel(`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div class="bb" style="font-size:24px">New Project</div>
+      <button class="btn btn-ghost btn-sm" onclick="closePanel()">✕</button>
+    </div>
+    <div class="form-grid" style="gap:14px">
+      <div class="form-group">
+        <label class="form-label">Community *</label>
+        <select class="form-select" id="proj-community">
+          <option value="">Select community…</option>
+          ${communityOptions}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Brand *</label>
+        <select class="form-select" id="proj-brand">
+          <option value="">Select brand…</option>
+          ${brandOptions}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Brief (optional)</label>
+        <select class="form-select" id="proj-brief">
+          <option value="">None / Ad hoc</option>
+          ${briefOptions}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Project Title</label>
+        <input class="form-input" id="proj-title" placeholder="e.g. Southbound 400 × Hyperice">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Partnership Type</label>
+        <select class="form-select" id="proj-type">
+          <option value="">Select…</option>
+          <option>Event Sponsorship</option>
+          <option>Content Partnership</option>
+          <option>Product Seeding</option>
+          <option>Ambassador Programme</option>
+          <option>Community Activation</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Budget ($)</label>
+        <input class="form-input" type="number" id="proj-budget" placeholder="0">
+      </div>
+      <div class="form-grid form-grid-2">
+        <div class="form-group">
+          <label class="form-label">Start Date</label>
+          <input class="form-input" type="date" id="proj-start">
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Date</label>
+          <input class="form-input" type="date" id="proj-end">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Initial Status</label>
+        <select class="form-select" id="proj-status">
+          <option value="scoping">Scoping</option>
+          <option value="contracted">Contracted</option>
+          <option value="active">Active</option>
+        </select>
+      </div>
+      <div id="proj-err" style="color:var(--red);font-size:12px;display:none"></div>
+      <button class="btn btn-primary" onclick="submitCreateProject()">Create Project</button>
+    </div>
+  `);
+}
+
+async function submitCreateProject() {
+  const community_id = document.getElementById('proj-community').value;
+  const brand_id = document.getElementById('proj-brand').value;
+  const err = document.getElementById('proj-err');
+  if (!community_id || !brand_id) { err.textContent = 'Community and brand are required.'; err.style.display=''; return; }
+  err.style.display = 'none';
+  const res = await api('/api/admin/projects', {
+    method: 'POST',
+    body: JSON.stringify({
+      community_id, brand_id,
+      brief_id: document.getElementById('proj-brief').value || null,
+      title: document.getElementById('proj-title').value,
+      type: document.getElementById('proj-type').value,
+      budget: parseFloat(document.getElementById('proj-budget').value)||null,
+      start_date: document.getElementById('proj-start').value||null,
+      end_date: document.getElementById('proj-end').value||null,
+      status: document.getElementById('proj-status').value,
+    })
+  });
+  if (res.ok) {
+    const projects = await api('/api/admin/projects');
+    S.projects = Array.isArray(projects) ? projects : S.projects;
+    closePanel();
+    navigate('projects');
+    showToast('Project created');
+  } else {
+    err.textContent = res.error || 'Failed to create project.';
+    err.style.display = '';
+  }
+}
+
+// ── COMMUNITY MODAL ───────────────────────────────────────────────────────────
+function openCommunityModal(id) {
+  const c = S.communities.find(x => x.id === id);
   if (!c) return;
-
   const igData = c.instagram_data || {};
   const igProfile = igData.profile || {};
   const tier = getTier(c);
   const er = getER(c);
   const followers = getFollowers(c);
-  const coverObj = COVER_OPTIONS.find(o => o.id === (c.cover_option || 1)) || COVER_OPTIONS[0];
-  const coverBg = c.cover_image_url
-    ? `url(${c.cover_image_url}) center/cover no-repeat`
-    : coverObj.gradient;
-  const igUsername = igProfile.username || '';
-  const notableMembers = c.notable_members || [];
-  const caseStudies = c.case_studies || [];
-  const capabilities = c.capabilities || [];
+  const coverObj = COVER_OPTIONS.find(o => o.id === (c.cover_option||1)) || COVER_OPTIONS[0];
+  const coverBg = c.cover_image_url ? `url(${c.cover_image_url}) center/cover no-repeat` : coverObj.gradient;
+  const cis = c.cis_stamped!=null ? c.cis_stamped : (c.cis_raw!=null ? c.cis_raw : null);
+  const media = igData.media || [];
 
-  const statItems = [
-    er !== null ? `${er}% ER` : null,
-    c.active_members ? `${Number(c.active_members).toLocaleString()} members` : null,
-    followers ? `${followers.toLocaleString()} reach` : null,
-  ].filter(Boolean).join(' · ');
-
-  const igIcon = `<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`;
-  const globeIcon = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
-
-  document.getElementById('modal-inner').innerHTML = `
-
-    <!-- Cover / Header -->
+  document.getElementById('comm-modal-inner').innerHTML = `
     <div style="position:relative;background:${coverBg};min-height:200px;display:flex;flex-direction:column;justify-content:flex-end;">
       <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.2) 50%,transparent 100%);pointer-events:none"></div>
       <div style="position:absolute;top:20px;left:24px;z-index:1">
-        <button class="back-btn" onclick="closeModal()">← Back</button>
+        <button class="back-btn" onclick="closeCommunityModal()">← Back</button>
       </div>
       <div style="position:absolute;top:20px;right:24px;z-index:1">
         <a href="/profile/${c.id}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);color:#fff;font-family:'Barlow Condensed';font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:7px 14px;border-radius:5px;text-decoration:none">↗ Public Profile</a>
       </div>
-      <div style="position:relative;z-index:1;padding:24px 28px 24px">
+      <div style="position:relative;z-index:1;padding:24px 28px">
         <div class="bb" style="font-size:44px;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,0.6)">${c.name}</div>
-        ${c.tagline || c.location ? `<div style="font-size:14px;color:rgba(255,255,255,0.7);margin-top:5px">${[c.tagline, c.location].filter(Boolean).join(' · ')}</div>` : ''}
+        ${c.tagline||c.location ? `<div style="font-size:14px;color:rgba(255,255,255,0.7);margin-top:5px">${[c.tagline,c.location].filter(Boolean).join(' · ')}</div>` : ''}
         ${(c.tags||[]).length ? `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">${(c.tags||[]).map(t=>`<span style="padding:3px 10px;border-radius:4px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase">${t}</span>`).join('')}</div>` : ''}
         <div style="margin-top:12px">${tierBadge(tier)}</div>
       </div>
     </div>
 
-    <!-- Metric cards -->
-    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;padding:20px 28px 0">
-      <div class="metric-card" style="background:#0f0f00;border-color:#2a2800">
-        <div class="tip">Scored relative to a specific brand brief only. No brief = no score.</div>
-        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Match Score</div>
-        <div style="font-family:'Bebas Neue';font-size:30px;color:#555;line-height:1">—</div>
-        <div style="font-size:10px;color:#444;margin-top:4px">No active brief</div>
-      </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:20px 28px 0">
       <div class="metric-card">
-        <div class="tip">avg(likes + comments) ÷ followers × 100. Recalculated live from ${(c.instagram_data?.media||[]).length || 0} posts.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Engagement Rate</div>
-        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${er !== null ? `${er}%` : '—'}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:4px">${er !== null ? (igUsername ? `@${igUsername}` : 'Instagram') : 'No IG data'}</div>
+        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${er!==null?er+'%':'—'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">${er!==null?(igProfile.username?'@'+igProfile.username:'Instagram'):'No IG data'}</div>
       </div>
       <div class="metric-card">
-        <div class="tip">Self-reported by community leader. Verified tier — not platform-confirmed.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Active Members</div>
-        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${c.active_members ? Number(c.active_members).toLocaleString() : '—'}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:4px">${c.active_members ? 'community-reported' : 'Not set'}</div>
+        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${c.active_members?Number(c.active_members).toLocaleString():'—'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">Community-reported</div>
       </div>
       <div class="metric-card">
-        <div class="tip">Followers across connected channels. Fully Verified via API.</div>
         <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Total Reach</div>
-        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${followers !== null ? followers.toLocaleString() : '—'}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:4px">${followers !== null ? 'Instagram' : 'Not connected'}</div>
+        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${followers!==null?followers.toLocaleString():'—'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:4px">${followers!==null?'Instagram':'Not connected'}</div>
       </div>
-      <div class="metric-card" style="background:#090005;border-color:#1f0015">
-        <div class="tip">Organic reach per active member. Σ(log(followers) × ER) ÷ members. Set tiers on verified members below.</div>
-        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Network Multiplier</div>
-        ${c.network_multiplier != null
-          ? (() => {
-              const hasActual = (c.notable_members||[]).some(m => m.verified && m.ig_followers);
-              return `<div style="font-family:'Bebas Neue';font-size:30px;color:#ff6ef2;line-height:1">${c.network_multiplier}×</div><div style="font-size:10px;color:${hasActual?'var(--lime)':'var(--muted)'};margin-top:4px">${hasActual?'mayo-verified':'tier-estimated'}</div>`;
-            })()
-          : `<div style="font-family:'Bebas Neue';font-size:20px;color:#444;line-height:1;padding-top:4px">Pending</div><div style="font-size:10px;color:#444;margin-top:4px">Enter follower counts below</div>`}
-      </div>
-      <div class="metric-card" style="background:#0a0700;border-color:#221a00">
-        <div class="tip">MIQ + GV + BAH + PMM weighted average. Admin stamp ±15 pts. See CIS section below.</div>
-        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Cultural Impact</div>
-        ${(c.cis_stamped != null || c.cis_raw != null)
-          ? (() => { const score = c.cis_stamped != null ? c.cis_stamped : c.cis_raw; const stamped = c.cis_stamped != null; return `<div style="font-family:'Bebas Neue';font-size:30px;color:var(--orange);line-height:1">${score}<span style="font-size:14px">/100</span></div><div style="font-size:10px;color:var(--muted);margin-top:4px">${stamped ? '★ Stamped' : 'Raw — unstamped'}</div>`; })()
-          : `<div style="font-family:'Bebas Neue';font-size:20px;color:#444;line-height:1;padding-top:4px">Pending</div><div style="font-size:10px;color:#444;margin-top:4px">Run analysis below</div>`}
+      <div class="metric-card">
+        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">CIS</div>
+        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${cis!==null?Math.round(cis)+'/100':'—'}</div>
+        <div style="font-size:10px;color:${c.cis_stamped!=null?'var(--lime)':'var(--muted)'};margin-top:4px">${c.cis_stamped!=null?'★ Stamped':'Not scored'}</div>
       </div>
     </div>
 
-    <!-- Channels + Capabilities -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 28px 0">
+    ${c.description ? `<div style="padding:20px 28px 0"><div class="section-label">About</div><div style="font-size:13px;color:rgba(240,240,240,0.8);line-height:1.6">${c.description}</div></div>` : ''}
 
-      <!-- Channels + What We Offer -->
-      <div class="panel">
-        ${capabilities.length ? `
-        <div style="margin-bottom:16px">
-          <div class="section-label">What We Offer</div>
-          <div>${capabilities.map(cap=>`<span class="chip">${cap}</span>`).join('')}</div>
-        </div>` : ''}
-        <div class="section-label">Channels</div>
-
-        ${(c.instagram_token || c.instagram_data) ? `
-        <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)">
-          <div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0">${igIcon}</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:600;font-size:13px">Instagram${igUsername ? ` · <span style="color:var(--muted);font-weight:400">@${igUsername}</span>` : ''}</div>
-            <div style="font-size:11px;color:var(--muted);margin-top:2px">
-              ${[followers ? `${followers.toLocaleString()} followers` : null, er !== null ? `${er}% ER` : null, c.instagram_connected_at ? `Since ${formatDate(c.instagram_connected_at)}` : null].filter(Boolean).join(' · ')}
-            </div>
-          </div>
-          ${c.instagram_data ? '<span class="badge badge-green" style="font-size:9px;flex-shrink:0">✓ Live</span>' : '<span style="color:var(--lime);font-family:\'Barlow Condensed\';font-size:10px;font-weight:700;flex-shrink:0">Connected</span>'}
-        </div>` : `<div style="font-size:12px;color:var(--muted);padding:10px 0;border-bottom:1px solid var(--border)">Instagram not connected</div>`}
-
-        ${c.substack_url ? `
-        <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border)">
-          <div style="width:30px;height:30px;border-radius:50%;background:#ff6719;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:14px;color:#fff;flex-shrink:0">S</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:600;font-size:13px">Substack</div>
-            <div style="font-size:11px;margin-top:2px"><a href="${c.substack_url}" target="_blank" style="color:var(--cyan);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">${c.substack_url.replace(/^https?:\/\//,'')}</a></div>
-          </div>
-          ${c.substack_data ? '<span class="badge badge-green" style="font-size:9px;flex-shrink:0">✓ Feed fetched</span>' : '<span style="color:var(--muted);font-size:10px;font-family:\'Barlow Condensed\';flex-shrink:0">URL saved</span>'}
-        </div>` : ''}
-
-        ${c.website ? `
-        <div style="display:flex;align-items:center;gap:10px;padding:11px 0">
-          <div style="width:30px;height:30px;border-radius:50%;background:var(--surface3);display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0">${globeIcon}</div>
-          <div>
-            <div style="font-weight:600;font-size:13px">Website <span style="font-weight:400;color:var(--muted);font-size:11px">— reference only</span></div>
-            <div style="font-size:11px;margin-top:2px"><a href="${c.website}" target="_blank" style="color:var(--cyan);text-decoration:none">${c.website.replace(/^https?:\/\//,'')}</a></div>
-          </div>
-        </div>` : ''}
-
-        ${!c.instagram_token && !c.substack_url && !c.website ? '<div style="font-size:12px;color:var(--muted)">No channels connected</div>' : ''}
-      </div>
-
-      <!-- About + Location + Looking For -->
-      <div style="display:flex;flex-direction:column;gap:12px">
-        ${c.description ? `
-        <div class="panel">
-          <div class="section-label">About</div>
-          <p style="font-size:13px;color:rgba(240,240,240,0.75);line-height:1.65;margin:0">${c.description}</p>
-        </div>` : ''}
-        ${c.location ? `
-        <div class="panel">
-          <div class="section-label">Location</div>
-          <p style="font-size:13px;color:rgba(240,240,240,0.75);margin:0">${c.location}</p>
-        </div>` : ''}
-        ${c.partnership_preferences ? `
-        <div class="panel">
-          <div class="section-label">Looking for</div>
-          <p style="font-size:13px;color:rgba(240,240,240,0.75);line-height:1.65;margin:0">${c.partnership_preferences}</p>
-        </div>` : ''}
-        ${!c.description && !c.location && !c.partnership_preferences ? `
-        <div class="panel" style="color:var(--muted);font-size:13px">No profile text set</div>` : ''}
-      </div>
-    </div>
-
-    <!-- Content feed carousel -->
-    ${(() => {
-      const igPosts = (c.instagram_data?.media || []).filter(p => p.media_url || p.thumbnail_url);
-      const subPosts = c.substack_data?.posts || [];
-      const allPosts = [
-        ...igPosts.map(p => ({...p, _type:'ig'})),
-        ...subPosts.map(p => ({...p, _type:'sub'})),
-      ].sort((a,b) => new Date(b.timestamp||b.date||0) - new Date(a.timestamp||a.date||0));
-      if (!allPosts.length) return '';
-      const cards = allPosts.map(post => {
-        if (post._type === 'ig') {
-          const img = `<img src="${post.media_url||post.thumbnail_url}" style="width:100%;height:100%;object-fit:cover;display:block;pointer-events:none" />`;
-          const badge = `<div style="position:absolute;bottom:0;left:0;right:0;padding:18px 7px 5px;background:linear-gradient(to top,rgba(0,0,0,0.75),transparent)"><span style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;color:#e1306c">IG</span>${post.like_count>0?` <span style="font-family:'Barlow Condensed';font-size:9px;color:#fff">${Number(post.like_count).toLocaleString()}</span>`:''}</div>`;
-          const inner = `<div style="position:relative;width:100%;height:100%">${img}${badge}</div>`;
-          return post.permalink
-            ? `<a href="${post.permalink}" target="_blank" rel="noopener noreferrer" style="flex-shrink:0;width:130px;height:190px;border-radius:8px;overflow:hidden;display:block;background:var(--surface2);text-decoration:none;scroll-snap-align:start">${inner}</a>`
-            : `<div style="flex-shrink:0;width:130px;height:190px;border-radius:8px;overflow:hidden;background:var(--surface2);scroll-snap-align:start">${inner}</div>`;
-        } else {
-          const img = post.image_url ? `<img src="${post.image_url}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none" />` : '';
-          const overlay = `<div style="position:absolute;inset:0;padding:10px 10px 8px;display:flex;flex-direction:column;justify-content:${post.image_url?'flex-end':'space-between'};background:${post.image_url?'linear-gradient(to top,rgba(0,0,0,0.85) 0%,rgba(0,0,0,0.2) 50%,transparent 100%)':'none'}">
-            ${!post.image_url?`<div style="font-size:11px;font-weight:600;color:var(--white);line-height:1.4">${(post.title||'').slice(0,50)}</div>`:''}
-            ${post.image_url?`<div style="font-size:11px;font-weight:600;color:#fff;line-height:1.35">${(post.title||'').slice(0,50)}</div>`:''}
-            <span style="font-family:'Barlow Condensed';font-size:9px;color:#ff6719;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Substack</span>
-          </div>`;
-          const inner = `<div style="position:relative;width:100%;height:100%">${img}${overlay}</div>`;
-          return post.link
-            ? `<a href="${post.link}" target="_blank" rel="noopener noreferrer" style="flex-shrink:0;width:130px;height:190px;border-radius:8px;overflow:hidden;display:block;background:var(--surface2);border:1px solid var(--border);text-decoration:none;scroll-snap-align:start">${inner}</a>`
-            : `<div style="flex-shrink:0;width:130px;height:190px;border-radius:8px;overflow:hidden;background:var(--surface2);border:1px solid var(--border);scroll-snap-align:start">${inner}</div>`;
-        }
-      }).join('');
-      return `
-    <div style="padding:12px 28px 0">
-      <div class="panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div class="section-label" style="margin-bottom:0">Latest Content</div>
-          <div style="display:flex;gap:8px">
-            ${igPosts.length?`<span style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;color:#e1306c">IG</span>`:''}
-            ${subPosts.length?`<span style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;color:#ff6719">Substack</span>`:''}
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:thick;scrollbar-color:rgba(255,255,255,0.25) transparent">${cards}</div>
-      </div>
-    </div>`;
-    })()}
-
-    <!-- Photos & Events -->
-    ${(() => {
-      const items = c.media_items || [];
-      if (!items.length) return '';
-      return `
-    <div style="padding:12px 28px 0">
-      <div class="panel">
-        <div class="section-label">Photos &amp; Events</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
-          ${items.map(item => `<div style="aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--surface2);border:1px solid var(--border)"><img src="${item.url}" alt="${item.caption||''}" style="width:100%;height:100%;object-fit:cover;display:block" /></div>`).join('')}
-        </div>
-      </div>
-    </div>`;
-    })()}
-
-    <!-- Archetype -->
-    <div style="padding:12px 28px 0">
-      <div class="panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <div class="section-label" style="margin-bottom:0">Community Archetype</div>
-          ${c.archetype ? '<span style="color:var(--lime);font-family:\'Barlow Condensed\';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em">★ Mayo assigned</span>' : ''}
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Platform-assigned — never self-selected.</div>
-        ${c.archetype ? (() => { const a = ARCHETYPES.find(x=>x.id===c.archetype); return a ? `<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><span style="font-family:'Bebas Neue';font-size:22px;color:${a.color}">${a.label}</span><span style="background:${a.color}22;border:1px solid ${a.color}44;color:${a.color};font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;padding:2px 8px;border-radius:3px">${a.best}</span></div>` : ''; })() : '<div style="font-size:12px;color:var(--muted);margin-bottom:14px">Not yet assigned</div>'}
-
-        <!-- AI reasoning (persists from DB) -->
-        <div id="arch-result-${c.id}" style="display:${c.archetype_reasoning?'block':'none'};background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:12px 14px;margin-bottom:12px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <div style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Why this archetype</div>
-            <div id="arch-confidence-${c.id}" style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;color:var(--lime)">${c.archetype_confidence!=null?c.archetype_confidence+'% confidence':''}</div>
-          </div>
-          <div id="arch-reasoning-${c.id}" style="font-size:12px;color:rgba(240,240,240,0.65);line-height:1.6">${c.archetype_reasoning||''}</div>
-        </div>
-
-        <div style="display:flex;align-items:center;gap:8px">
-          <button id="arch-analyse-${c.id}" onclick="analyseArchetype('${c.id}')" style="background:var(--surface2);color:var(--white);border:1px solid var(--border2);border-radius:5px;padding:8px 14px;font-family:'Barlow Condensed';font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap;flex-shrink:0">✦ Analyse</button>
-          <select id="arch-select-${c.id}" style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;padding:7px 10px;color:var(--white);font-family:'Barlow Condensed';font-size:13px;font-weight:600">
-            <option value="">— Remove archetype —</option>
-            ${ARCHETYPES.map(a=>`<option value="${a.id}" ${c.archetype===a.id?'selected':''}>${a.label} — ${a.best}</option>`).join('')}
-          </select>
-          <button onclick="assignArchetype('${c.id}')" style="background:var(--lime);color:#000;border:none;border-radius:5px;padding:8px 16px;font-family:'Barlow Condensed';font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap">Assign</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Notable Members -->
-    ${notableMembers.length ? `
-    <div style="padding:12px 28px 0">
-      <div class="panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div class="section-label" style="margin-bottom:0">Notable Members</div>
-          <span style="font-family:'Barlow Condensed';font-size:11px;color:var(--muted)">${notableMembers.filter(m=>m.verified).length}/${notableMembers.length} approved</span>
-        </div>
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
-          ${notableMembers.map((m, idx) => {
-            const col = avatarColor(m.name||'');
-            const hasActual = !!m.ig_followers;
-            return `<div class="member-card" style="border-color:${m.verified?'rgba(210,255,1,0.2)':'var(--border)'}">
-              <div style="width:36px;height:36px;border-radius:50%;background:${col.bg};color:${col.text};display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:16px;flex-shrink:0">${(m.name||'?')[0].toUpperCase()}</div>
-              <div style="flex:1;min-width:0">
-                <div style="font-weight:600;font-size:13px">${m.name||'—'}</div>
-                ${m.ig_handle ? `<div style="font-size:11px;color:var(--muted)">@${m.ig_handle}</div>` : ''}
-                ${m.role ? `<div style="font-size:11px;color:var(--muted)">${m.role}</div>` : ''}
-                ${m.verified ? `
-                  <div style="margin-top:6px;display:flex;gap:4px;align-items:center">
-                    <input type="number" id="followers-${c.id}-${idx}" placeholder="Followers" value="${m.ig_followers||''}"
-                      style="flex:1;min-width:0;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--white);font-size:10px;font-family:'Barlow Condensed'" />
-                    <input type="number" id="er-${c.id}-${idx}" placeholder="ER%" value="${m.ig_er||''}" step="0.1" min="0" max="100"
-                      style="width:44px;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:3px 5px;color:var(--white);font-size:10px;font-family:'Barlow Condensed'" />
-                    <button onclick="setMemberFollowers('${c.id}',${idx})"
-                      style="background:var(--surface2);color:var(--white);border:1px solid var(--border2);border-radius:4px;padding:3px 7px;font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer;white-space:nowrap">Set</button>
-                  </div>
-                  ${hasActual
-                    ? `<div style="font-size:9px;color:var(--lime);margin-top:3px;font-family:'Barlow Condensed';font-weight:700;text-transform:uppercase;letter-spacing:0.05em">✓ ${m.ig_followers.toLocaleString()} followers${m.ig_er ? ' · '+m.ig_er+'% ER' : ''}</div>`
-                    : `<select onchange="setMemberTier('${c.id}',${idx},this.value)" style="margin-top:4px;width:100%;background:var(--surface3);border:1px solid var(--border2);border-radius:4px;padding:3px 6px;color:var(--white);font-family:'Barlow Condensed';font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em">
-                        <option value="">— Fallback tier —</option>
-                        <option value="micro" ${m.follower_tier==='micro'?'selected':''}>Micro (1k–10k)</option>
-                        <option value="mid"   ${m.follower_tier==='mid'?'selected':''}>Mid (10k–100k)</option>
-                        <option value="macro" ${m.follower_tier==='macro'?'selected':''}>Macro (100k+)</option>
-                      </select>`
-                  }
-                ` : ''}
-              </div>
-              <button onclick="verifyMember('${c.id}',${idx},${!m.verified})" style="background:${m.verified?'transparent':'var(--lime)'};color:${m.verified?'var(--muted)':'#000'};border:1px solid ${m.verified?'var(--border)':'var(--lime)'};border-radius:4px;padding:4px 10px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;flex-shrink:0;white-space:nowrap;align-self:flex-start">${m.verified?'Revoke':'Approve'}</button>
-            </div>`;
-          }).join('')}
-        </div>
+    ${media.length ? `
+    <div style="padding:20px 28px 0">
+      <div class="section-label">Recent Instagram Posts (${media.length})</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px">
+        ${media.slice(0,12).map(post => post.media_url ? `<a href="${post.permalink||'#'}" target="_blank"><img src="${post.media_url}" style="width:100%;height:100px;object-fit:cover;border-radius:6px;display:block" loading="lazy"></a>` : '').join('')}
       </div>
     </div>` : ''}
 
-    <!-- Past Partnerships -->
-    ${caseStudies.length ? `
-    <div style="padding:12px 28px 0">
-      <div class="panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div class="section-label" style="margin-bottom:0">Past Partnerships</div>
-          <span style="font-family:'Barlow Condensed';font-size:11px;color:var(--muted)">${caseStudies.filter(cs=>cs.verified).length}/${caseStudies.length} approved</span>
-        </div>
-        <div style="display:flex;gap:12px;overflow-x:auto;padding-bottom:4px">
-          ${caseStudies.map((cs, idx) => {
-            const imgs = cs.images || [];
-            const hero = imgs[0] || cs.image_url || null;
-            const col = avatarColor(cs.brand||'P');
-            return `<div class="cs-card" style="border-color:${cs.verified?'rgba(210,255,1,0.25)':'var(--border)'}">
-              <div style="height:110px;position:relative;${hero ? `background:url(${hero}) center/cover no-repeat` : `background:${col.bg};display:flex;align-items:center;justify-content:center`}">
-                ${!hero ? `<span style="font-family:'Bebas Neue';font-size:36px;color:${col.text}">${(cs.brand||'?')[0].toUpperCase()}</span>` : ''}
-                <div style="position:absolute;top:6px;right:6px">
-                  ${cs.verified ? '<span style="background:var(--lime);color:#000;font-family:\'Barlow Condensed\';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:2px 6px;border-radius:3px">✓ Verified</span>' : '<span style="background:rgba(0,0,0,0.65);color:#666;font-family:\'Barlow Condensed\';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;padding:2px 6px;border-radius:3px">Pending</span>'}
-                </div>
-              </div>
-              <div style="padding:10px 12px">
-                <div style="font-weight:700;font-size:13px">${cs.brand||'—'}</div>
-                ${cs.year ? `<div style="font-size:11px;color:var(--muted);margin-top:1px">${cs.year}</div>` : ''}
-                ${cs.description ? `<div style="font-size:11px;color:rgba(240,240,240,0.5);margin-top:5px;line-height:1.4">${cs.description.slice(0,70)}${cs.description.length>70?'…':''}</div>` : ''}
-                <button onclick="verifyCaseStudy('${c.id}',${idx},${!cs.verified})" style="margin-top:8px;width:100%;background:${cs.verified?'transparent':'var(--lime)'};color:${cs.verified?'var(--muted)':'#000'};border:1px solid ${cs.verified?'var(--border)':'var(--lime)'};border-radius:4px;padding:5px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer">${cs.verified?'Revoke':'Approve'}</button>
-              </div>
-            </div>`;
-          }).join('')}
-        </div>
-      </div>
-    </div>` : ''}
-
-    <!-- Cultural Impact Score -->
-    <div style="padding:12px 28px 0">
-      <div class="panel">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <div class="section-label" style="margin-bottom:0">Cultural Impact Score</div>
-          ${c.cis_stamped != null ? '<span style="color:var(--orange);font-family:\'Barlow Condensed\';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em">★ Stamped</span>' : ''}
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Part algorithmic, part editorial. Raw score calculated from MIQ, Growth Velocity, Brand History, and Press Mentions. Admin stamp adjusts within ±15.</div>
-
-        <!-- Sub-score breakdown -->
-        <div id="cis-subscores-${c.id}" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px">
-          ${(() => {
-            const pressMentions = c.press_mentions || [];
-            const confirmedPMM = pressMentions.filter(m=>m.confirmed===true);
-            const pendingPMM = pressMentions.filter(m=>m.confirmed===null);
-            const SUBSCORE_TIPS = {
-              'MIQ': 'Member Influence Quality — who are the verified members? Scored by Claude based on roles and cultural relevance.',
-              'GV':  'Growth Velocity — follower % change over 90 days. Needs two snapshots ≥90 days apart to calculate.',
-              'BAH': 'Brand Association History — score from verified platform case studies. Tier 1 brands worth more than Tier 3.',
-              'PMM': 'Press & Media Mentions — score from admin-confirmed editorial coverage. National outlets score highest.',
-            };
-            const subscore = (label, val, desc) => `
-              <div class="subscore">
-                <div class="tip">${SUBSCORE_TIPS[label] || ''}</div>
-                <div style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px">${label}</div>
-                <div style="font-family:'Bebas Neue';font-size:24px;color:${val!=null?'var(--orange)':'#444'};line-height:1">${val!=null?val:'—'}</div>
-                <div style="font-size:9px;color:#444;margin-top:3px">${desc}</div>
-              </div>`;
-            const bah = caseStudies.filter(cs=>cs.verified).length;
-            return [
-              subscore('MIQ', c.miq_score != null ? c.miq_score : null, c.miq_score != null ? 'member influence' : 'run analysis'),
-              subscore('GV', null, 'needs 90-day data'),
-              subscore('BAH', bah ? Math.min(100, bah * 12) : null, bah ? `${bah} verified partnership${bah!==1?'s':''}` : 'no verified cases'),
-              subscore('PMM', confirmedPMM.length ? Math.min(100, confirmedPMM.reduce((s,m)=>s+({'national':25,'regional':12,'niche':6,'unknown':3}[m.outlet_tier]||3),0)) : null, confirmedPMM.length ? `${confirmedPMM.length} confirmed${pendingPMM.length?' · '+pendingPMM.length+' pending':''}` : (pendingPMM.length ? pendingPMM.length+' pending review' : 'fetch news below')),
-            ].join('');
-          })()}
-        </div>
-
-        <!-- Raw + Stamp -->
-        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:16px">
-          <div style="flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:12px;text-align:center">
-            <div style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px">Raw CIS</div>
-            <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:${c.cis_raw!=null?'var(--orange)':'#444'}">${c.cis_raw != null ? c.cis_raw : '—'}</div>
-          </div>
-          <div style="display:flex;align-items:center;color:var(--muted);font-size:18px;padding-top:18px">→</div>
-          <div style="flex:1;background:${c.cis_stamped!=null?'rgba(255,171,64,0.08)':'var(--surface2)'};border:1px solid ${c.cis_stamped!=null?'rgba(255,171,64,0.3)':'var(--border2)'};border-radius:6px;padding:12px;text-align:center">
-            <div style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px">Stamped CIS</div>
-            <div style="font-family:'Bebas Neue';font-size:32px;line-height:1;color:${c.cis_stamped!=null?'var(--orange)':'#444'}">${c.cis_stamped != null ? c.cis_stamped : '—'}</div>
-            ${c.cis_stamp_by ? `<div style="font-size:9px;color:var(--muted);margin-top:3px">by ${c.cis_stamp_by}</div>` : ''}
-          </div>
-        </div>
-
-        <!-- MIQ analysis + Stamp controls -->
-        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-          <button id="miq-btn-${c.id}" onclick="analyseMIQ('${c.id}')" style="background:var(--surface2);color:var(--white);border:1px solid var(--border2);border-radius:5px;padding:7px 14px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer">✦ Analyse MIQ</button>
-          ${c.cis_raw != null ? `
-          <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:200px">
-            <span style="font-family:'Barlow Condensed';font-size:10px;color:var(--muted);white-space:nowrap">Stamp (±15):</span>
-            <input id="stamp-input-${c.id}" type="number" min="${Math.max(0,c.cis_raw-15)}" max="${Math.min(100,c.cis_raw+15)}" value="${c.cis_stamped != null ? c.cis_stamped : c.cis_raw}" style="width:60px;background:var(--surface2);border:1px solid var(--border2);border-radius:4px;padding:5px 8px;color:var(--white);font-family:'Barlow Condensed';font-size:13px;font-weight:700;text-align:center">
-            <button onclick="applyStamp('${c.id}')" style="background:var(--orange);color:#000;border:none;border-radius:5px;padding:7px 14px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;white-space:nowrap">Apply Stamp</button>
-            ${c.cis_stamped != null ? `<button onclick="removeStamp('${c.id}')" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:5px;padding:7px 10px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer">Remove</button>` : ''}
-          </div>` : '<span style="font-size:11px;color:var(--muted);padding-top:8px">Run MIQ analysis or confirm press mentions to generate raw CIS</span>'}
-        </div>
-
-        <!-- MIQ result box -->
-        <div id="miq-result-${c.id}" style="display:${c.miq_score!=null?'block':'none'};background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:12px;margin-bottom:14px">
-          <div style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:6px">MIQ Analysis</div>
-          <div id="miq-reasoning-${c.id}" style="font-size:12px;color:rgba(240,240,240,0.7);line-height:1.6">${c.miq_reasoning || ''}</div>
-        </div>
-
-        <!-- Press monitoring -->
-        <div style="border-top:1px solid var(--border);padding-top:14px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">Press & Media Mentions</div>
-            <button id="press-btn-${c.id}" onclick="fetchPress('${c.id}')" style="background:var(--surface2);color:var(--white);border:1px solid var(--border2);border-radius:4px;padding:5px 12px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer">↻ Fetch News</button>
-          </div>
-          <div id="press-list-${c.id}">
-            ${(() => {
-              const mentions = c.press_mentions || [];
-              if (!mentions.length) return '<div style="font-size:12px;color:var(--muted)">No mentions yet. Click Fetch News to search Google News.</div>';
-              return mentions.map((m, idx) => `
-                <div style="background:var(--surface2);border:1px solid ${m.confirmed===true?'rgba(210,255,1,0.2)':m.confirmed===false?'var(--border)':'rgba(255,171,64,0.15)'};border-radius:6px;padding:10px 12px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start">
-                  <div style="flex:1;min-width:0">
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap">
-                      <span style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;background:${m.outlet_tier==='national'?'rgba(210,255,1,0.15)':m.outlet_tier==='regional'?'rgba(177,236,240,0.15)':m.outlet_tier==='niche'?'rgba(255,106,242,0.1)':'rgba(255,255,255,0.05)'};color:${m.outlet_tier==='national'?'var(--lime)':m.outlet_tier==='regional'?'var(--cyan)':m.outlet_tier==='niche'?'var(--pink)':'var(--muted)'};padding:1px 6px;border-radius:3px">${m.outlet_tier||'unknown'}</span>
-                      <span style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted)">${m.type||'mention'}</span>
-                    </div>
-                    <a href="${m.url}" target="_blank" style="font-size:12px;font-weight:600;color:var(--white);text-decoration:none;display:block;margin-bottom:2px">${m.title}</a>
-                    <div style="font-size:11px;color:var(--muted)">${m.outlet} · ${m.date ? new Date(m.date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : ''}</div>
-                    ${m.ai_reason ? `<div style="font-size:10px;color:#555;margin-top:4px;font-style:italic">${m.ai_reason}</div>` : ''}
-                  </div>
-                  <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-                    ${m.confirmed === true
-                      ? `<span style="font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--lime)">✓ Confirmed</span>`
-                      : `<button onclick="confirmMention('${c.id}',${idx},true)" style="background:var(--lime);color:#000;border:none;border-radius:4px;padding:4px 8px;font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">Confirm</button>`}
-                    ${m.confirmed !== false
-                      ? `<button onclick="confirmMention('${c.id}',${idx},false)" style="background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:4px;padding:3px 8px;font-family:'Barlow Condensed';font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;cursor:pointer">Dismiss</button>`
-                      : `<span style="font-family:'Barlow Condensed';font-size:9px;color:#444;text-transform:uppercase;letter-spacing:0.04em">Dismissed</span>`}
-                  </div>
-                </div>`).join('');
-            })()}
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Admin Info -->
-    <div style="padding:12px 28px 0">
-      <div class="panel">
-        <div class="section-label">Admin Info</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
-          <div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Leader</div>
-            <div style="font-size:13px">${c.leader_name||'—'}</div>
-          </div>
-          <div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Email</div>
-            <div style="font-size:13px">${c.email ? `<a href="mailto:${c.email}" style="color:var(--cyan);text-decoration:none">${c.email}</a>` : '—'}</div>
-          </div>
-          <div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Joined</div>
-            <div style="font-size:13px">${formatDate(c.created_at)}</div>
-          </div>
-          <div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">IG Connected</div>
-            <div style="font-size:13px">${c.instagram_connected_at ? formatDate(c.instagram_connected_at) : '—'}</div>
-          </div>
-          <div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Last Updated</div>
-            <div style="font-size:13px">${formatDate(c.updated_at)}</div>
-          </div>
-          <div>
-            <div style="font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px">Community ID</div>
-            <div style="font-size:10px;color:#555;word-break:break-all;font-family:'Barlow Condensed'">${c.id}</div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <div style="height:60px"></div>
   `;
-
-  document.getElementById('main-view').style.display = 'none';
-  const modal = document.getElementById('modal');
-  modal.style.display = 'block';
-  modal.scrollTop = 0;
+  document.getElementById('comm-modal').style.display = 'block';
+  document.getElementById('comm-modal').scrollTop = 0;
 }
 
-async function verifyMember(communityId, idx, verified) {
-  await fetch(`/api/community/${communityId}/notable-member/${idx}/verify`, {
-    method:'PUT', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ verified }),
-  });
-  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
-  communities = await res.json();
-  renderTable();
-  openCommunity(communityId);
+function closeCommunityModal() {
+  document.getElementById('comm-modal').style.display = 'none';
 }
 
-async function verifyCaseStudy(communityId, idx, verified) {
-  await fetch(`/api/community/${communityId}/case-study/${idx}/verify`, {
-    method:'PUT', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ verified }),
-  });
-  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
-  communities = await res.json();
-  renderTable();
-  openCommunity(communityId);
-}
-
-async function analyseArchetype(communityId) {
-  const btn = document.getElementById(`arch-analyse-${communityId}`);
-  const resultBox = document.getElementById(`arch-result-${communityId}`);
-  btn.textContent = 'Analysing…';
-  btn.disabled = true;
-  resultBox.style.display = 'none';
-
-  try {
-    const res = await fetch(`/api/community/${communityId}/suggest-archetype`, { method:'POST' });
-    const data = await res.json();
-    if (data.error) { btn.textContent = 'Error — retry'; btn.disabled = false; return; }
-
-    document.getElementById(`arch-confidence-${communityId}`).textContent = `${data.confidence}% confidence`;
-    document.getElementById(`arch-reasoning-${communityId}`).textContent = data.reasoning;
-    resultBox.style.display = 'block';
-
-    // Pre-select recommended archetype in dropdown
-    document.getElementById(`arch-select-${communityId}`).value = data.archetype;
-
-    // Persist result so it survives modal re-renders
-    archetypeResults[communityId] = data;
-
-    btn.textContent = '↺ Re-analyse';
-    btn.disabled = false;
-  } catch (e) {
-    btn.textContent = 'Error — retry';
-    btn.disabled = false;
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--lime);color:#000;font-family:\'Barlow Condensed\';font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:10px 18px;border-radius:6px;z-index:999;transition:opacity 0.3s';
+    document.body.appendChild(t);
   }
+  t.textContent = msg;
+  t.style.opacity = '1';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
 }
 
-async function assignArchetype(communityId) {
-  const val = document.getElementById(`arch-select-${communityId}`).value;
-  const result = archetypeResults[communityId];
-  await fetch(`/api/community/${communityId}`, {
-    method:'PUT', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({
-      archetype: val || null,
-      archetype_source: val ? 'mayo_assigned' : null,
-      archetype_reasoning: (val && result) ? result.reasoning : null,
-      archetype_confidence: (val && result) ? result.confidence : null,
-    }),
-  });
-  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
-  communities = await res.json();
-  renderTable();
-  openCommunity(communityId);
-  restoreArchetypeResult(communityId);
-}
-
-function restoreArchetypeResult(communityId) {
-  const data = archetypeResults[communityId];
-  if (!data) return;
-  const resultBox = document.getElementById(`arch-result-${communityId}`);
-  if (!resultBox) return;
-  document.getElementById(`arch-confidence-${communityId}`).textContent = `${data.confidence}% confidence`;
-  document.getElementById(`arch-reasoning-${communityId}`).textContent = data.reasoning;
-  resultBox.style.display = 'block';
-  const btn = document.getElementById(`arch-analyse-${communityId}`);
-  if (btn) { btn.textContent = '↺ Re-analyse'; btn.disabled = false; }
-}
-
-async function setMemberFollowers(communityId, idx) {
-  const followerInput = document.getElementById(`followers-${communityId}-${idx}`);
-  const erInput = document.getElementById(`er-${communityId}-${idx}`);
-  const followers = parseInt(followerInput.value);
-  const er = erInput.value !== '' ? parseFloat(erInput.value) : null;
-  if (isNaN(followers) || followers < 0) {
-    followerInput.style.borderColor = 'var(--red)';
-    return;
-  }
-  followerInput.style.borderColor = 'var(--border2)';
-  await fetch(`/api/community/${communityId}/notable-member/${idx}/followers`, {
-    method: 'PUT', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ig_followers: followers, ig_er: er }),
-  });
-  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
-  communities = await res.json();
-  renderTable();
-  openCommunity(communityId);
-  restoreArchetypeResult(communityId);
-}
-
-async function setMemberTier(communityId, idx, tier) {
-  await fetch(`/api/community/${communityId}/notable-member/${idx}/tier`, {
-    method:'PUT', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ follower_tier: tier || null }),
-  });
-  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
-  communities = await res.json();
-  renderTable();
-  openCommunity(communityId);
-  restoreArchetypeResult(communityId);
-}
-
-async function fetchPress(communityId) {
-  const btn = document.getElementById(`press-btn-${communityId}`);
-  btn.textContent = 'Fetching…';
-  btn.disabled = true;
-  try {
-    const res = await fetch(`/api/community/${communityId}/fetch-press`, { method:'POST' });
-    const data = await res.json();
-    const commRes = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
-    communities = await commRes.json();
-    renderTable();
-    openCommunity(communityId);
-    restoreArchetypeResult(communityId);
-    if (data.error) { btn.textContent = 'Error — retry'; btn.disabled = false; return; }
-    if (data.added === 0) { btn.textContent = '↻ Fetch News'; btn.disabled = false; }
-  } catch (e) {
-    btn.textContent = 'Error — retry';
-    btn.disabled = false;
-  }
-}
-
-async function confirmMention(communityId, idx, confirmed) {
-  await fetch(`/api/community/${communityId}/press-mention/${idx}/confirm`, {
-    method:'PUT', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ confirmed }),
-  });
-  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
-  communities = await res.json();
-  renderTable();
-  openCommunity(communityId);
-  restoreArchetypeResult(communityId);
-}
-
-async function analyseMIQ(communityId) {
-  const btn = document.getElementById(`miq-btn-${communityId}`);
-  btn.textContent = 'Analysing…';
-  btn.disabled = true;
-  try {
-    const res = await fetch(`/api/community/${communityId}/analyse-miq`, { method:'POST' });
-    const data = await res.json();
-    if (data.error) { btn.textContent = `Error: ${data.error}`; btn.disabled = false; return; }
-    const commRes = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
-    communities = await commRes.json();
-    renderTable();
-    openCommunity(communityId);
-    restoreArchetypeResult(communityId);
-    // Show MIQ result box (openCommunity renders it from DB data, but reasoning may not auto-show)
-    const box = document.getElementById(`miq-result-${communityId}`);
-    const reasoning = document.getElementById(`miq-reasoning-${communityId}`);
-    if (box && reasoning) { reasoning.textContent = data.reasoning; box.style.display = 'block'; }
-  } catch (e) {
-    btn.textContent = 'Error — retry';
-    btn.disabled = false;
-  }
-}
-
-async function applyStamp(communityId) {
-  const input = document.getElementById(`stamp-input-${communityId}`);
-  const score = parseInt(input.value);
-  if (isNaN(score)) return;
-  const res = await fetch(`/api/community/${communityId}/apply-cis-stamp`, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ stamped_score: score, stamped_by: 'admin' }),
-  });
-  const data = await res.json();
-  if (data.error) { alert(data.error); return; }
-  const commRes = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
-  communities = await commRes.json();
-  renderTable();
-  openCommunity(communityId);
-  restoreArchetypeResult(communityId);
-}
-
-async function removeStamp(communityId) {
-  await fetch(`/api/community/${communityId}/apply-cis-stamp`, {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ stamped_score: null }),
-  });
-  const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
-  communities = await res.json();
-  renderTable();
-  openCommunity(communityId);
-  restoreArchetypeResult(communityId);
-}
-
-function closeModal() {
-  document.getElementById('modal').style.display = 'none';
-  document.getElementById('main-view').style.display = 'block';
-}
-
-// ── Data ──────────────────────────────────────────────────────────────────────
-
-async function load() {
-  try {
-    const res = await fetch(`/api/admin/communities?token=${ADMIN_TOKEN}`);
-    communities = await res.json();
-    renderTable();
-  } catch (e) {
-    document.getElementById('table-container').innerHTML = '<div class="empty">Failed to load communities.</div>';
-  }
-}
-
-// ── Tabs ──────────────────────────────────────────────────────────────────────
-
-let activeTab = 'communities';
-let briefs = [];
-
-function switchTab(tab) {
-  activeTab = tab;
-  document.getElementById('view-communities').style.display = tab === 'communities' ? 'block' : 'none';
-  document.getElementById('view-briefs').style.display = tab === 'briefs' ? 'block' : 'none';
-  document.getElementById('tab-communities').style.borderBottomColor = tab === 'communities' ? 'var(--lime)' : 'transparent';
-  document.getElementById('tab-communities').style.color = tab === 'communities' ? 'var(--white)' : 'var(--muted)';
-  document.getElementById('tab-briefs').style.borderBottomColor = tab === 'briefs' ? 'var(--lime)' : 'transparent';
-  document.getElementById('tab-briefs').style.color = tab === 'briefs' ? 'var(--white)' : 'var(--muted)';
-  if (tab === 'briefs' && briefs.length === 0) loadBriefs();
-}
-
-// ── Briefs ─────────────────────────────────────────────────────────────────────
-
-async function loadBriefs() {
-  try {
-    const res = await fetch(`/api/admin/briefs?token=${ADMIN_TOKEN}`);
-    briefs = await res.json();
-    renderBriefs();
-  } catch (e) {
-    document.getElementById('briefs-container').innerHTML = '<div class="empty">Failed to load briefs.</div>';
-  }
-}
-
-function renderBriefs() {
-  const typeColors = { Sponsorship:'var(--orange)', 'Product Partnership':'var(--cyan)', 'Event Partnership':'var(--green)', 'Content Partnership':'#7eb8ff', Collaboration:'var(--pink)' };
-  document.getElementById('stat-briefs-total').textContent = briefs.length;
-  const uniqueBrands = new Set(briefs.map(b => b.brand_id).filter(Boolean));
-  document.getElementById('stat-briefs-brands').textContent = uniqueBrands.size;
-  document.getElementById('briefs-sub').textContent = `${briefs.length} brief${briefs.length !== 1 ? 's' : ''} · Last refreshed ${new Date().toLocaleTimeString()}`;
-
-  if (!briefs.length) {
-    document.getElementById('briefs-container').innerHTML = '<div class="empty">No briefs yet.</div>';
-    return;
-  }
-
-  document.getElementById('briefs-container').innerHTML = `
-    <div style="overflow-x:auto;">
-    <table style="min-width:900px;">
-      <thead><tr>
-        <th>Brand</th>
-        <th>Brief Title</th>
-        <th>Type</th>
-        <th>Budget</th>
-        <th>Deadline</th>
-        <th>Activation</th>
-        <th>Status</th>
-        <th>Created</th>
-        <th></th>
-      </tr></thead>
-      <tbody>
-        ${briefs.map(b => {
-          const typeColor = typeColors[b.partnership_type] || 'var(--muted)';
-          const budget = b.budget ? `$${parseInt(b.budget).toLocaleString()}` : '—';
-          return `<tr>
-            <td>
-              <div class="community-name" style="color:${b.brand_color || 'var(--white)'}">${b.brand_name || '—'}</div>
-            </td>
-            <td>
-              <div style="font-size:13px;font-weight:500;max-width:260px">${b.title || '—'}</div>
-            </td>
-            <td><span style="font-family:'Barlow Condensed';font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:${typeColor}">${b.partnership_type || '—'}</span></td>
-            <td><div class="metric">${budget}</div><div class="metric-label">${b.budget_period || ''}</div></td>
-            <td style="font-size:12px;color:var(--muted)">${b.deadline || '—'}</td>
-            <td style="font-size:12px;color:var(--muted)">${b.activation_window || '—'}</td>
-            <td><span class="badge ${b.status === 'open' ? 'badge-lime' : 'badge-muted'}">${b.status || 'open'}</span></td>
-            <td style="font-size:12px;color:var(--muted)">${formatDate(b.created_at)}</td>
-            <td>
-              <div style="display:flex;gap:6px;flex-direction:column">
-                <label style="background:var(--surface2);color:var(--white);border:1px solid var(--border2);border-radius:4px;padding:4px 10px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer;text-align:center;white-space:nowrap">
-                  ${b.cover_image_url ? '↺ Cover' : '+ Cover'}
-                  <input type="file" accept="image/*" style="display:none" onchange="uploadBriefCover('${b.id}', this)" />
-                </label>
-                <button onclick="deleteBrief('${b.id}', '${(b.title||'').replace(/'/g, "\\'")}')" style="background:transparent;border:1px solid var(--red);color:var(--red);border-radius:4px;padding:4px 10px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;cursor:pointer">Delete</button>
-              </div>
-            </td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>
-    </div>`;
-}
-
-async function uploadBriefCover(briefId, input) {
-  const file = input.files[0];
-  if (!file) return;
-  const formData = new FormData();
-  formData.append('file', file);
-  try {
-    const res = await fetch(`/api/briefs/${briefId}/cover`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${ADMIN_TOKEN}` },
-      body: formData,
-    });
-    const data = await res.json();
-    if (data.ok) {
-      await loadBriefs();
-    } else {
-      alert('Upload failed: ' + (data.error || 'unknown error'));
-    }
-  } catch (e) {
-    alert('Upload failed.');
-  }
-}
-
-async function deleteBrief(briefId, title) {
-  if (!confirm(`Delete brief "${title}"?\n\nThis cannot be undone.`)) return;
-  try {
-    await fetch(`/api/admin/briefs/${briefId}?token=${ADMIN_TOKEN}`, { method: 'DELETE' });
-    briefs = briefs.filter(b => b.id !== briefId);
-    renderBriefs();
-  } catch (e) {
-    alert('Delete failed — try again.');
-  }
-}
-
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-load();
-setInterval(load, 30000);
+// ── INIT ──────────────────────────────────────────────────────────────────────
+(async () => {
+  document.getElementById('nav-dashboard').classList.add('active');
+  await loadAll();
+  render();
+})();
 </script>
 </body>
 </html>

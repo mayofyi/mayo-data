@@ -337,6 +337,15 @@ def init_db():
             cur.execute("ALTER TABLE brands ADD COLUMN IF NOT EXISTS past_partnerships JSONB DEFAULT '[]'")
             cur.execute("ALTER TABLE briefs ADD COLUMN IF NOT EXISTS cover_image_url TEXT")
             cur.execute("ALTER TABLE briefs ADD COLUMN IF NOT EXISTS deliverables JSONB DEFAULT '[]'")
+            # Projects table migrations
+            for col, typedef in [
+                ("media_items", "JSONB DEFAULT '[]'"),
+                ("report", "JSONB DEFAULT '{}'"),
+                ("recap", "JSONB DEFAULT '{}'"),
+                ("title", "TEXT"),
+                ("notes", "TEXT"),
+            ]:
+                cur.execute(f"ALTER TABLE projects ADD COLUMN IF NOT EXISTS {col} {typedef}")
         conn.commit()
 
 
@@ -1588,6 +1597,186 @@ def admin_delete_brief(brief_id):
             cur.execute("DELETE FROM briefs WHERE id = %s", (brief_id,))
         conn.commit()
     return jsonify({"ok": True})
+
+
+@app.route("/api/admin/briefs", methods=["POST"])
+def admin_create_brief():
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
+    import uuid as _uuid
+    data = request.json or {}
+    brand_id = data.get("brand_id")
+    title = data.get("title", "").strip()
+    if not brand_id or not title:
+        return jsonify({"error": "brand_id and title required"}), 400
+    brief_id = str(_uuid.uuid4())
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO briefs (id, brand_id, title, campaign_goal, partnership_type,
+                    budget, budget_period, tags, goal, looking_for, status, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'open', NOW())
+            """, (
+                brief_id, brand_id, title,
+                data.get("campaign_goal"), data.get("partnership_type"),
+                data.get("budget"), data.get("budget_period"),
+                data.get("tags", []),
+                data.get("goal"), data.get("looking_for"),
+            ))
+        conn.commit()
+    return jsonify({"ok": True, "id": brief_id})
+
+
+@app.route("/api/admin/brands")
+def admin_brands():
+    token = request.args.get("token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT b.id, b.name, b.email, b.category, b.tagline, b.bio,
+                       b.website, b.color, b.profile_image_url, b.header_image_url,
+                       b.social_links, b.looking_for, b.created_at,
+                       COUNT(br.id) AS brief_count
+                FROM brands b
+                LEFT JOIN briefs br ON br.brand_id = b.id
+                GROUP BY b.id
+                ORDER BY b.created_at DESC
+            """)
+            rows = cur.fetchall()
+    result = []
+    for row in rows:
+        d = dict(row)
+        for k, v in d.items():
+            if hasattr(v, "isoformat"):
+                d[k] = v.isoformat()
+        result.append(d)
+    return jsonify(result)
+
+
+@app.route("/api/admin/projects")
+def admin_projects():
+    token = request.args.get("token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT p.*,
+                    c.name AS community_name, c.cover_image_url AS community_cover,
+                    b.name AS brand_name, b.color AS brand_color,
+                    br.title AS brief_title, br.campaign_goal
+                FROM projects p
+                LEFT JOIN communities c ON p.community_id = c.id
+                LEFT JOIN brands b ON p.brand_id = b.id
+                LEFT JOIN briefs br ON p.brief_id = br.id
+                ORDER BY p.created_at DESC
+            """)
+            rows = cur.fetchall()
+    result = []
+    for row in rows:
+        d = dict(row)
+        for k, v in d.items():
+            if hasattr(v, "isoformat"):
+                d[k] = v.isoformat()
+        result.append(d)
+    return jsonify(result)
+
+
+@app.route("/api/admin/projects", methods=["POST"])
+def admin_create_project():
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
+    import uuid as _uuid
+    data = request.json or {}
+    project_id = str(_uuid.uuid4())
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO projects (id, brief_id, community_id, brand_id,
+                    title, type, budget, status, start_date, end_date, created_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, NOW())
+            """, (
+                project_id,
+                data.get("brief_id"),
+                data.get("community_id"),
+                data.get("brand_id"),
+                data.get("title"),
+                data.get("type"),
+                data.get("budget"),
+                data.get("status", "scoping"),
+                data.get("start_date"),
+                data.get("end_date"),
+            ))
+        conn.commit()
+    return jsonify({"ok": True, "id": project_id})
+
+
+@app.route("/api/admin/projects/<project_id>", methods=["PUT"])
+def admin_update_project(project_id):
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
+    data = request.json or {}
+    allowed = ["title", "status", "budget", "start_date", "end_date",
+               "team", "media_items", "report", "recap", "notes", "milestones", "timeline"]
+    fields, values = [], []
+    for field in allowed:
+        if field in data:
+            val = data[field]
+            if isinstance(val, (dict, list)):
+                val = _json_stdlib.dumps(val)
+            fields.append(f"{field} = %s")
+            values.append(val if val != "" else None)
+    if not fields:
+        return jsonify({"error": "Nothing to update"}), 400
+    values.append(project_id)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"UPDATE projects SET {', '.join(fields)} WHERE id = %s",
+                values
+            )
+        conn.commit()
+    return jsonify({"ok": True})
+
+
+@app.route("/api/admin/projects/<project_id>/media", methods=["POST"])
+def admin_upload_project_media(project_id):
+    """Upload an image asset to a project's media library."""
+    import uuid as _uuid
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "No file provided"}), 400
+    allowed = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+    if file.content_type not in allowed:
+        return jsonify({"error": "Invalid file type"}), 400
+    ext = {"image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif"}.get(file.content_type, "jpg")
+    asset_id = str(_uuid.uuid4())[:8]
+    path = f"projects/{project_id}/media/{asset_id}.{ext}"
+    url = upload_to_supabase(file.read(), path, file.content_type)
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT media_items FROM projects WHERE id = %s", (project_id,))
+            row = cur.fetchone()
+            items = list(row["media_items"] or []) if row else []
+            items.append({
+                "id": asset_id, "type": "image", "url": url,
+                "caption": request.form.get("caption", ""),
+                "uploaded_at": __import__("datetime").datetime.utcnow().isoformat() + "Z"
+            })
+            cur.execute(
+                "UPDATE projects SET media_items = %s WHERE id = %s",
+                (_json_stdlib.dumps(items), project_id)
+            )
+        conn.commit()
+    return jsonify({"ok": True, "url": url, "id": asset_id})
 
 
 @app.route("/profile/<community_id>")
