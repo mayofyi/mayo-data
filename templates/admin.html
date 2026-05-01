@@ -7,213 +7,163 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --lime: #d2ff01; --cyan: #b1ecf0; --pink: #ff6ef2; --orange: #ffab40;
-  --yellow: #ffea12; --green: #b3ff9e; --red: #ff6b6b;
-  --muted: #666; --surface: #080808; --surface2: #111; --surface3: #1a1a1a;
-  --border: #222; --border2: #2a2a2a; --white: #f0f0f0;
-  --nav-w: 216px;
+  --lime:#d2ff01;--cyan:#b1ecf0;--pink:#ff6ef2;--orange:#ffab40;
+  --yellow:#ffea12;--green:#b3ff9e;--red:#ff6b6b;
+  --muted:#666;--surface:#080808;--surface2:#111;--surface3:#1a1a1a;
+  --border:#222;--border2:#2a2a2a;--white:#f0f0f0;--nav-w:216px;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { background:var(--surface); color:var(--white); font-family:'Barlow',sans-serif; font-size:14px; min-height:100vh; }
-.bb { font-family:'Bebas Neue',sans-serif; letter-spacing:0.03em; }
-.bc { font-family:'Barlow Condensed',sans-serif; }
-::-webkit-scrollbar { width:4px; height:6px; }
-::-webkit-scrollbar-thumb { background:var(--surface3); border-radius:3px; }
-::-webkit-scrollbar-track { background:transparent; }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--surface);color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;min-height:100vh;}
+.bb{font-family:'Bebas Neue',sans-serif;letter-spacing:0.03em;}
+.bc{font-family:'Barlow Condensed',sans-serif;}
+::-webkit-scrollbar{width:4px;height:6px;}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:3px;}
+::-webkit-scrollbar-track{background:transparent;}
 
-/* ── LAYOUT ── */
-.admin-app { display:flex; min-height:100vh; }
+.admin-app{display:flex;min-height:100vh;}
 
-/* ── SIDENAV ── */
-.sidenav {
-  width:var(--nav-w); min-width:var(--nav-w);
-  background:var(--surface2); border-right:1px solid var(--border);
-  display:flex; flex-direction:column;
-  height:100vh; overflow-y:auto; position:sticky; top:0; flex-shrink:0;
-}
-.sidenav-logo {
-  padding:20px 20px 16px; border-bottom:1px solid var(--border);
-  display:flex; align-items:center; justify-content:space-between;
-}
-.logo-text { font-family:'Bebas Neue'; font-size:28px; letter-spacing:0.05em; }
-.logo-dot { color:var(--lime); }
-.role-badge {
-  font-family:'Barlow Condensed'; font-size:10px; font-weight:700;
-  letter-spacing:0.1em; text-transform:uppercase; padding:3px 7px; border-radius:3px;
-}
-.sidenav-user {
-  padding:14px 16px; border-bottom:1px solid var(--border);
-  display:flex; align-items:center; gap:10px;
-}
-.avatar {
-  width:34px; height:34px; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  font-family:'Barlow Condensed'; font-weight:700; font-size:13px; flex-shrink:0;
-}
-.user-name { font-weight:600; font-size:13px; }
-.user-org { font-size:11px; color:var(--muted); }
-.nav-section { padding:10px 10px 4px; }
-.nav-section-label {
-  font-family:'Barlow Condensed'; font-size:10px; font-weight:700;
-  letter-spacing:0.12em; text-transform:uppercase; color:var(--muted); padding:0 8px 6px;
-}
-.nav-item {
-  display:flex; align-items:center; gap:10px;
-  padding:8px 10px; border-radius:6px; cursor:pointer;
-  font-size:13px; font-weight:500; color:var(--muted);
-  transition:all 0.12s; margin-bottom:1px; border:none;
-  background:transparent; width:100%; text-align:left;
-}
-.nav-item:hover { background:var(--surface3); color:var(--white); }
-.nav-item.active { background:var(--surface3); color:var(--white); }
-.nav-item.active .nav-icon { color:var(--lime); }
-.nav-icon { font-size:14px; width:18px; text-align:center; flex-shrink:0; }
-.nav-badge {
-  margin-left:auto; background:var(--lime); color:#000;
-  font-size:10px; font-weight:700; padding:1px 6px; border-radius:10px;
-  font-family:'Barlow Condensed';
-}
+/* SIDENAV */
+.sidenav{width:var(--nav-w);min-width:var(--nav-w);background:var(--surface2);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow-y:auto;position:sticky;top:0;flex-shrink:0;}
+.sidenav-logo{padding:20px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.logo-text{font-family:'Bebas Neue';font-size:28px;letter-spacing:0.05em;}
+.logo-dot{color:var(--lime);}
+.role-badge{font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:3px 7px;border-radius:3px;}
+.sidenav-user{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.avatar{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed';font-weight:700;font-size:13px;flex-shrink:0;overflow:hidden;}
+.avatar img{width:100%;height:100%;object-fit:cover;}
+.user-name{font-weight:600;font-size:13px;}
+.user-org{font-size:11px;color:var(--muted);}
+.nav-section{padding:10px 10px 4px;}
+.nav-section-label{font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);padding:0 8px 6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:all 0.12s;margin-bottom:1px;border:none;background:transparent;width:100%;text-align:left;}
+.nav-item:hover{background:var(--surface3);color:var(--white);}
+.nav-item.active{background:var(--surface3);color:var(--white);}
+.nav-item.active .nav-icon{color:var(--lime);}
+.nav-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
+.nav-badge{margin-left:auto;background:var(--lime);color:#000;font-size:10px;font-weight:700;padding:1px 6px;border-radius:10px;font-family:'Barlow Condensed';}
 
-/* ── MAIN ── */
-.main { flex:1; display:flex; flex-direction:column; min-width:0; overflow:hidden; }
-.topbar {
-  padding:0 28px; height:56px; min-height:56px;
-  border-bottom:1px solid var(--border);
-  display:flex; align-items:center; justify-content:space-between;
-  background:var(--surface2);
-}
-.topbar-title { font-family:'Barlow Condensed'; font-size:18px; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; }
-.topbar-actions { display:flex; align-items:center; gap:10px; }
-.page { flex:1; overflow-y:auto; padding:24px 28px; }
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+.topbar{padding:0 28px;height:56px;min-height:56px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--surface2);}
+.topbar-title{font-family:'Barlow Condensed';font-size:18px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;}
+.topbar-title .breadcrumb{color:var(--muted);font-weight:400;}
+.topbar-actions{display:flex;align-items:center;gap:10px;}
+.page{flex:1;overflow-y:auto;padding:24px 28px;}
 
-/* ── BUTTONS ── */
-.btn {
-  display:inline-flex; align-items:center; gap:6px;
-  padding:8px 16px; border-radius:6px; border:none; cursor:pointer;
-  font-family:'Barlow Condensed'; font-size:13px; font-weight:700;
-  letter-spacing:0.06em; text-transform:uppercase; transition:all 0.12s;
-}
-.btn-primary { background:var(--lime); color:#000; }
-.btn-primary:hover { background:#bde500; }
-.btn-ghost { background:transparent; border:1px solid var(--border2); color:var(--white); }
-.btn-ghost:hover { background:var(--surface3); }
-.btn-sm { padding:5px 11px; font-size:12px; }
-.btn-danger { background:transparent; border:1px solid var(--red); color:var(--red); }
-.btn-danger:hover { background:rgba(255,107,107,0.1); }
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:6px;border:none;cursor:pointer;font-family:'Barlow Condensed';font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;transition:all 0.12s;text-decoration:none;}
+.btn-primary{background:var(--lime);color:#000;}
+.btn-primary:hover{background:#bde500;}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--white);}
+.btn-ghost:hover{background:var(--surface3);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.btn-danger{background:transparent;border:1px solid var(--red);color:var(--red);}
+.btn-danger:hover{background:rgba(255,107,107,0.1);}
+.btn-cyan{background:var(--cyan);color:#000;}
 
-/* ── CARDS & STATS ── */
-.stats-row { display:grid; gap:16px; margin-bottom:24px; }
-.stat-card { background:var(--surface3); border:1px solid var(--border); border-radius:10px; padding:16px 20px; }
-.stat-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:6px; }
-.stat-value { font-family:'Bebas Neue'; font-size:36px; line-height:1; }
-.stat-sub { font-size:11px; color:var(--muted); margin-top:4px; }
-.panel { background:var(--surface3); border:1px solid var(--border); border-radius:10px; padding:20px; }
-.card { background:var(--surface3); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+/* CARDS */
+.stats-row{display:grid;gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--surface3);border:1px solid var(--border);border-radius:10px;padding:16px 20px;}
+.stat-label{font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;}
+.stat-value{font-family:'Bebas Neue';font-size:36px;line-height:1;}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.panel{background:var(--surface3);border:1px solid var(--border);border-radius:10px;padding:20px;}
+.card{background:var(--surface3);border:1px solid var(--border);border-radius:10px;overflow:hidden;}
 
-/* ── TABLE ── */
-table { width:100%; border-collapse:collapse; }
-thead th { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); padding:10px 14px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
-tbody tr { border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s; }
-tbody tr:hover { background:var(--surface3); }
-tbody td { padding:12px 14px; vertical-align:middle; font-size:13px; }
-tbody tr:last-child { border-bottom:none; }
+/* TABLE */
+table{width:100%;border-collapse:collapse;}
+thead th{font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.1s;}
+tbody tr:hover{background:var(--surface3);}
+tbody td{padding:12px 14px;vertical-align:middle;font-size:13px;}
+tbody tr:last-child{border-bottom:none;}
 
-/* ── BADGES ── */
-.badge { display:inline-block; padding:3px 9px; border-radius:3px; font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; }
-.badge-lime { background:var(--lime); color:#000; }
-.badge-cyan { background:var(--cyan); color:#000; }
-.badge-green { background:var(--green); color:#000; }
-.badge-orange { background:var(--orange); color:#000; }
-.badge-muted { background:var(--surface3); color:var(--muted); border:1px solid var(--border2); }
-.badge-red { background:rgba(255,107,107,0.15); color:var(--red); border:1px solid rgba(255,107,107,0.3); }
+/* BADGES */
+.badge{display:inline-block;padding:3px 9px;border-radius:3px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;}
+.badge-lime{background:var(--lime);color:#000;}
+.badge-cyan{background:var(--cyan);color:#000;}
+.badge-green{background:var(--green);color:#000;}
+.badge-orange{background:var(--orange);color:#000;}
+.badge-muted{background:var(--surface3);color:var(--muted);border:1px solid var(--border2);}
+.badge-red{background:rgba(255,107,107,0.15);color:var(--red);border:1px solid rgba(255,107,107,0.3);}
+.status-scoping{background:var(--surface3);color:var(--muted);border:1px solid var(--border2);}
+.status-contracted{background:rgba(177,236,240,0.15);color:var(--cyan);border:1px solid rgba(177,236,240,0.3);}
+.status-active{background:rgba(210,255,1,0.15);color:var(--lime);border:1px solid rgba(210,255,1,0.3);}
+.status-wrapup{background:rgba(255,171,64,0.15);color:var(--orange);border:1px solid rgba(255,171,64,0.3);}
+.status-complete{background:rgba(179,255,158,0.15);color:var(--green);border:1px solid rgba(179,255,158,0.3);}
 
-/* Status pipeline */
-.status-scoping  { background:var(--surface3); color:var(--muted); border:1px solid var(--border2); }
-.status-contracted { background:rgba(177,236,240,0.15); color:var(--cyan); border:1px solid rgba(177,236,240,0.3); }
-.status-active   { background:rgba(210,255,1,0.15); color:var(--lime); border:1px solid rgba(210,255,1,0.3); }
-.status-wrapup   { background:rgba(255,171,64,0.15); color:var(--orange); border:1px solid rgba(255,171,64,0.3); }
-.status-complete { background:rgba(179,255,158,0.15); color:var(--green); border:1px solid rgba(179,255,158,0.3); }
+/* TABS */
+.tab-bar{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:20px;}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'Barlow Condensed';font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:10px 16px 10px 0;cursor:pointer;margin-right:4px;transition:color 0.12s;}
+.tab-btn:hover{color:var(--white);}
+.tab-btn.active{border-bottom-color:var(--lime);color:var(--white);}
 
-/* ── TABS ── */
-.tab-bar { display:flex; gap:0; border-bottom:1px solid var(--border); margin-bottom:20px; }
-.tab-btn { background:none; border:none; border-bottom:2px solid transparent; color:var(--muted); font-family:'Barlow Condensed'; font-size:13px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; padding:10px 16px 10px 0; cursor:pointer; margin-right:4px; transition:color 0.12s; }
-.tab-btn:hover { color:var(--white); }
-.tab-btn.active { border-bottom-color:var(--lime); color:var(--white); }
+/* FORMS */
+.form-grid{display:grid;gap:16px;}
+.form-grid-2{grid-template-columns:1fr 1fr;}
+.form-grid-3{grid-template-columns:1fr 1fr 1fr;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+.form-label{font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
+.form-input,.form-select,.form-textarea{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:9px 12px;color:var(--white);font-family:'Barlow';font-size:13px;outline:none;transition:border-color 0.15s;width:100%;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--lime);}
+.form-select option{background:var(--surface2);}
+.form-textarea{resize:vertical;min-height:80px;}
 
-/* ── FORMS ── */
-.form-grid { display:grid; gap:16px; }
-.form-grid-2 { grid-template-columns:1fr 1fr; }
-.form-group { display:flex; flex-direction:column; gap:6px; }
-.form-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); }
-.form-input, .form-select, .form-textarea {
-  background:var(--surface2); border:1px solid var(--border2); border-radius:6px;
-  padding:9px 12px; color:var(--white); font-family:'Barlow'; font-size:13px;
-  outline:none; transition:border-color 0.15s; width:100%;
-}
-.form-input:focus, .form-select:focus, .form-textarea:focus { border-color:var(--lime); }
-.form-select option { background:var(--surface2); }
-.form-textarea { resize:vertical; min-height:80px; }
-.form-hint { font-size:11px; color:var(--muted); }
+/* MISC */
+.section-label{font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;}
+.empty{text-align:center;padding:40px 20px;color:var(--muted);}
+.loading{text-align:center;padding:60px;color:var(--muted);font-family:'Barlow Condensed';font-size:16px;letter-spacing:0.06em;text-transform:uppercase;}
+.tag{display:inline-block;padding:2px 6px;border-radius:3px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;border:1px solid var(--border2);color:var(--muted);}
+.metric{font-family:'Barlow Condensed';font-size:16px;font-weight:700;}
+.metric-label{font-size:10px;color:var(--muted);font-family:'Barlow Condensed';text-transform:uppercase;letter-spacing:0.05em;}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);}
+.detail-row:last-child{border-bottom:none;}
+.detail-key{font-family:'Barlow Condensed';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted);}
+.detail-val{font-size:13px;text-align:right;}
 
-/* ── MISC ── */
-.section-label { font-family:'Barlow Condensed'; font-size:11px; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
-.empty { text-align:center; padding:60px 20px; color:var(--muted); }
-.loading { text-align:center; padding:60px; color:var(--muted); font-family:'Barlow Condensed'; font-size:16px; letter-spacing:0.06em; text-transform:uppercase; }
-.metric { font-family:'Barlow Condensed'; font-size:16px; font-weight:700; }
-.metric-label { font-size:10px; color:var(--muted); font-family:'Barlow Condensed'; text-transform:uppercase; letter-spacing:0.05em; }
-.tag { display:inline-block; padding:2px 6px; border-radius:3px; font-family:'Barlow Condensed'; font-size:10px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; border:1px solid var(--border2); color:var(--muted); }
-.divider { border:none; border-top:1px solid var(--border); margin:20px 0; }
+/* SLIDE PANEL */
+#slide-panel{position:fixed;top:0;right:0;bottom:0;width:480px;background:var(--surface2);border-left:1px solid var(--border);z-index:200;overflow-y:auto;padding:28px;transform:translateX(100%);transition:transform 0.2s ease;}
+#slide-panel.open{transform:translateX(0);}
+#panel-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:199;display:none;}
 
-/* ── SLIDE PANEL ── */
-#slide-panel {
-  position:fixed; top:0; right:0; bottom:0; width:480px;
-  background:var(--surface2); border-left:1px solid var(--border);
-  z-index:200; overflow-y:auto; padding:28px;
-  transform:translateX(100%); transition:transform 0.2s ease;
-}
-#slide-panel.open { transform:translateX(0); }
-#panel-overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:199;
-  display:none;
-}
+/* PIPELINE */
+.pipeline-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.pipeline-pill{padding:6px 14px;border-radius:20px;cursor:pointer;font-family:'Barlow Condensed';font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;border:1px solid var(--border2);background:transparent;color:var(--muted);transition:all 0.12s;}
+.pipeline-pill:hover{color:var(--white);}
+.pipeline-pill.active{background:var(--surface3);color:var(--white);border-color:var(--lime);}
 
-/* ── COMMUNITY MODAL ── */
-#comm-modal { position:fixed; inset:0; z-index:300; overflow-y:auto; background:var(--surface); display:none; }
-.comm-modal-inner { max-width:980px; margin:0 auto; padding-bottom:80px; }
-.back-btn { display:inline-flex; align-items:center; gap:6px; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.15); color:var(--white); font-family:'Barlow Condensed'; font-size:13px; font-weight:700; letter-spacing:0.06em; padding:7px 14px; border-radius:5px; cursor:pointer; transition:background 0.15s; }
-.back-btn:hover { background:rgba(255,255,255,0.18); }
-.metric-card { background:var(--surface3); border:1px solid var(--border); border-radius:10px; padding:18px 16px; position:relative; }
+/* PROGRESS */
+.progress-bar{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--lime);border-radius:2px;transition:width 0.3s;}
 
-/* ── MEDIA GRID ── */
-.media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; margin-top:16px; }
-.media-item { background:var(--surface3); border:1px solid var(--border); border-radius:8px; overflow:hidden; position:relative; }
-.media-item img { width:100%; height:100px; object-fit:cover; display:block; }
-.media-item-cap { padding:6px 8px; font-size:11px; color:var(--muted); }
-.media-item-del { position:absolute; top:6px; right:6px; background:rgba(0,0,0,0.7); border:none; color:var(--red); border-radius:4px; padding:2px 6px; cursor:pointer; font-size:11px; }
+/* MEDIA */
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px;margin-top:14px;}
+.media-item{background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden;position:relative;}
+.media-item img{width:100%;height:100px;object-fit:cover;display:block;}
+.media-item-cap{padding:6px 8px;font-size:11px;color:var(--muted);}
+.media-item-del{position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);border:none;color:var(--red);border-radius:4px;padding:2px 6px;cursor:pointer;font-size:11px;}
 
-/* ── PIPELINE PILLS ── */
-.pipeline-bar { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:16px; }
-.pipeline-pill {
-  padding:6px 14px; border-radius:20px; cursor:pointer;
-  font-family:'Barlow Condensed'; font-size:12px; font-weight:700;
-  letter-spacing:0.06em; text-transform:uppercase; border:1px solid var(--border2);
-  background:transparent; color:var(--muted); transition:all 0.12s;
-}
-.pipeline-pill:hover { border-color:var(--border2); color:var(--white); }
-.pipeline-pill.active { background:var(--surface3); color:var(--white); border-color:var(--lime); }
+/* IG POST GRID */
+.ig-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px;}
+.ig-post{border-radius:6px;overflow:hidden;background:var(--surface3);position:relative;aspect-ratio:1;}
+.ig-post img{width:100%;height:100%;object-fit:cover;display:block;}
+.ig-post-fb{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--muted);}
+.ig-post:hover .ig-post-overlay{opacity:1;}
+.ig-post-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.65);opacity:0;transition:opacity 0.15s;display:flex;align-items:center;justify-content:center;gap:10px;font-family:'Barlow Condensed';font-size:12px;font-weight:700;}
 
-/* ── QUOTE SLOTS ── */
-.quote-slot { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:14px; margin-bottom:12px; }
+/* QUOTE SLOTS */
+.quote-slot{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:14px;margin-bottom:12px;}
 
-/* ── PROGRESS BAR ── */
-.progress-bar { height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
-.progress-fill { height:100%; background:var(--lime); border-radius:2px; transition:width 0.3s; }
+/* MEMBER CARDS */
+.member-card{display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;}
+
+/* COVER PREVIEW */
+.cover-preview{width:100%;height:120px;border-radius:8px;display:flex;align-items:flex-end;padding:16px;margin-bottom:12px;position:relative;}
 </style>
 </head>
 <body>
 
 <div class="admin-app">
-  <!-- Sidebar -->
   <nav class="sidenav">
     <div class="sidenav-logo">
       <div class="logo-text">mayo<span class="logo-dot">.</span></div>
@@ -221,10 +171,7 @@ tbody tr:last-child { border-bottom:none; }
     </div>
     <div class="sidenav-user">
       <div class="avatar" style="background:var(--lime);color:#000">A</div>
-      <div>
-        <div class="user-name">Admin Panel</div>
-        <div class="user-org">mayo.fyi</div>
-      </div>
+      <div><div class="user-name">Admin Panel</div><div class="user-org">mayo.fyi</div></div>
     </div>
     <div class="nav-section">
       <div class="nav-section-label">Overview</div>
@@ -250,26 +197,17 @@ tbody tr:last-child { border-bottom:none; }
     </div>
   </nav>
 
-  <!-- Main -->
   <div class="main">
     <div class="topbar">
       <div class="topbar-title" id="topbar-title">Dashboard</div>
       <div class="topbar-actions" id="topbar-actions"></div>
     </div>
-    <div class="page" id="content">
-      <div class="loading">Loading…</div>
-    </div>
+    <div class="page" id="content"><div class="loading">Loading…</div></div>
   </div>
 </div>
 
-<!-- Slide panel -->
 <div id="panel-overlay" onclick="closePanel()"></div>
-<div id="slide-panel" id="slide-panel"></div>
-
-<!-- Community detail modal -->
-<div id="comm-modal">
-  <div class="comm-modal-inner" id="comm-modal-inner"></div>
-</div>
+<div id="slide-panel"></div>
 
 <div id="admin-token" style="display:none">{{ admin_token }}</div>
 
@@ -278,1166 +216,893 @@ const ADMIN_TOKEN = document.getElementById('admin-token').textContent.trim();
 
 // ── State ────────────────────────────────────────────────────────────────────
 const S = {
-  page: 'dashboard',
-  projectFilter: 'all',
-  projectTab: 'overview',
-  selectedProject: null,
-  communities: [], brands: [], briefs: [], projects: [],
+  page:'dashboard', projectFilter:'all', projectTab:'overview',
+  selectedProject:null, selectedCommunity:null, communityTab:'overview',
+  selectedBrand:null, selectedBrief:null,
+  communities:[], brands:[], briefs:[], projects:[],
 };
 
 // ── API ──────────────────────────────────────────────────────────────────────
-async function api(path, opts = {}) {
-  const sep = path.includes('?') ? '&' : '?';
-  const res = await fetch(`${path}${sep}token=${ADMIN_TOKEN}`, {
-    headers: { 'Content-Type': 'application/json', 'X-Admin-Token': ADMIN_TOKEN, ...opts.headers },
+async function api(path, opts={}) {
+  const sep = path.includes('?')?'&':'?';
+  const url = /^\/api\/community|^\/api\/brand/.test(path) ? path : `${path}${sep}token=${ADMIN_TOKEN}`;
+  const res = await fetch(url, {
+    headers:{'Content-Type':'application/json','X-Admin-Token':ADMIN_TOKEN,...(opts.headers||{})},
     ...opts
   });
   return res.json();
 }
-
-async function apiUpload(path, formData) {
-  const sep = path.includes('?') ? '&' : '?';
+async function apiForm(path, fd) {
+  const sep = path.includes('?')?'&':'?';
   const res = await fetch(`${path}${sep}token=${ADMIN_TOKEN}`, {
-    method: 'POST',
-    headers: { 'X-Admin-Token': ADMIN_TOKEN },
-    body: formData
+    method:'POST', headers:{'X-Admin-Token':ADMIN_TOKEN}, body:fd
   });
   return res.json();
 }
 
 async function loadAll() {
-  try {
-    const [communities, brands, briefs, projects] = await Promise.all([
-      api('/api/admin/communities'),
-      api('/api/admin/brands'),
-      api('/api/admin/briefs'),
-      api('/api/admin/projects'),
-    ]);
-    S.communities = Array.isArray(communities) ? communities : [];
-    S.brands = Array.isArray(brands) ? brands : [];
-    S.briefs = Array.isArray(briefs) ? briefs : [];
-    S.projects = Array.isArray(projects) ? projects : [];
-
-    // Update active projects badge
-    const active = S.projects.filter(p => p.status === 'active').length;
-    const badge = document.getElementById('badge-projects');
-    if (badge) { badge.textContent = active; badge.style.display = active ? '' : 'none'; }
-  } catch (e) {
-    console.error('Load error', e);
-  }
+  const [comm,brands,briefs,projects] = await Promise.all([
+    api('/api/admin/communities'), api('/api/admin/brands'),
+    api('/api/admin/briefs'), api('/api/admin/projects'),
+  ]);
+  S.communities = Array.isArray(comm)?comm:[];
+  S.brands = Array.isArray(brands)?brands:[];
+  S.briefs = Array.isArray(briefs)?briefs:[];
+  S.projects = Array.isArray(projects)?projects:[];
+  const active = S.projects.filter(p=>p.status==='active').length;
+  const el = document.getElementById('badge-projects');
+  if(el){el.textContent=active;el.style.display=active?'':'none';}
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const COVER_OPTIONS = [
-  { id:1, gradient:'linear-gradient(135deg,#1a1a2e 0%,#16213e 40%,#0f3460 70%,#533483 100%)' },
-  { id:2, gradient:'linear-gradient(135deg,#0d0d0d 0%,#1a0a00 40%,#3d1c00 70%,#c43a00 100%)' },
-  { id:3, gradient:'linear-gradient(135deg,#0a1628 0%,#1b3a4b 50%,#2d6a4f 100%)' },
-  { id:4, gradient:'linear-gradient(135deg,#1a0a00 0%,#3d2b1f 40%,#8a6a40 70%,#c4a060 100%)' },
-  { id:5, gradient:'linear-gradient(135deg,#0d0d1a 0%,#1a1a3e 40%,#2d1b69 70%,#6b2d8b 100%)' },
-  { id:6, gradient:'linear-gradient(135deg,#001a0a 0%,#003d1a 40%,#006b2d 70%,#00a844 100%)' },
+  {id:1,gradient:'linear-gradient(135deg,#1a1a2e 0%,#0f3460 70%,#533483 100%)'},
+  {id:2,gradient:'linear-gradient(135deg,#0d0d0d 0%,#3d1c00 70%,#c43a00 100%)'},
+  {id:3,gradient:'linear-gradient(135deg,#0a1628 0%,#1b3a4b 50%,#2d6a4f 100%)'},
+  {id:4,gradient:'linear-gradient(135deg,#1a0a00 0%,#8a6a40 70%,#c4a060 100%)'},
+  {id:5,gradient:'linear-gradient(135deg,#0d0d1a 0%,#2d1b69 70%,#6b2d8b 100%)'},
+  {id:6,gradient:'linear-gradient(135deg,#001a0a 0%,#006b2d 70%,#00a844 100%)'},
 ];
-
-const AVATAR_COLORS = [
-  {bg:'#d2ff01',text:'#000'},{bg:'#b1ecf0',text:'#000'},{bg:'#ff6ef2',text:'#000'},
-  {bg:'#ffab40',text:'#000'},{bg:'#b3ff9e',text:'#000'},{bg:'#ff6b6b',text:'#000'},
-  {bg:'#a78bfa',text:'#000'},{bg:'#34d399',text:'#000'},
-];
-
-function avatarColor(name) {
-  let h = 0;
-  for (let i = 0; i < (name||'').length; i++) h = (h * 31 + (name||'').charCodeAt(i)) & 0xffff;
-  return AVATAR_COLORS[h % AVATAR_COLORS.length];
-}
-
-function formatDate(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
-}
-
-function formatCurrency(n) {
-  if (!n) return '—';
-  return '$' + Number(n).toLocaleString();
-}
-
-function getER(c) {
-  const media = c.instagram_data?.media || [];
-  const followers = c.instagram_data?.profile?.followers_count || 0;
-  if (!media.length || !followers) return null;
-  const total = media.reduce((sum, p) => sum + (p.like_count||0) + (p.comments_count||0), 0);
-  return Math.round(total / media.length / followers * 10000) / 100;
-}
-
-function getFollowers(c) { return c.instagram_data?.profile?.followers_count ?? null; }
-
-function getTier(c) {
-  const n = [!!c.instagram_token, !!c.substack_url].filter(Boolean).length;
-  if (n >= 2) return 'fully-verified';
-  if (n >= 1) return 'verified';
-  return 'starter';
-}
-
-function tierBadge(tier) {
-  if (tier === 'fully-verified') return '<span class="badge badge-lime">✦ Fully Verified</span>';
-  if (tier === 'verified') return '<span class="badge badge-cyan">✦ Verified</span>';
-  return '<span class="badge badge-muted">Starter</span>';
-}
-
-const STATUS_LABELS = {
-  scoping:'Scoping', contracted:'Contracted', active:'Active', wrapup:'Wrap-up', complete:'Complete'
-};
-
-function statusBadge(status) {
-  const label = STATUS_LABELS[status] || status || '—';
-  return `<span class="badge status-${status||'scoping'}">${label}</span>`;
-}
+const AV_COLORS=[{bg:'#d2ff01',t:'#000'},{bg:'#b1ecf0',t:'#000'},{bg:'#ff6ef2',t:'#000'},{bg:'#ffab40',t:'#000'},{bg:'#b3ff9e',t:'#000'},{bg:'#ff6b6b',t:'#000'},{bg:'#a78bfa',t:'#000'},{bg:'#34d399',t:'#000'}];
+function avCol(name){let h=0;for(let i=0;i<(name||'').length;i++)h=(h*31+(name||'').charCodeAt(i))&0xffff;return AV_COLORS[h%AV_COLORS.length];}
+function fDate(iso){if(!iso)return'—';return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
+function fCur(n){if(!n)return'—';return'$'+Number(n).toLocaleString();}
+function getER(c){const m=c.instagram_data?.media||[];const f=c.instagram_data?.profile?.followers_count||0;if(!m.length||!f)return null;const t=m.reduce((s,p)=>s+(p.like_count||0)+(p.comments_count||0),0);return Math.round(t/m.length/f*10000)/100;}
+function getFollowers(c){return c.instagram_data?.profile?.followers_count??null;}
+function getTier(c){const n=[!!c.instagram_token,!!c.substack_url].filter(Boolean).length;if(n>=2)return'fully-verified';if(n>=1)return'verified';return'starter';}
+function tierBadge(tier){if(tier==='fully-verified')return'<span class="badge badge-lime">✦ Fully Verified</span>';if(tier==='verified')return'<span class="badge badge-cyan">✦ Verified</span>';return'<span class="badge badge-muted">Starter</span>';}
+const STATUS_LABELS={scoping:'Scoping',contracted:'Contracted',active:'Active',wrapup:'Wrap-up',complete:'Complete'};
+function statusBadge(s){return`<span class="badge status-${s||'scoping'}">${STATUS_LABELS[s]||s||'—'}</span>`;}
+const ARCH_COLORS={evangelists:'var(--pink)',early_adopters:'var(--cyan)',loyalists:'var(--lime)',buyers:'var(--orange)'};
+const ARCH_LABELS={evangelists:'Evangelists',early_adopters:'Early Adopters',loyalists:'Loyalists',buyers:'Buyers'};
 
 // ── Navigation ───────────────────────────────────────────────────────────────
-function navigate(page, extra = {}) {
-  S.page = page;
-  Object.assign(S, extra);
-  ['dashboard','projects','briefs','communities','brands'].forEach(p => {
-    const el = document.getElementById(`nav-${p}`);
-    if (el) el.classList.toggle('active', page === p);
+const PAGE_NAV = {
+  dashboard:'dashboard',projects:'projects','project-detail':'projects',
+  briefs:'briefs','brief-detail':'briefs',
+  communities:'communities','community-detail':'communities',
+  brands:'brands','brand-detail':'brands',
+};
+function navigate(page, extra={}) {
+  S.page=page; Object.assign(S,extra);
+  ['dashboard','projects','briefs','communities','brands'].forEach(p=>{
+    const el=document.getElementById(`nav-${p}`);
+    if(el)el.classList.toggle('active',(PAGE_NAV[page]||page)===p);
   });
-  const titles = { dashboard:'Dashboard', projects:'Projects', briefs:'Briefs', communities:'Communities', brands:'Brands' };
-  document.getElementById('topbar-title').textContent = titles[page] || page;
-  renderTopbarActions();
-  render();
+  renderTopbar(); render();
 }
 
-function renderTopbarActions() {
-  const el = document.getElementById('topbar-actions');
-  if (S.page === 'projects' && !S.selectedProject) {
-    el.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openCreateProject()">+ New Project</button>`;
-  } else if (S.page === 'briefs') {
-    el.innerHTML = `<button class="btn btn-primary btn-sm" onclick="openCreateBrief()">+ New Brief</button>`;
-  } else {
-    el.innerHTML = '';
-  }
+function renderTopbar() {
+  const titles={dashboard:'Dashboard',projects:'Projects',briefs:'Briefs',communities:'Communities',brands:'Brands'};
+  let title = titles[S.page]||S.page;
+  if(S.page==='community-detail'){const c=S.communities.find(x=>x.id===S.selectedCommunity);title=`<span class="breadcrumb">Communities /</span> ${c?c.name:''}`;}
+  else if(S.page==='brand-detail'){const b=S.brands.find(x=>x.id===S.selectedBrand);title=`<span class="breadcrumb">Brands /</span> ${b?b.name:''}`;}
+  else if(S.page==='brief-detail'){const br=S.briefs.find(x=>x.id===S.selectedBrief);title=`<span class="breadcrumb">Briefs /</span> ${br?br.title:''}`;}
+  else if(S.page==='project-detail'){const p=S.projects.find(x=>x.id===S.selectedProject);title=`<span class="breadcrumb">Projects /</span> ${p?p.community_name||p.title||'Project':''}`;}
+  document.getElementById('topbar-title').innerHTML=title;
+  const acts=document.getElementById('topbar-actions');
+  if(S.page==='projects')acts.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openCreateProject()">+ New Project</button>`;
+  else if(S.page==='briefs')acts.innerHTML=`<button class="btn btn-primary btn-sm" onclick="openCreateBrief()">+ New Brief</button>`;
+  else if(S.page==='community-detail'){const c=S.communities.find(x=>x.id===S.selectedCommunity);acts.innerHTML=`<a href="/profile/${S.selectedCommunity}" target="_blank" class="btn btn-ghost btn-sm">↗ Public Profile</a>${c&&c.instagram_token?`<button class="btn btn-ghost btn-sm" onclick="refreshIG('${S.selectedCommunity}')">Refresh IG</button>`:''}`;}
+  else acts.innerHTML='';
 }
 
 function render() {
-  const c = document.getElementById('content');
-  switch (S.page) {
-    case 'dashboard':   c.innerHTML = renderDashboard(); break;
-    case 'projects':    c.innerHTML = S.selectedProject ? renderProjectDetail() : renderProjects(); break;
-    case 'briefs':      c.innerHTML = renderBriefs(); break;
-    case 'communities': c.innerHTML = renderCommunities(); break;
-    case 'brands':      c.innerHTML = renderBrands(); break;
+  const c=document.getElementById('content');
+  switch(S.page){
+    case'dashboard':c.innerHTML=renderDashboard();break;
+    case'projects':c.innerHTML=renderProjects();break;
+    case'project-detail':c.innerHTML=renderProjectDetail();break;
+    case'briefs':c.innerHTML=renderBriefs();break;
+    case'brief-detail':c.innerHTML=renderBriefDetail();break;
+    case'communities':c.innerHTML=renderCommunities();break;
+    case'community-detail':c.innerHTML=renderCommunityDetail();break;
+    case'brands':c.innerHTML=renderBrands();break;
+    case'brand-detail':c.innerHTML=renderBrandDetail();break;
   }
 }
 
 // ── DASHBOARD ────────────────────────────────────────────────────────────────
-function renderDashboard() {
-  const activeProjects = S.projects.filter(p => p.status === 'active');
-  const openBriefs = S.briefs.filter(b => b.status === 'open');
-  const byStatus = {};
-  S.projects.forEach(p => { const s = p.status || 'scoping'; byStatus[s] = (byStatus[s]||0)+1; });
-
-  const recentProjects = S.projects.slice(0, 6);
-
-  return `
-    <div style="max-width:1100px">
-      <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stat-card">
-          <div class="stat-label">Communities</div>
-          <div class="stat-value">${S.communities.length}</div>
-          <div class="stat-sub">${S.communities.filter(c=>getTier(c)==='fully-verified').length} fully verified</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Brands</div>
-          <div class="stat-value">${S.brands.length}</div>
-          <div class="stat-sub">${S.briefs.length} briefs total</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Active Projects</div>
-          <div class="stat-value" style="color:var(--lime)">${activeProjects.length}</div>
-          <div class="stat-sub">${S.projects.length} total</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Open Briefs</div>
-          <div class="stat-value">${openBriefs.length}</div>
-          <div class="stat-sub">${S.brands.length} brands</div>
+function renderDashboard(){
+  const byStatus={};S.projects.forEach(p=>{const s=p.status||'scoping';byStatus[s]=(byStatus[s]||0)+1;});
+  const recent=S.projects.slice(0,6);
+  return`<div style="max-width:1100px">
+    <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card"><div class="stat-label">Communities</div><div class="stat-value">${S.communities.length}</div><div class="stat-sub">${S.communities.filter(c=>getTier(c)==='fully-verified').length} fully verified</div></div>
+      <div class="stat-card"><div class="stat-label">Brands</div><div class="stat-value">${S.brands.length}</div><div class="stat-sub">${S.briefs.length} briefs total</div></div>
+      <div class="stat-card"><div class="stat-label">Active Projects</div><div class="stat-value" style="color:var(--lime)">${S.projects.filter(p=>p.status==='active').length}</div><div class="stat-sub">${S.projects.length} total</div></div>
+      <div class="stat-card"><div class="stat-label">Open Briefs</div><div class="stat-value">${S.briefs.filter(b=>b.status==='open').length}</div><div class="stat-sub">${new Set(S.briefs.map(b=>b.brand_id)).size} brands</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
+      <div class="panel">
+        <div class="section-label">Project Pipeline</div>
+        ${['scoping','contracted','active','wrapup','complete'].map(s=>{
+          const count=byStatus[s]||0,pct=S.projects.length?Math.round(count/S.projects.length*100):0;
+          const barC=s==='active'?'var(--lime)':s==='complete'?'var(--green)':s==='wrapup'?'var(--orange)':s==='contracted'?'var(--cyan)':'var(--border2)';
+          return`<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><div style="width:90px">${statusBadge(s)}</div><div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:${pct}%;background:${barC}"></div></div><div style="font-family:'Barlow Condensed';font-size:13px;font-weight:700;width:20px;text-align:right">${count}</div></div>`;
+        }).join('')}
+      </div>
+      <div class="panel">
+        <div class="section-label">Quick Actions</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <button class="btn btn-primary" onclick="navigate('projects');openCreateProject()" style="justify-content:center">+ New Project</button>
+          <button class="btn btn-ghost" onclick="navigate('briefs');openCreateBrief()" style="justify-content:center">+ New Brief</button>
+          <button class="btn btn-ghost" onclick="navigate('communities')" style="justify-content:center">View Communities →</button>
         </div>
       </div>
-
-      <!-- Pipeline summary -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px">
-        <div class="panel">
-          <div class="section-label">Project Pipeline</div>
-          ${['scoping','contracted','active','wrapup','complete'].map(s => {
-            const count = byStatus[s] || 0;
-            const pct = S.projects.length ? Math.round(count/S.projects.length*100) : 0;
-            return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-              <div style="width:90px">${statusBadge(s)}</div>
-              <div class="progress-bar" style="flex:1"><div class="progress-fill" style="width:${pct}%;background:${s==='active'?'var(--lime)':s==='complete'?'var(--green)':s==='wrapup'?'var(--orange)':s==='contracted'?'var(--cyan)':'var(--border2)'}"></div></div>
-              <div style="font-family:'Barlow Condensed';font-size:13px;font-weight:700;width:20px;text-align:right">${count}</div>
-            </div>`;
-          }).join('')}
-        </div>
-
-        <div class="panel">
-          <div class="section-label">Quick Actions</div>
-          <div style="display:flex;flex-direction:column;gap:10px">
-            <button class="btn btn-primary" onclick="navigate('projects');openCreateProject()" style="justify-content:center">+ Create Project</button>
-            <button class="btn btn-ghost" onclick="navigate('briefs');openCreateBrief()" style="justify-content:center">+ Create Brief</button>
-            <button class="btn btn-ghost" onclick="navigate('communities')" style="justify-content:center">View Communities →</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recent projects -->
-      ${recentProjects.length ? `
-      <div class="section-label">Recent Projects</div>
-      <div class="card">
-        <div style="overflow-x:auto">
-        <table style="min-width:700px">
-          <thead><tr>
-            <th>Community</th><th>Brand</th><th>Status</th><th>Budget</th><th>Created</th>
-          </tr></thead>
-          <tbody>
-            ${recentProjects.map(p => `
-              <tr onclick="navigate('projects',{selectedProject:'${p.id}',projectTab:'overview'})">
-                <td><div style="font-weight:600">${p.community_name||'—'}</div><div style="font-size:11px;color:var(--muted)">${p.brief_title||''}</div></td>
-                <td>${p.brand_name||'—'}</td>
-                <td>${statusBadge(p.status)}</td>
-                <td>${formatCurrency(p.budget)}</td>
-                <td style="color:var(--muted)">${formatDate(p.created_at)}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-        </div>
-      </div>
-      ` : `<div class="panel"><div class="empty" style="padding:30px">No projects yet. <button class="btn btn-primary btn-sm" onclick="openCreateProject()" style="margin-left:8px">Create first project →</button></div></div>`}
-    </div>`;
+    </div>
+    ${recent.length?`<div class="section-label">Recent Projects</div><div class="card"><div style="overflow-x:auto"><table style="min-width:700px"><thead><tr><th>Community</th><th>Brand</th><th>Status</th><th>Budget</th><th>Created</th></tr></thead><tbody>${recent.map(p=>`<tr onclick="navigate('project-detail',{selectedProject:'${p.id}',projectTab:'overview'})"><td><div style="font-weight:600">${p.community_name||'—'}</div><div style="font-size:11px;color:var(--muted)">${p.brief_title||p.title||''}</div></td><td>${p.brand_name||'—'}</td><td>${statusBadge(p.status)}</td><td>${fCur(p.budget)}</td><td style="color:var(--muted)">${fDate(p.created_at)}</td></tr>`).join('')}</tbody></table></div></div>`:`<div class="panel"><div class="empty">No projects yet. <button class="btn btn-primary btn-sm" onclick="openCreateProject()" style="margin-left:8px">Create first project →</button></div></div>`}
+  </div>`;
 }
 
-// ── PROJECTS LIST ─────────────────────────────────────────────────────────────
-function renderProjects() {
-  const statuses = ['all','scoping','contracted','active','wrapup','complete'];
-  const filtered = S.projectFilter === 'all'
-    ? S.projects
-    : S.projects.filter(p => (p.status||'scoping') === S.projectFilter);
-
-  return `
-    <div style="max-width:1100px">
-      <div class="pipeline-bar">
-        ${statuses.map(s => `
-          <button class="pipeline-pill${S.projectFilter===s?' active':''}" onclick="filterProjects('${s}')">
-            ${s==='all'?`All (${S.projects.length})`:STATUS_LABELS[s]+' ('+S.projects.filter(p=>(p.status||'scoping')===s).length+')'}
-          </button>
-        `).join('')}
-      </div>
-      <div class="card">
-        <div style="overflow-x:auto">
-        <table style="min-width:800px">
-          <thead><tr>
-            <th>Community</th><th>Brand</th><th>Brief</th><th>Status</th><th>Budget</th><th>Start</th><th>End</th>
-          </tr></thead>
-          <tbody>
-            ${filtered.length ? filtered.map(p => `
-              <tr onclick="navigate('projects',{selectedProject:'${p.id}',projectTab:'overview'})">
-                <td>
-                  <div style="font-weight:600">${p.community_name||'—'}</div>
-                  <div style="font-size:11px;color:var(--muted)">${p.title||''}</div>
-                </td>
-                <td>${p.brand_name||'—'}</td>
-                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.brief_title||'—'}</td>
-                <td>${statusBadge(p.status)}</td>
-                <td>${formatCurrency(p.budget)}</td>
-                <td style="color:var(--muted)">${formatDate(p.start_date)}</td>
-                <td style="color:var(--muted)">${formatDate(p.end_date)}</td>
-              </tr>
-            `).join('') : `<tr><td colspan="7"><div class="empty">No ${S.projectFilter==='all'?'':''+STATUS_LABELS[S.projectFilter]+' '}projects yet.</div></td></tr>`}
-          </tbody>
-        </table>
-        </div>
-      </div>
-    </div>`;
-}
-
-function filterProjects(status) {
-  S.projectFilter = status;
-  render();
+// ── PROJECTS ─────────────────────────────────────────────────────────────────
+function renderProjects(){
+  const filtered=S.projectFilter==='all'?S.projects:S.projects.filter(p=>(p.status||'scoping')===S.projectFilter);
+  return`<div style="max-width:1100px">
+    <div class="pipeline-bar">
+      ${['all','scoping','contracted','active','wrapup','complete'].map(s=>`<button class="pipeline-pill${S.projectFilter===s?' active':''}" onclick="S.projectFilter='${s}';render()">${s==='all'?'All ('+S.projects.length+')':STATUS_LABELS[s]+' ('+S.projects.filter(p=>(p.status||'scoping')===s).length+')'}</button>`).join('')}
+    </div>
+    <div class="card"><div style="overflow-x:auto"><table style="min-width:800px">
+      <thead><tr><th>Community</th><th>Brand</th><th>Brief</th><th>Status</th><th>Budget</th><th>Start</th><th>End</th></tr></thead>
+      <tbody>${filtered.length?filtered.map(p=>`<tr onclick="navigate('project-detail',{selectedProject:'${p.id}',projectTab:'overview'})"><td><div style="font-weight:600">${p.community_name||'—'}</div><div style="font-size:11px;color:var(--muted)">${p.title||''}</div></td><td>${p.brand_name||'—'}</td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.brief_title||'—'}</td><td>${statusBadge(p.status)}</td><td>${fCur(p.budget)}</td><td style="color:var(--muted)">${fDate(p.start_date)}</td><td style="color:var(--muted)">${fDate(p.end_date)}</td></tr>`).join(''):`<tr><td colspan="7"><div class="empty">No projects.</div></td></tr>`}</tbody>
+    </table></div></div>
+  </div>`;
 }
 
 // ── PROJECT DETAIL ────────────────────────────────────────────────────────────
-function renderProjectDetail() {
-  const p = S.projects.find(x => x.id === S.selectedProject);
-  if (!p) return `<div class="empty">Project not found. <button class="btn btn-ghost btn-sm" onclick="navigate('projects')">← Back</button></div>`;
-
-  const tabs = ['overview','media','measurement','recap','team'];
-  const tabLabels = { overview:'Overview', media:'Media Library', measurement:'Measurement', recap:'Recap Report', team:'Team' };
-
-  return `
-    <div style="max-width:1000px">
-      <!-- Header -->
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
-        <div>
-          <button class="btn btn-ghost btn-sm" onclick="navigate('projects')" style="margin-bottom:12px">← Back to Projects</button>
-          <div class="bb" style="font-size:32px;line-height:1">${p.community_name||'Project'}</div>
-          <div style="color:var(--muted);margin-top:4px">${p.brand_name||''} ${p.brief_title?'· '+p.brief_title:''}</div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;margin-top:32px">
-          ${statusBadge(p.status)}
-        </div>
+function renderProjectDetail(){
+  const p=S.projects.find(x=>x.id===S.selectedProject);
+  if(!p)return`<div class="empty">Not found. <button class="btn btn-ghost btn-sm" onclick="navigate('projects')">← Back</button></div>`;
+  const tabs=['overview','media','measurement','recap','team'];
+  const tl={overview:'Overview',media:'Media Library',measurement:'Measurement',recap:'Recap Report',team:'Team'};
+  return`<div style="max-width:1000px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <button class="btn btn-ghost btn-sm" onclick="navigate('projects')" style="margin-bottom:12px">← Back</button>
+        <div class="bb" style="font-size:32px;line-height:1">${p.community_name||'Project'}</div>
+        <div style="color:var(--muted);margin-top:4px">${p.brand_name||''}${p.brief_title?' · '+p.brief_title:''}</div>
       </div>
-
-      <!-- Status pipeline -->
-      <div class="panel" style="margin-bottom:20px">
-        <div class="section-label">Update Status</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${['scoping','contracted','active','wrapup','complete'].map(s => `
-            <button
-              class="btn btn-sm${(p.status||'scoping')===s?' btn-primary':' btn-ghost'}"
-              style="${(p.status||'scoping')===s?'':'opacity:0.6'}"
-              onclick="updateProjectStatus('${p.id}','${s}')">
-              ${STATUS_LABELS[s]}
-            </button>
-          `).join('')}
-        </div>
+      <div style="margin-top:32px">${statusBadge(p.status)}</div>
+    </div>
+    <div class="panel" style="margin-bottom:20px">
+      <div class="section-label">Status</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${['scoping','contracted','active','wrapup','complete'].map(s=>`<button class="btn btn-sm ${(p.status||'scoping')===s?'btn-primary':'btn-ghost'}" onclick="updateProjectStatus('${p.id}','${s}')">${STATUS_LABELS[s]}</button>`).join('')}
       </div>
-
-      <!-- Tabs -->
-      <div class="tab-bar">
-        ${tabs.map(t => `<button class="tab-btn${S.projectTab===t?' active':''}" onclick="switchProjectTab('${t}')">${tabLabels[t]}</button>`).join('')}
-      </div>
-
-      <!-- Tab content -->
-      <div id="project-tab-content">
-        ${renderProjectTab(p)}
-      </div>
-    </div>`;
+    </div>
+    <div class="tab-bar">${tabs.map(t=>`<button class="tab-btn${S.projectTab===t?' active':''}" onclick="switchProjTab('${t}')">${tl[t]}</button>`).join('')}</div>
+    <div id="proj-tab">${renderProjTab(p)}</div>
+  </div>`;
 }
+function switchProjTab(t){S.projectTab=t;const p=S.projects.find(x=>x.id===S.selectedProject);if(p)document.getElementById('proj-tab').innerHTML=renderProjTab(p);document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['overview','media','measurement','recap','team'][i]===t));}
+function renderProjTab(p){switch(S.projectTab){case'overview':return renderProjOverview(p);case'media':return renderProjMedia(p);case'measurement':return renderProjMeasure(p);case'recap':return renderProjRecap(p);case'team':return renderProjTeam(p);}return'';}
 
-function renderProjectTab(p) {
-  switch (S.projectTab) {
-    case 'overview':    return renderProjectOverview(p);
-    case 'media':       return renderProjectMedia(p);
-    case 'measurement': return renderProjectMeasurement(p);
-    case 'recap':       return renderProjectRecap(p);
-    case 'team':        return renderProjectTeam(p);
-    default: return '';
-  }
-}
-
-function switchProjectTab(tab) {
-  S.projectTab = tab;
-  const p = S.projects.find(x => x.id === S.selectedProject);
-  if (p) document.getElementById('project-tab-content').innerHTML = renderProjectTab(p);
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.textContent.toLowerCase().replace(/ /g,'') === tab.replace(/ /g,'') ||
-      btn.onclick?.toString().includes(`'${tab}'`));
-  });
-  // Simpler: re-render the tab bar
-  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
-    const tabMap = ['overview','media','measurement','recap','team'];
-    btn.classList.toggle('active', tabMap[i] === tab);
-  });
-}
-
-function renderProjectOverview(p) {
-  return `
-    <div class="form-grid form-grid-2" style="margin-bottom:20px">
-      <div class="panel">
-        <div class="section-label">Details</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          ${[
-            ['Community', p.community_name||'—'],
-            ['Brand', p.brand_name||'—'],
-            ['Brief', p.brief_title||'—'],
-            ['Type', p.type||'—'],
-            ['Budget', formatCurrency(p.budget)],
-            ['Start Date', formatDate(p.start_date)],
-            ['End Date', formatDate(p.end_date)],
-            ['Created', formatDate(p.created_at)],
-          ].map(([label,val]) => `
-            <div style="display:flex;justify-content:space-between;gap:12px;padding-bottom:8px;border-bottom:1px solid var(--border)">
-              <div style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted)">${label}</div>
-              <div style="font-size:13px;text-align:right">${val}</div>
-            </div>
-          `).join('')}
-        </div>
-      </div>
-      <div class="panel">
-        <div class="section-label">Notes</div>
-        <textarea class="form-textarea" id="proj-notes" style="min-height:120px" placeholder="Internal notes…">${p.notes||''}</textarea>
-        <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="saveProjectNotes('${p.id}')">Save Notes</button>
-      </div>
+function renderProjOverview(p){
+  return`<div class="form-grid form-grid-2" style="margin-bottom:20px">
+    <div class="panel">
+      <div class="section-label">Details</div>
+      ${[['Community',p.community_name||'—'],['Brand',p.brand_name||'—'],['Brief',p.brief_title||'—'],['Type',p.type||'—'],['Budget',fCur(p.budget)],['Start',fDate(p.start_date)],['End',fDate(p.end_date)],['Created',fDate(p.created_at)]].map(([k,v])=>`<div class="detail-row"><div class="detail-key">${k}</div><div class="detail-val">${v}</div></div>`).join('')}
     </div>
     <div class="panel">
-      <div class="section-label">Milestones</div>
-      <div id="milestones-list">
-        ${renderMilestones(p.milestones||[])}
-      </div>
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <input class="form-input" style="flex:1" id="milestone-text" placeholder="Add milestone…">
-        <input class="form-input" style="width:140px" type="date" id="milestone-date">
-        <button class="btn btn-ghost btn-sm" onclick="addMilestone('${p.id}')">Add</button>
-      </div>
-    </div>`;
-}
-
-function renderMilestones(milestones) {
-  if (!milestones.length) return '<div style="color:var(--muted);font-size:13px">No milestones yet.</div>';
-  return milestones.map((m, i) => `
-    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-      <input type="checkbox" ${m.done?'checked':''} onchange="toggleMilestone('${S.selectedProject}',${i},this.checked)" style="accent-color:var(--lime)">
-      <div style="flex:1;font-size:13px;${m.done?'text-decoration:line-through;color:var(--muted)':''}">${m.text}</div>
-      ${m.date ? `<div style="font-size:11px;color:var(--muted)">${formatDate(m.date)}</div>` : ''}
+      <div class="section-label">Notes</div>
+      <textarea class="form-textarea" id="proj-notes" style="min-height:120px" placeholder="Internal notes…">${p.notes||''}</textarea>
+      <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="saveProjNotes('${p.id}')">Save</button>
     </div>
-  `).join('');
+  </div>
+  <div class="panel">
+    <div class="section-label">Milestones</div>
+    <div id="milestones-list">${renderMilestones(p.milestones||[],p.id)}</div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <input class="form-input" style="flex:1" id="ms-text" placeholder="Add milestone…">
+      <input class="form-input" style="width:140px" type="date" id="ms-date">
+      <button class="btn btn-ghost btn-sm" onclick="addMilestone('${p.id}')">Add</button>
+    </div>
+  </div>`;
+}
+function renderMilestones(ms,pid){if(!ms.length)return'<div style="color:var(--muted);font-size:13px">No milestones yet.</div>';return ms.map((m,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)"><input type="checkbox"${m.done?' checked':''} onchange="toggleMS('${pid}',${i},this.checked)" style="accent-color:var(--lime)"><div style="flex:1;font-size:13px;${m.done?'text-decoration:line-through;color:var(--muted)':''}">${m.text}</div>${m.date?`<div style="font-size:11px;color:var(--muted)">${fDate(m.date)}</div>`:''}</div>`).join('');}
+
+function renderProjMedia(p){
+  const items=p.media_items||[];
+  return`<div>
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <label class="btn btn-primary btn-sm" style="cursor:pointer">Upload Image<input type="file" accept="image/*" style="display:none" onchange="uploadProjMedia('${p.id}',this)"></label>
+      <button class="btn btn-ghost btn-sm" onclick="addVideoLink('${p.id}')">+ Video URL</button>
+    </div>
+    ${items.length?`<div class="media-grid">${items.map(item=>`<div class="media-item">${item.type==='image'?`<img src="${item.url}" onerror="this.style.display='none'" loading="lazy">`:`<div style="height:100px;display:flex;align-items:center;justify-content:center;background:var(--surface2)"><a href="${item.url}" target="_blank" style="color:var(--cyan);font-size:12px">▶ Video</a></div>`}<div class="media-item-cap">${item.caption||'—'}</div><button class="media-item-del" onclick="delMediaItem('${p.id}','${item.id}')">✕</button></div>`).join('')}</div>`:`<div class="panel"><div class="empty">No media yet.</div></div>`}
+  </div>`;
 }
 
-function renderProjectMedia(p) {
-  const items = p.media_items || [];
-  return `
-    <div>
-      <div style="display:flex;gap:10px;margin-bottom:16px;align-items:center">
-        <label class="btn btn-primary btn-sm" style="cursor:pointer">
-          Upload Image <input type="file" accept="image/*" style="display:none" onchange="uploadMediaFile('${p.id}',this)">
-        </label>
-        <button class="btn btn-ghost btn-sm" onclick="addVideoUrl('${p.id}')">+ Add Video URL</button>
+function renderProjMeasure(p){
+  const r=p.report||{};const emv=r.impressions&&r.cpm_benchmark?Math.round(r.impressions*(r.cpm_benchmark||25)/1000):0;
+  return`<div>
+    <div class="form-grid form-grid-2" style="margin-bottom:16px">
+      <div class="form-group"><label class="form-label">Attendance</label><input class="form-input" type="number" id="r-att" value="${r.attendance||''}"></div>
+      <div class="form-group"><label class="form-label">Post Count</label><input class="form-input" type="number" id="r-posts" value="${r.post_count||''}"></div>
+      <div class="form-group"><label class="form-label">Impressions</label><input class="form-input" type="number" id="r-imp" value="${r.impressions||''}" oninput="calcEMV()"></div>
+      <div class="form-group"><label class="form-label">CPM Benchmark ($)</label><input class="form-input" type="number" id="r-cpm" value="${r.cpm_benchmark||25}" oninput="calcEMV()"></div>
+    </div>
+    <div class="panel" style="margin-bottom:16px;background:rgba(210,255,1,0.05);border-color:rgba(210,255,1,0.2)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><div class="section-label" style="margin-bottom:2px">Estimated Media Value</div><div style="font-size:11px;color:var(--muted)">Impressions × CPM ÷ 1000</div></div>
+        <div class="bb" style="font-size:36px;color:var(--lime)" id="emv-out">${emv?'$'+emv.toLocaleString():'—'}</div>
       </div>
-      ${items.length ? `
-        <div class="media-grid">
-          ${items.map(item => `
-            <div class="media-item">
-              ${item.type==='image'
-                ? `<img src="${item.url}" alt="${item.caption||''}" loading="lazy">`
-                : `<div style="height:100px;display:flex;align-items:center;justify-content:center;background:var(--surface2)">
-                    <a href="${item.url}" target="_blank" style="color:var(--cyan);font-size:11px;text-decoration:none">▶ Video Link</a>
-                  </div>`
-              }
-              <div class="media-item-cap">${item.caption||'No caption'}</div>
-              <button class="media-item-del" onclick="deleteMediaItem('${p.id}','${item.id}')">✕</button>
-            </div>
-          `).join('')}
-        </div>
-      ` : `<div class="panel"><div class="empty" style="padding:30px">No media yet. Upload images or add video links to build the partnership record.</div></div>`}
-    </div>`;
+    </div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">Campaign Hashtag</label><input class="form-input" id="r-tag" value="${r.hashtag||''}"></div>
+    <div class="form-group" style="margin-bottom:12px"><label class="form-label">Engagement Summary</label><textarea class="form-textarea" id="r-sum">${r.engagement_summary||''}</textarea></div>
+    <div class="form-group" style="margin-bottom:20px"><label class="form-label">Methodology Note</label><textarea class="form-textarea" id="r-meth">${r.methodology||''}</textarea></div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn btn-ghost" onclick="saveMeasure('${p.id}','draft')">Save Draft</button>
+      <button class="btn btn-primary" onclick="saveMeasure('${p.id}','published')">Publish</button>
+      ${r.status==='published'?'<span class="badge badge-lime">Published</span>':''}
+    </div>
+  </div>`;
 }
 
-function renderProjectMeasurement(p) {
-  const r = p.report || {};
-  const emv = r.impressions && r.cpm_benchmark ? Math.round(r.impressions * (r.cpm_benchmark||25) / 1000) : 0;
-  return `
-    <div>
-      <div class="form-grid form-grid-2" style="margin-bottom:16px">
-        <div class="form-group">
-          <label class="form-label">Attendance</label>
-          <input class="form-input" type="number" id="rpt-attendance" value="${r.attendance||''}" placeholder="0">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Post Count (hashtag)</label>
-          <input class="form-input" type="number" id="rpt-posts" value="${r.post_count||''}" placeholder="0">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Impressions</label>
-          <input class="form-input" type="number" id="rpt-impressions" value="${r.impressions||''}" placeholder="0" oninput="updateEMV()">
-        </div>
-        <div class="form-group">
-          <label class="form-label">CPM Benchmark ($)</label>
-          <input class="form-input" type="number" id="rpt-cpm" value="${r.cpm_benchmark||25}" oninput="updateEMV()">
-        </div>
-      </div>
-
-      <!-- EMV preview -->
-      <div class="panel" style="margin-bottom:16px;background:rgba(210,255,1,0.05);border-color:rgba(210,255,1,0.2)">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <div class="section-label" style="margin-bottom:4px">Estimated Media Value</div>
-            <div style="font-size:11px;color:var(--muted)">Impressions × CPM ÷ 1000. Methodology disclosed to brands.</div>
-          </div>
-          <div class="bb" style="font-size:36px;color:var(--lime)" id="emv-display">${emv?'$'+emv.toLocaleString():'—'}</div>
-        </div>
-      </div>
-
-      <div class="form-group" style="margin-bottom:16px">
-        <label class="form-label">Campaign Hashtag</label>
-        <input class="form-input" id="rpt-hashtag" value="${r.hashtag||''}" placeholder="#CampaignHashtag">
-      </div>
-      <div class="form-group" style="margin-bottom:16px">
-        <label class="form-label">Engagement Summary</label>
-        <textarea class="form-textarea" id="rpt-summary" placeholder="Describe key engagement moments, audience response…">${r.engagement_summary||''}</textarea>
-      </div>
-      <div class="form-group" style="margin-bottom:20px">
-        <label class="form-label">Methodology Note</label>
-        <textarea class="form-textarea" id="rpt-methodology" placeholder="Data sources, calculation notes…">${r.methodology||''}</textarea>
-      </div>
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-ghost" onclick="saveMeasurementReport('${p.id}','draft')">Save Draft</button>
-        <button class="btn btn-primary" onclick="saveMeasurementReport('${p.id}','published')">Publish Report</button>
-        ${r.status==='published'?`<span class="badge badge-lime" style="align-self:center">Published</span>`:''}
-      </div>
-    </div>`;
+function renderProjRecap(p){
+  const rc=p.recap||{};const qs=rc.quotes||[{text:'',author:''},{text:'',author:''},{text:'',author:''}];
+  while(qs.length<3)qs.push({text:'',author:''});
+  return`<div>
+    <div class="form-group" style="margin-bottom:14px"><label class="form-label">Title</label><input class="form-input" id="rc-title" value="${rc.title||''}"></div>
+    <div class="form-group" style="margin-bottom:14px"><label class="form-label">Summary</label><textarea class="form-textarea" id="rc-sum" style="min-height:90px">${rc.summary||''}</textarea></div>
+    <div class="form-group" style="margin-bottom:14px"><label class="form-label">Key Wins</label><textarea class="form-textarea" id="rc-wins">${rc.key_wins||''}</textarea></div>
+    <div class="form-group" style="margin-bottom:14px"><label class="form-label">Campaign Hashtag</label><input class="form-input" id="rc-tag" value="${rc.hashtag||''}"></div>
+    <div class="section-label" style="margin-bottom:10px">Quotes</div>
+    ${qs.slice(0,3).map((q,i)=>`<div class="quote-slot"><div class="form-group" style="margin-bottom:8px"><label class="form-label">Quote ${i+1}</label><textarea class="form-textarea" id="rc-q${i}" style="min-height:55px">${q.text||''}</textarea></div><div class="form-group"><label class="form-label">Attribution</label><input class="form-input" id="rc-a${i}" value="${q.author||''}"></div></div>`).join('')}
+    <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+      <button class="btn btn-ghost" onclick="saveRecap('${p.id}','draft')">Save Draft</button>
+      <button class="btn btn-primary" onclick="saveRecap('${p.id}','published')">Publish Case Study</button>
+      ${rc.status==='published'?'<span class="badge badge-lime">Published</span>':''}
+    </div>
+  </div>`;
 }
 
-function renderProjectRecap(p) {
-  const rc = p.recap || {};
-  const quotes = rc.quotes || [{text:'',author:''},{text:'',author:''},{text:'',author:''}];
-  while (quotes.length < 3) quotes.push({text:'',author:''});
-  return `
-    <div>
-      <div class="form-group" style="margin-bottom:16px">
-        <label class="form-label">Report Title</label>
-        <input class="form-input" id="recap-title" value="${rc.title||''}" placeholder="e.g. Southbound 400 × Hyperice Partnership">
-      </div>
-      <div class="form-group" style="margin-bottom:16px">
-        <label class="form-label">Executive Summary</label>
-        <textarea class="form-textarea" id="recap-summary" style="min-height:100px" placeholder="2–3 sentence overview of the partnership and outcomes…">${rc.summary||''}</textarea>
-      </div>
-      <div class="form-group" style="margin-bottom:16px">
-        <label class="form-label">Key Wins</label>
-        <textarea class="form-textarea" id="recap-wins" placeholder="Bullet-point the headline results…">${rc.key_wins||''}</textarea>
-      </div>
-      <div class="form-group" style="margin-bottom:16px">
-        <label class="form-label">Campaign Hashtag</label>
-        <input class="form-input" id="recap-hashtag" value="${rc.hashtag||''}" placeholder="#CampaignHashtag">
-      </div>
-
-      <div class="section-label" style="margin-bottom:12px">Quotes (up to 3)</div>
-      ${quotes.slice(0,3).map((q, i) => `
-        <div class="quote-slot">
-          <div class="form-group" style="margin-bottom:8px">
-            <label class="form-label">Quote ${i+1}</label>
-            <textarea class="form-textarea" id="recap-quote-${i}" style="min-height:60px" placeholder="Quote text…">${q.text||''}</textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Attribution</label>
-            <input class="form-input" id="recap-author-${i}" value="${q.author||''}" placeholder="Name, Title">
-          </div>
-        </div>
-      `).join('')}
-
-      <div style="display:flex;gap:10px;margin-top:8px">
-        <button class="btn btn-ghost" onclick="saveRecapReport('${p.id}','draft')">Save Draft</button>
-        <button class="btn btn-primary" onclick="saveRecapReport('${p.id}','published')">Publish as Case Study</button>
-        ${rc.status==='published'?`<span class="badge badge-lime" style="align-self:center">Published</span>`:''}
-      </div>
-    </div>`;
+function renderProjTeam(p){
+  const team=p.team||[];
+  return`<div>
+    ${team.length?`<div class="card" style="margin-bottom:16px"><table><thead><tr><th>Name</th><th>Role</th><th>Email</th><th></th></tr></thead><tbody>${team.map((m,i)=>`<tr><td style="font-weight:600">${m.name||'—'}</td><td style="color:var(--muted)">${m.role||'—'}</td><td>${m.email?`<a href="mailto:${m.email}" style="color:var(--cyan)">${m.email}</a>`:'—'}</td><td><button class="btn btn-danger btn-sm" onclick="removeTeamMember('${p.id}',${i})">Remove</button></td></tr>`).join('')}</tbody></table></div>`:`<div class="panel" style="margin-bottom:16px"><div class="empty" style="padding:20px">No team members.</div></div>`}
+    <div class="panel"><div class="section-label">Add Member</div><div class="form-grid form-grid-2" style="margin-bottom:12px"><div class="form-group"><label class="form-label">Name</label><input class="form-input" id="tm-name"></div><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="tm-role"></div><div class="form-group"><label class="form-label">Email</label><input class="form-input" id="tm-email"></div></div><button class="btn btn-ghost btn-sm" onclick="addTeamMember('${p.id}')">Add</button></div>
+  </div>`;
 }
 
-function renderProjectTeam(p) {
-  const team = p.team || [];
-  return `
-    <div>
-      ${team.length ? `
-        <div class="card" style="margin-bottom:16px">
-          <table>
-            <thead><tr><th>Name</th><th>Role</th><th>Email</th><th></th></tr></thead>
-            <tbody>
-              ${team.map((m, i) => `
-                <tr>
-                  <td><div style="font-weight:600">${m.name||'—'}</div></td>
-                  <td style="color:var(--muted)">${m.role||'—'}</td>
-                  <td>${m.email ? `<a href="mailto:${m.email}" style="color:var(--cyan)">${m.email}</a>` : '—'}</td>
-                  <td><button class="btn btn-danger btn-sm" onclick="removeTeamMember('${p.id}',${i})">Remove</button></td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      ` : `<div class="panel" style="margin-bottom:16px"><div class="empty" style="padding:20px">No team members added yet.</div></div>`}
+// ── COMMUNITY LIST ────────────────────────────────────────────────────────────
+function renderCommunities(){
+  const igC=S.communities.filter(c=>c.instagram_token).length;
+  const fvC=S.communities.filter(c=>getTier(c)==='fully-verified').length;
+  const ers=S.communities.map(getER).filter(v=>v!==null);
+  const avgER=ers.length?(ers.reduce((a,b)=>a+b,0)/ers.length).toFixed(1):'—';
+  return`<div style="max-width:1100px">
+    <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value">${S.communities.length}</div></div>
+      <div class="stat-card"><div class="stat-label">IG Connected</div><div class="stat-value">${igC}</div></div>
+      <div class="stat-card"><div class="stat-label">Fully Verified</div><div class="stat-value">${fvC}</div></div>
+      <div class="stat-card"><div class="stat-label">Avg ER</div><div class="stat-value">${avgER}${ers.length?'%':''}</div></div>
+    </div>
+    <div class="card"><div style="overflow-x:auto"><table style="min-width:900px">
+      <thead><tr><th>Community</th><th>Tier</th><th>Members</th><th>Reach</th><th>ER</th><th>Archetype</th><th>CIS</th><th>Tags</th><th>Joined</th></tr></thead>
+      <tbody>${S.communities.map(c=>{
+        const er=getER(c),f=getFollowers(c),tier=getTier(c);
+        const cis=c.cis_stamped!=null?c.cis_stamped:(c.cis_raw!=null?c.cis_raw:null);
+        return`<tr onclick="navigate('community-detail',{selectedCommunity:'${c.id}',communityTab:'overview'})">
+          <td><div style="font-weight:600">${c.name}</div><div style="font-size:11px;color:var(--muted)">${c.location||''}</div></td>
+          <td>${tierBadge(tier)}</td>
+          <td>${c.active_members!=null?Number(c.active_members).toLocaleString():'—'}</td>
+          <td>${f!==null?f.toLocaleString():'—'}</td>
+          <td>${er!==null?er+'%':'—'}</td>
+          <td>${c.archetype?`<span style="font-family:'Barlow Condensed';font-size:12px;font-weight:700;text-transform:uppercase;color:${ARCH_COLORS[c.archetype]||'var(--white)'}">${ARCH_LABELS[c.archetype]||c.archetype}</span>`:'—'}</td>
+          <td>${cis!==null?`<span style="color:${c.cis_stamped!=null?'var(--lime)':'var(--white)'}">${Math.round(cis)}</span>`:' —'}</td>
+          <td><div style="display:flex;flex-wrap:wrap;gap:3px">${(c.tags||[]).slice(0,3).map(t=>`<span class="tag">${t}</span>`).join('')}</div></td>
+          <td style="color:var(--muted);font-size:12px">${fDate(c.created_at)}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div></div>
+  </div>`;
+}
 
+// ── COMMUNITY DETAIL ──────────────────────────────────────────────────────────
+function renderCommunityDetail(){
+  const c=S.communities.find(x=>x.id===S.selectedCommunity);
+  if(!c)return`<div class="empty">Not found. <button class="btn btn-ghost btn-sm" onclick="navigate('communities')">← Back</button></div>`;
+  const tabs=['overview','edit','analysis','members','instagram'];
+  const tl={overview:'Overview',edit:'Edit',analysis:'CIS & Archetype',members:'Members',instagram:'Instagram'};
+  const er=getER(c),f=getFollowers(c),tier=getTier(c);
+  const coverObj=COVER_OPTIONS.find(o=>o.id===(c.cover_option||1))||COVER_OPTIONS[0];
+  const coverBg=c.cover_image_url?`url(${c.cover_image_url}) center/cover no-repeat`:coverObj.gradient;
+  const cis=c.cis_stamped!=null?c.cis_stamped:(c.cis_raw!=null?c.cis_raw:null);
+  return`<div style="max-width:1000px">
+    <button class="btn btn-ghost btn-sm" onclick="navigate('communities')" style="margin-bottom:16px">← Back</button>
+    <!-- Cover header -->
+    <div class="cover-preview" style="background:${coverBg};margin-bottom:16px;border-radius:10px;height:140px;border:1px solid var(--border)">
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 60%);border-radius:10px;pointer-events:none"></div>
+      <div style="position:relative;z-index:1">
+        <div class="bb" style="font-size:36px;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,0.6)">${c.name}</div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          ${tierBadge(tier)}
+          ${c.archetype?`<span style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:${ARCH_COLORS[c.archetype]||'var(--white)'};background:rgba(0,0,0,0.5);padding:3px 8px;border-radius:3px">${ARCH_LABELS[c.archetype]}</span>`:''}
+        </div>
+      </div>
+    </div>
+    <!-- Metric cards -->
+    <div class="stats-row" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px">
+      <div class="stat-card"><div class="stat-label">ER</div><div class="stat-value" style="font-size:28px">${er!==null?er+'%':'—'}</div><div class="stat-sub">${er!==null?'Instagram':'No data'}</div></div>
+      <div class="stat-card"><div class="stat-label">Members</div><div class="stat-value" style="font-size:28px">${c.active_members?Number(c.active_members).toLocaleString():'—'}</div><div class="stat-sub">community-reported</div></div>
+      <div class="stat-card"><div class="stat-label">Reach</div><div class="stat-value" style="font-size:28px">${f!==null?f.toLocaleString():'—'}</div><div class="stat-sub">${f!==null?'Instagram':'—'}</div></div>
+      <div class="stat-card"><div class="stat-label">CIS</div><div class="stat-value" style="font-size:28px;color:${c.cis_stamped!=null?'var(--lime)':'var(--white)'}">${cis!==null?Math.round(cis):'—'}</div><div class="stat-sub">${c.cis_stamped!=null?'★ Stamped':c.cis_raw!=null?'Raw':'Not scored'}</div></div>
+      <div class="stat-card"><div class="stat-label">NM</div><div class="stat-value" style="font-size:28px">${c.network_multiplier!=null?Number(c.network_multiplier).toFixed(1)+'×':'—'}</div><div class="stat-sub">network multiplier</div></div>
+    </div>
+    <div class="tab-bar">${tabs.map(t=>`<button class="tab-btn${S.communityTab===t?' active':''}" onclick="switchCommTab('${t}')">${tl[t]}</button>`).join('')}</div>
+    <div id="comm-tab">${renderCommTab(c)}</div>
+  </div>`;
+}
+
+function switchCommTab(t){
+  S.communityTab=t;
+  const c=S.communities.find(x=>x.id===S.selectedCommunity);
+  if(c)document.getElementById('comm-tab').innerHTML=renderCommTab(c);
+  document.querySelectorAll('#comm-tab ~ .tab-btn, .tab-bar .tab-btn').forEach((b,i)=>b.classList.toggle('active',['overview','edit','analysis','members','instagram'][i]===t));
+}
+
+function renderCommTab(c){
+  switch(S.communityTab){
+    case'overview':return renderCommOverview(c);
+    case'edit':return renderCommEdit(c);
+    case'analysis':return renderCommAnalysis(c);
+    case'members':return renderCommMembers(c);
+    case'instagram':return renderCommInstagram(c);
+  }return'';
+}
+
+function renderCommOverview(c){
+  const igP=c.instagram_data?.profile||{};
+  const cs=(c.case_studies||[]);
+  const verCS=cs.filter(x=>x.verified||x.mayo_verified);
+  return`<div class="form-grid form-grid-2">
+    <div class="panel">
+      <div class="section-label">Profile</div>
+      ${[['Name',c.name||'—'],['Location',c.location||'—'],['Leader',c.leader_name||'—'],['Email',c.email?`<a href="mailto:${c.email}" style="color:var(--cyan)">${c.email}</a>`:' —'],['Website',c.website?`<a href="${c.website}" target="_blank" style="color:var(--cyan)">${c.website.replace(/^https?:\/\//,'')}</a>`:'—'],['Joined',fDate(c.created_at)]].map(([k,v])=>`<div class="detail-row"><div class="detail-key">${k}</div><div class="detail-val">${v}</div></div>`).join('')}
+    </div>
+    <div class="panel">
+      <div class="section-label">Instagram</div>
+      ${[['Handle',igP.username?`<a href="https://instagram.com/${igP.username}" target="_blank" style="color:var(--cyan)">@${igP.username}</a>`:'—'],['Followers',igP.followers_count?igP.followers_count.toLocaleString():'—'],['Posts',igP.media_count||'—'],['Bio',igP.biography?`<span style="font-size:12px;color:var(--muted)">${igP.biography.slice(0,100)}</span>`:'—']].map(([k,v])=>`<div class="detail-row"><div class="detail-key">${k}</div><div class="detail-val">${v}</div></div>`).join('')}
+    </div>
+    <div class="panel">
+      <div class="section-label">Description</div>
+      <div style="font-size:13px;line-height:1.6;color:rgba(240,240,240,0.8)">${c.description||'<span style="color:var(--muted)">No description set.</span>'}</div>
+    </div>
+    <div class="panel">
+      <div class="section-label">Channels & Capabilities</div>
+      <div style="margin-bottom:10px;display:flex;flex-wrap:wrap;gap:5px">${(c.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')||(c.tags||[]).length===0?'<span style="color:var(--muted);font-size:12px">No tags</span>':''}</div>
+      ${c.substack_url?`<div class="detail-row"><div class="detail-key">Substack</div><div class="detail-val"><a href="${c.substack_url}" target="_blank" style="color:var(--cyan);font-size:12px">${c.substack_url.replace(/^https?:\/\//,'').slice(0,30)}</a></div></div>`:''}
+      <div class="detail-row"><div class="detail-key">Partnership Prefs</div><div class="detail-val" style="font-size:12px;max-width:200px;text-align:right">${c.partnership_preferences||'—'}</div></div>
+    </div>
+  </div>
+  ${verCS.length?`<div class="panel" style="margin-top:16px"><div class="section-label">Verified Case Studies (${verCS.length})</div>${verCS.map(cs=>`<div class="detail-row"><div class="detail-key">${cs.brand||'Brand'}</div><div class="detail-val">${cs.year||''} · ${cs.type||''}</div></div>`).join('')}</div>`:''}`
+}
+
+function renderCommEdit(c){
+  return`<div>
+    <div class="form-grid form-grid-2" style="margin-bottom:16px">
+      <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="ce-name" value="${esc(c.name||'')}"></div>
+      <div class="form-group"><label class="form-label">Tagline</label><input class="form-input" id="ce-tagline" value="${esc(c.tagline||'')}"></div>
+      <div class="form-group"><label class="form-label">Location</label><input class="form-input" id="ce-location" value="${esc(c.location||'')}"></div>
+      <div class="form-group"><label class="form-label">Leader Name</label><input class="form-input" id="ce-leader" value="${esc(c.leader_name||'')}"></div>
+      <div class="form-group"><label class="form-label">Contact Email</label><input class="form-input" id="ce-email" value="${esc(c.email||'')}"></div>
+      <div class="form-group"><label class="form-label">Website</label><input class="form-input" id="ce-website" value="${esc(c.website||'')}"></div>
+      <div class="form-group"><label class="form-label">Active Members</label><input class="form-input" type="number" id="ce-members" value="${c.active_members||''}"></div>
+      <div class="form-group"><label class="form-label">Substack URL</label><input class="form-input" id="ce-substack" value="${esc(c.substack_url||'')}"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px"><label class="form-label">Description</label><textarea class="form-textarea" id="ce-desc" style="min-height:90px">${esc(c.description||'')}</textarea></div>
+    <div class="form-group" style="margin-bottom:14px"><label class="form-label">Tags (comma-separated)</label><input class="form-input" id="ce-tags" value="${(c.tags||[]).join(', ')}"></div>
+    <div class="form-group" style="margin-bottom:20px"><label class="form-label">Partnership Preferences</label><textarea class="form-textarea" id="ce-prefs">${esc(c.partnership_preferences||'')}</textarea></div>
+    <div id="ce-err" style="color:var(--red);font-size:12px;display:none;margin-bottom:10px"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" onclick="saveCommunityEdit('${c.id}')">Save Changes</button>
+      <button class="btn btn-ghost" onclick="navigate('community-detail',{selectedCommunity:'${c.id}',communityTab:'overview'})">Cancel</button>
+    </div>
+  </div>`;
+}
+
+function renderCommAnalysis(c){
+  const cis_raw=c.cis_raw,cis_stamped=c.cis_stamped;
+  return`<div>
+    <div class="form-grid form-grid-2" style="margin-bottom:20px">
+      <!-- CIS Stamp -->
       <div class="panel">
-        <div class="section-label">Add Team Member</div>
-        <div class="form-grid form-grid-2" style="margin-bottom:12px">
-          <div class="form-group">
-            <label class="form-label">Name</label>
-            <input class="form-input" id="team-name" placeholder="Full name">
+        <div class="section-label">CIS Stamp</div>
+        <div style="margin-bottom:14px">
+          <div style="display:flex;gap:16px;margin-bottom:10px">
+            <div><div style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)">Raw Score</div><div class="bb" style="font-size:28px">${cis_raw!=null?cis_raw:'—'}</div></div>
+            <div><div style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)">Stamped Score</div><div class="bb" style="font-size:28px;color:${cis_stamped!=null?'var(--lime)':'var(--muted)'}">${cis_stamped!=null?cis_stamped:'—'}</div></div>
           </div>
-          <div class="form-group">
-            <label class="form-label">Role</label>
-            <input class="form-input" id="team-role" placeholder="e.g. Account Manager">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input class="form-input" id="team-email" placeholder="email@example.com">
-          </div>
+          ${cis_stamped!=null?`<div style="font-size:11px;color:var(--muted)">Stamped ${c.cis_stamped_at?fDate(c.cis_stamped_at):''} · Expires ${c.cis_stamp_expires_at?fDate(c.cis_stamp_expires_at):''}</div>`:''}
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="addTeamMember('${p.id}')">Add Member</button>
+        ${cis_raw!=null?`<div class="form-group" style="margin-bottom:10px"><label class="form-label">Stamp Score (raw ±15)</label><input class="form-input" type="number" id="cis-val" value="${cis_stamped!=null?cis_stamped:cis_raw}" min="${Math.max(0,cis_raw-15)}" max="${Math.min(100,cis_raw+15)}"></div><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="stampCIS('${c.id}')">Apply Stamp</button>${cis_stamped!=null?`<button class="btn btn-danger btn-sm" onclick="clearCIStamp('${c.id}')">Clear Stamp</button>`:''}</div>`:`<div style="font-size:12px;color:var(--muted)">Run Recalculate to generate a raw CIS before stamping.</div>`}
+        <hr style="border-color:var(--border);margin:16px 0">
+        <div class="section-label">Recalculate Scores</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px">Recalculates NM and raw CIS from stored data.</div>
+        <button class="btn btn-ghost btn-sm" onclick="recalculate('${c.id}')">Recalculate</button>
+        <div id="recalc-out" style="margin-top:10px;font-size:12px;color:var(--cyan)"></div>
       </div>
-    </div>`;
+      <!-- Archetype -->
+      <div class="panel">
+        <div class="section-label">Archetype</div>
+        ${c.archetype?`<div style="margin-bottom:14px"><span style="font-family:'Barlow Condensed';font-size:20px;font-weight:700;text-transform:uppercase;color:${ARCH_COLORS[c.archetype]||'var(--white)'}">${ARCH_LABELS[c.archetype]}</span><div style="font-size:12px;color:var(--muted);margin-top:4px">${c.archetype_confidence!=null?c.archetype_confidence+'% confidence':''} · ${c.archetype_source||'unknown source'}</div>${c.archetype_reasoning?`<div style="font-size:12px;color:rgba(240,240,240,0.7);margin-top:8px;line-height:1.5;font-style:italic">"${c.archetype_reasoning}"</div>`:''}</div>`:`<div style="font-size:12px;color:var(--muted);margin-bottom:14px">No archetype set yet. Run AI analysis to suggest one.</div>`}
+        <div class="form-group" style="margin-bottom:10px"><label class="form-label">Override Archetype</label><select class="form-select" id="arch-override"><option value="">— Select —</option>${Object.entries(ARCH_LABELS).map(([k,v])=>`<option value="${k}"${c.archetype===k?' selected':''}>${v}</option>`).join('')}</select></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost btn-sm" onclick="overrideArchetype('${c.id}')">Set Override</button>
+          <button class="btn btn-cyan btn-sm" onclick="suggestArchetype('${c.id}')">AI Suggest</button>
+        </div>
+        <div id="arch-out" style="margin-top:12px;font-size:12px;color:var(--cyan)"></div>
+      </div>
+    </div>
+    <!-- MIQ -->
+    <div class="panel">
+      <div class="section-label">MIQ — Member Influence Quality</div>
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:14px">
+        <div><div style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted)">Current MIQ Score</div><div class="bb" style="font-size:28px">${c.miq_score!=null?c.miq_score:' —'}</div></div>
+        ${c.miq_reasoning?`<div style="font-size:12px;color:rgba(240,240,240,0.7);line-height:1.5;font-style:italic;flex:1">"${c.miq_reasoning}"</div>`:''}
+      </div>
+      <button class="btn btn-cyan btn-sm" onclick="analyseMIQ('${c.id}')">Run MIQ Analysis</button>
+      <div id="miq-out" style="margin-top:10px;font-size:12px;color:var(--cyan)"></div>
+    </div>
+  </div>`;
 }
 
-// ── PROJECT ACTIONS ───────────────────────────────────────────────────────────
-async function updateProjectStatus(id, status) {
-  const res = await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ status }) });
-  if (res.ok) {
-    const p = S.projects.find(x => x.id === id);
-    if (p) p.status = status;
-    render();
-  }
+function renderCommMembers(c){
+  const members=c.notable_members||[];
+  return`<div>
+    <div class="section-label" style="margin-bottom:12px">Notable Members (${members.length})</div>
+    ${members.length?members.map((m,i)=>`
+      <div class="member-card">
+        <div class="avatar" style="background:${avCol(m.name||'').bg};color:${avCol(m.name||'').t}">${(m.name||'?')[0].toUpperCase()}</div>
+        <div style="flex:1">
+          <div style="font-weight:600">${m.name||'—'}</div>
+          <div style="font-size:11px;color:var(--muted)">${m.role||''} ${m.ig_handle?'· @'+m.ig_handle:''}</div>
+          ${m.followers?`<div style="font-size:11px;color:var(--muted)">${m.followers.toLocaleString()} followers</div>`:''}
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          ${m.verified?'<span class="badge badge-lime">Verified</span>':'<button class="btn btn-ghost btn-sm" onclick="verifyMember(\''+c.id+'\','+i+')">Verify</button>'}
+          <button class="btn btn-danger btn-sm" onclick="removeMember('${c.id}',${i})">✕</button>
+        </div>
+      </div>`).join(''):`<div class="panel"><div class="empty">No notable members yet.</div></div>`}
+    <div class="panel" style="margin-top:16px">
+      <div class="section-label">Add Notable Member</div>
+      <div class="form-grid form-grid-2" style="margin-bottom:12px">
+        <div class="form-group"><label class="form-label">Name</label><input class="form-input" id="nm-name" placeholder="Full name"></div>
+        <div class="form-group"><label class="form-label">Instagram Handle</label><input class="form-input" id="nm-ig" placeholder="@handle"></div>
+        <div class="form-group"><label class="form-label">Role/Occupation</label><input class="form-input" id="nm-role" placeholder="e.g. Athlete, Journalist"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="addMember('${c.id}')">Add Member</button>
+    </div>
+  </div>`;
 }
 
-async function saveProjectNotes(id) {
-  const notes = document.getElementById('proj-notes').value;
-  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ notes }) });
-  const p = S.projects.find(x => x.id === id);
-  if (p) p.notes = notes;
-  showToast('Notes saved');
-}
-
-async function addMilestone(id) {
-  const text = document.getElementById('milestone-text').value.trim();
-  const date = document.getElementById('milestone-date').value;
-  if (!text) return;
-  const p = S.projects.find(x => x.id === id);
-  const milestones = [...(p.milestones||[]), { text, date: date||null, done: false }];
-  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ milestones }) });
-  p.milestones = milestones;
-  document.getElementById('milestones-list').innerHTML = renderMilestones(milestones);
-  document.getElementById('milestone-text').value = '';
-  document.getElementById('milestone-date').value = '';
-}
-
-async function toggleMilestone(id, idx, done) {
-  const p = S.projects.find(x => x.id === id);
-  const milestones = [...(p.milestones||[])];
-  milestones[idx] = { ...milestones[idx], done };
-  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ milestones }) });
-  p.milestones = milestones;
-}
-
-async function uploadMediaFile(id, input) {
-  const file = input.files[0];
-  if (!file) return;
-  const fd = new FormData();
-  fd.append('file', file);
-  const res = await apiUpload(`/api/admin/projects/${id}/media`, fd);
-  if (res.ok) {
-    await refreshProject(id);
-    switchProjectTab('media');
-  } else {
-    alert('Upload failed: ' + (res.error||'Unknown error'));
-  }
-}
-
-async function addVideoUrl(id) {
-  const url = prompt('Enter video URL (YouTube, Vimeo, etc.):');
-  if (!url) return;
-  const caption = prompt('Caption (optional):') || '';
-  const p = S.projects.find(x => x.id === id);
-  const items = [...(p.media_items||[]), {
-    id: Math.random().toString(36).slice(2,10), type:'video', url, caption,
-    uploaded_at: new Date().toISOString()
-  }];
-  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ media_items: items }) });
-  p.media_items = items;
-  switchProjectTab('media');
-}
-
-async function deleteMediaItem(id, itemId) {
-  if (!confirm('Remove this item?')) return;
-  const p = S.projects.find(x => x.id === id);
-  const items = (p.media_items||[]).filter(m => m.id !== itemId);
-  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ media_items: items }) });
-  p.media_items = items;
-  switchProjectTab('media');
-}
-
-function updateEMV() {
-  const imp = parseInt(document.getElementById('rpt-impressions')?.value||0);
-  const cpm = parseInt(document.getElementById('rpt-cpm')?.value||25);
-  const emv = imp && cpm ? Math.round(imp * cpm / 1000) : 0;
-  const el = document.getElementById('emv-display');
-  if (el) el.textContent = emv ? '$'+emv.toLocaleString() : '—';
-}
-
-async function saveMeasurementReport(id, status) {
-  const attendance = parseInt(document.getElementById('rpt-attendance').value||0);
-  const post_count = parseInt(document.getElementById('rpt-posts').value||0);
-  const impressions = parseInt(document.getElementById('rpt-impressions').value||0);
-  const cpm_benchmark = parseInt(document.getElementById('rpt-cpm').value||25);
-  const engagement_summary = document.getElementById('rpt-summary').value;
-  const methodology = document.getElementById('rpt-methodology').value;
-  const hashtag = document.getElementById('rpt-hashtag').value;
-  const emv = impressions && cpm_benchmark ? Math.round(impressions * cpm_benchmark / 1000) : 0;
-  const report = { attendance, post_count, impressions, cpm_benchmark, emv, engagement_summary, methodology, hashtag, status };
-  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ report }) });
-  const p = S.projects.find(x => x.id === id);
-  if (p) p.report = report;
-  showToast(status === 'published' ? 'Report published' : 'Draft saved');
-  render();
-}
-
-async function saveRecapReport(id, status) {
-  const title = document.getElementById('recap-title').value;
-  const summary = document.getElementById('recap-summary').value;
-  const key_wins = document.getElementById('recap-wins').value;
-  const hashtag = document.getElementById('recap-hashtag').value;
-  const quotes = [0,1,2].map(i => ({
-    text: document.getElementById(`recap-quote-${i}`)?.value||'',
-    author: document.getElementById(`recap-author-${i}`)?.value||''
-  })).filter(q => q.text);
-  const recap = { title, summary, key_wins, hashtag, quotes, status };
-  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ recap }) });
-  const p = S.projects.find(x => x.id === id);
-  if (p) p.recap = recap;
-  showToast(status === 'published' ? 'Case study published' : 'Draft saved');
-  render();
-}
-
-async function addTeamMember(id) {
-  const name = document.getElementById('team-name').value.trim();
-  const role = document.getElementById('team-role').value.trim();
-  const email = document.getElementById('team-email').value.trim();
-  if (!name) return;
-  const p = S.projects.find(x => x.id === id);
-  const team = [...(p.team||[]), { name, role, email }];
-  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ team }) });
-  p.team = team;
-  switchProjectTab('team');
-}
-
-async function removeTeamMember(id, idx) {
-  const p = S.projects.find(x => x.id === id);
-  const team = (p.team||[]).filter((_,i) => i !== idx);
-  await api(`/api/admin/projects/${id}`, { method:'PUT', body: JSON.stringify({ team }) });
-  p.team = team;
-  switchProjectTab('team');
-}
-
-async function refreshProject(id) {
-  const projects = await api('/api/admin/projects');
-  S.projects = Array.isArray(projects) ? projects : S.projects;
+function renderCommInstagram(c){
+  const ig=c.instagram_data||{};const media=ig.media||[];const prof=ig.profile||{};
+  return`<div>
+    ${prof.username?`<div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+      <div class="avatar" style="width:48px;height:48px;font-size:18px;background:var(--surface3)">${prof.profile_picture_url?`<img src="${prof.profile_picture_url}" onerror="this.style.display='none'">`:(prof.username||'?')[0].toUpperCase()}</div>
+      <div>
+        <div style="font-weight:600;font-size:15px">@${prof.username}</div>
+        <div style="font-size:12px;color:var(--muted)">${prof.followers_count?prof.followers_count.toLocaleString()+' followers':''} ${prof.media_count?' · '+prof.media_count+' posts':''}</div>
+        ${prof.biography?`<div style="font-size:12px;color:rgba(240,240,240,0.7);margin-top:4px;max-width:400px">${prof.biography}</div>`:''}
+      </div>
+    </div>`:''}
+    ${!c.instagram_token?`<div class="panel"><div class="empty">No Instagram connected.</div></div>`:
+      media.length?`<div class="section-label">${media.length} Posts</div>
+      <div class="ig-grid">${media.map(post=>{
+        const url=post.thumbnail_url||post.media_url||'';
+        const likes=post.like_count||0,comments=post.comments_count||0;
+        return`<div class="ig-post">
+          ${url?`<img src="${url}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="">`:''}
+          <div class="ig-post-fb" style="${url?'display:none':''}">📷</div>
+          <div class="ig-post-overlay">
+            <span>♥ ${likes}</span><span>💬 ${comments}</span>
+          </div>
+        </div>`;
+      }).join('')}</div>
+      <div style="margin-top:14px;font-size:12px;color:var(--muted)">Note: Instagram media URLs expire. If images are broken, use Refresh IG in the top bar to pull fresh data.</div>`
+      :`<div class="panel"><div class="empty">No post data collected yet. Use Refresh IG to pull data.</div></div>`}
+  </div>`;
 }
 
 // ── BRIEFS ────────────────────────────────────────────────────────────────────
-function renderBriefs() {
-  return `
-    <div style="max-width:1100px">
-      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
-        <div class="stat-card"><div class="stat-label">Total Briefs</div><div class="stat-value">${S.briefs.length}</div></div>
-        <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value" style="color:var(--lime)">${S.briefs.filter(b=>b.status==='open').length}</div></div>
-        <div class="stat-card"><div class="stat-label">Brands</div><div class="stat-value">${new Set(S.briefs.map(b=>b.brand_id)).size}</div></div>
-      </div>
-      <div class="card">
-        <div style="overflow-x:auto">
-        <table style="min-width:700px">
-          <thead><tr>
-            <th>Title</th><th>Brand</th><th>Goal</th><th>Type</th><th>Budget</th><th>Status</th><th>Created</th><th></th>
-          </tr></thead>
-          <tbody>
-            ${S.briefs.length ? S.briefs.map(b => `
-              <tr>
-                <td style="font-weight:600">${b.title||'Untitled'}</td>
-                <td>${b.brand_name||'—'}</td>
-                <td style="color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.campaign_goal||b.goal||'—'}</td>
-                <td>${b.partnership_type||'—'}</td>
-                <td>${b.budget||'—'}</td>
-                <td><span class="badge ${b.status==='open'?'badge-lime':'badge-muted'}">${b.status||'open'}</span></td>
-                <td style="color:var(--muted)">${formatDate(b.created_at)}</td>
-                <td><button class="btn btn-danger btn-sm" onclick="deleteBrief('${b.id}')">Delete</button></td>
-              </tr>
-            `).join('') : `<tr><td colspan="8"><div class="empty">No briefs yet.</div></td></tr>`}
-          </tbody>
-        </table>
-        </div>
-      </div>
-    </div>`;
+function renderBriefs(){
+  return`<div style="max-width:1100px">
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card"><div class="stat-label">Total Briefs</div><div class="stat-value">${S.briefs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Open</div><div class="stat-value" style="color:var(--lime)">${S.briefs.filter(b=>b.status==='open').length}</div></div>
+      <div class="stat-card"><div class="stat-label">Brands</div><div class="stat-value">${new Set(S.briefs.map(b=>b.brand_id)).size}</div></div>
+    </div>
+    <div class="card"><div style="overflow-x:auto"><table style="min-width:700px">
+      <thead><tr><th>Title</th><th>Brand</th><th>Goal</th><th>Type</th><th>Budget</th><th>Status</th><th>Created</th><th></th></tr></thead>
+      <tbody>${S.briefs.length?S.briefs.map(b=>`
+        <tr onclick="navigate('brief-detail',{selectedBrief:'${b.id}'})">
+          <td style="font-weight:600">${b.title||'Untitled'}</td>
+          <td>${b.brand_name||'—'}</td>
+          <td style="color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.campaign_goal||b.goal||'—'}</td>
+          <td>${b.partnership_type||'—'}</td>
+          <td>${b.budget||'—'}</td>
+          <td><span class="badge ${b.status==='open'?'badge-lime':'badge-muted'}">${b.status||'open'}</span></td>
+          <td style="color:var(--muted)">${fDate(b.created_at)}</td>
+          <td onclick="event.stopPropagation()"><button class="btn btn-danger btn-sm" onclick="deleteBrief('${b.id}')">Delete</button></td>
+        </tr>`).join(''):`<tr><td colspan="8"><div class="empty">No briefs yet.</div></td></tr>`}
+      </tbody>
+    </table></div></div>
+  </div>`;
 }
 
-async function deleteBrief(id) {
-  if (!confirm('Delete this brief? This cannot be undone.')) return;
-  await api(`/api/admin/briefs/${id}`, { method:'DELETE' });
-  S.briefs = S.briefs.filter(b => b.id !== id);
-  render();
-}
-
-// ── COMMUNITIES ───────────────────────────────────────────────────────────────
-function renderCommunities() {
-  const igConnected = S.communities.filter(c => c.instagram_token).length;
-  const fullyVerified = S.communities.filter(c => getTier(c) === 'fully-verified').length;
-  const ers = S.communities.map(getER).filter(v => v !== null);
-  const avgER = ers.length ? (ers.reduce((a,b)=>a+b,0)/ers.length).toFixed(1) : '—';
-
-  return `
-    <div style="max-width:1100px">
-      <div class="stats-row" style="grid-template-columns:repeat(4,1fr)">
-        <div class="stat-card"><div class="stat-label">Total Profiles</div><div class="stat-value">${S.communities.length}</div></div>
-        <div class="stat-card"><div class="stat-label">Instagram Connected</div><div class="stat-value">${igConnected}</div></div>
-        <div class="stat-card"><div class="stat-label">Fully Verified</div><div class="stat-value">${fullyVerified}</div></div>
-        <div class="stat-card"><div class="stat-label">Avg. ER</div><div class="stat-value">${avgER}${ers.length?'%':''}</div></div>
+function renderBriefDetail(){
+  const br=S.briefs.find(x=>x.id===S.selectedBrief);
+  if(!br)return`<div class="empty">Not found. <button class="btn btn-ghost btn-sm" onclick="navigate('briefs')">← Back</button></div>`;
+  const linked=S.projects.filter(p=>p.brief_id===br.id);
+  const shareUrl=`${location.origin}/briefs/${br.id}`;
+  return`<div style="max-width:900px">
+    <button class="btn btn-ghost btn-sm" onclick="navigate('briefs')" style="margin-bottom:16px">← Back</button>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+      <div>
+        <div class="bb" style="font-size:32px;line-height:1">${br.title||'Untitled'}</div>
+        <div style="color:var(--muted);margin-top:4px">${br.brand_name||'—'} · ${fDate(br.created_at)}</div>
       </div>
-      <div class="card">
-        <div style="overflow-x:auto">
-        <table style="min-width:900px">
-          <thead><tr>
-            <th>Community</th><th>Tier</th><th>Members</th><th>Reach</th><th>ER</th><th>Archetype</th><th>Tags</th><th>Joined</th>
-          </tr></thead>
-          <tbody>
-            ${S.communities.map(c => {
-              const er = getER(c), followers = getFollowers(c), tier = getTier(c);
-              const archetypeColors = {evangelists:'var(--pink)',early_adopters:'var(--cyan)',loyalists:'var(--lime)',buyers:'var(--orange)'};
-              const archetypeLabels = {evangelists:'Evangelists',early_adopters:'Early Adopters',loyalists:'Loyalists',buyers:'Buyers'};
-              return `
-              <tr onclick="openCommunityModal('${c.id}')">
-                <td>
-                  <div style="font-weight:600">${c.name}</div>
-                  <div style="font-size:11px;color:var(--muted)">${c.location||''}</div>
-                </td>
-                <td>${tierBadge(tier)}</td>
-                <td>${c.active_members!=null?Number(c.active_members).toLocaleString():'—'}</td>
-                <td>${followers!==null?followers.toLocaleString():'—'}</td>
-                <td>${er!==null?er+'%':'—'}</td>
-                <td>${c.archetype?`<span style="font-family:'Barlow Condensed';font-size:12px;font-weight:700;text-transform:uppercase;color:${archetypeColors[c.archetype]||'var(--white)'}">${archetypeLabels[c.archetype]||c.archetype}</span>`:'—'}</td>
-                <td><div style="display:flex;flex-wrap:wrap;gap:3px">${(c.tags||[]).slice(0,3).map(t=>`<span class="tag">${t}</span>`).join('')}</div></td>
-                <td style="color:var(--muted);font-size:12px">${formatDate(c.created_at)}</td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-        </div>
+      <span class="badge ${br.status==='open'?'badge-lime':'badge-muted'}">${br.status||'open'}</span>
+    </div>
+    <div class="form-grid form-grid-2" style="margin-bottom:20px">
+      <div class="panel">
+        <div class="section-label">Brief Details</div>
+        ${[['Brand',br.brand_name||'—'],['Campaign Goal',br.campaign_goal||br.goal||'—'],['Type',br.partnership_type||'—'],['Budget',br.budget||'—'],['Deadline',fDate(br.deadline)],['Status',br.status||'open']].map(([k,v])=>`<div class="detail-row"><div class="detail-key">${k}</div><div class="detail-val">${v}</div></div>`).join('')}
       </div>
-    </div>`;
+      <div class="panel">
+        <div class="section-label">Looking For</div>
+        <div style="font-size:13px;line-height:1.6;color:rgba(240,240,240,0.8)">${br.looking_for||'<span style="color:var(--muted)">No description.</span>'}</div>
+        ${(br.tags||[]).length?`<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:4px">${(br.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
+      </div>
+    </div>
+    <div class="panel" style="margin-bottom:20px">
+      <div class="section-label">Share Brief</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <input class="form-input" value="${shareUrl}" readonly style="flex:1;max-width:400px">
+        <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('${shareUrl}').then(()=>showToast('Copied!'))">Copy Link</button>
+        <div style="font-size:11px;color:var(--muted)">Send this link to communities off-platform</div>
+      </div>
+    </div>
+    <div class="section-label">Linked Projects (${linked.length})</div>
+    ${linked.length?`<div class="card"><table><thead><tr><th>Community</th><th>Status</th><th>Budget</th><th>Created</th></tr></thead><tbody>${linked.map(p=>`<tr onclick="navigate('project-detail',{selectedProject:'${p.id}',projectTab:'overview'})"><td style="font-weight:600">${p.community_name||'—'}</td><td>${statusBadge(p.status)}</td><td>${fCur(p.budget)}</td><td style="color:var(--muted)">${fDate(p.created_at)}</td></tr>`).join('')}</tbody></table></div>`:`<div class="panel"><div class="empty" style="padding:20px">No projects linked to this brief yet.</div></div>`}
+  </div>`;
 }
 
 // ── BRANDS ────────────────────────────────────────────────────────────────────
-function renderBrands() {
-  return `
-    <div style="max-width:1100px">
-      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
-        <div class="stat-card"><div class="stat-label">Total Brands</div><div class="stat-value">${S.brands.length}</div></div>
-        <div class="stat-card"><div class="stat-label">Total Briefs</div><div class="stat-value">${S.briefs.length}</div></div>
-        <div class="stat-card"><div class="stat-label">Avg Briefs/Brand</div><div class="stat-value">${S.brands.length?Math.round(S.briefs.length/S.brands.length*10)/10:'—'}</div></div>
-      </div>
-      <div class="card">
-        <div style="overflow-x:auto">
-        <table style="min-width:700px">
-          <thead><tr>
-            <th>Brand</th><th>Category</th><th>Website</th><th>Briefs</th><th>Joined</th>
-          </tr></thead>
-          <tbody>
-            ${S.brands.length ? S.brands.map(b => {
-              const ac = avatarColor(b.name||'');
-              return `
-              <tr>
-                <td>
-                  <div style="display:flex;align-items:center;gap:10px">
-                    <div class="avatar" style="background:${b.color||ac.bg};color:${b.color?'#000':ac.text};font-size:13px;width:32px;height:32px;flex-shrink:0">
-                      ${b.profile_image_url?`<img src="${b.profile_image_url}" style="width:100%;height:100%;object-fit:cover">`:(b.initial||(b.name||'?')[0].toUpperCase())}
-                    </div>
-                    <div>
-                      <div style="font-weight:600">${b.name}</div>
-                      <div style="font-size:11px;color:var(--muted)">${b.email}</div>
-                    </div>
-                  </div>
-                </td>
-                <td style="color:var(--muted)">${b.category||'—'}</td>
-                <td>${b.website?`<a href="${b.website}" target="_blank" style="color:var(--cyan)">${b.website.replace(/^https?:\/\//,'')}</a>`:'—'}</td>
-                <td><span class="metric">${b.brief_count||0}</span></td>
-                <td style="color:var(--muted)">${formatDate(b.created_at)}</td>
-              </tr>`;
-            }).join('') : `<tr><td colspan="5"><div class="empty">No brands yet.</div></td></tr>`}
-          </tbody>
-        </table>
+function renderBrands(){
+  return`<div style="max-width:1100px">
+    <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+      <div class="stat-card"><div class="stat-label">Total Brands</div><div class="stat-value">${S.brands.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Total Briefs</div><div class="stat-value">${S.briefs.length}</div></div>
+      <div class="stat-card"><div class="stat-label">Avg Briefs</div><div class="stat-value">${S.brands.length?Math.round(S.briefs.length/S.brands.length*10)/10:'—'}</div></div>
+    </div>
+    <div class="card"><div style="overflow-x:auto"><table style="min-width:700px">
+      <thead><tr><th>Brand</th><th>Category</th><th>Website</th><th>Briefs</th><th>Joined</th></tr></thead>
+      <tbody>${S.brands.length?S.brands.map(b=>{
+        const ac=avCol(b.name||'');
+        return`<tr onclick="navigate('brand-detail',{selectedBrand:'${b.id}'})">
+          <td><div style="display:flex;align-items:center;gap:10px">
+            <div class="avatar" style="background:${b.color||ac.bg};color:#000;width:32px;height:32px;font-size:13px;flex-shrink:0">${b.profile_image_url?`<img src="${b.profile_image_url}" onerror="this.style.display='none'">`:(b.initial||(b.name||'?')[0].toUpperCase())}</div>
+            <div><div style="font-weight:600">${b.name}</div><div style="font-size:11px;color:var(--muted)">${b.email}</div></div>
+          </div></td>
+          <td style="color:var(--muted)">${b.category||'—'}</td>
+          <td>${b.website?`<a href="${b.website}" target="_blank" style="color:var(--cyan)">${b.website.replace(/^https?:\/\//,'').slice(0,30)}</a>`:'—'}</td>
+          <td><span class="metric">${b.brief_count||0}</span></td>
+          <td style="color:var(--muted)">${fDate(b.created_at)}</td>
+        </tr>`;
+      }).join(''):`<tr><td colspan="5"><div class="empty">No brands yet.</div></td></tr>`}
+      </tbody>
+    </table></div></div>
+  </div>`;
+}
+
+function renderBrandDetail(){
+  const b=S.brands.find(x=>x.id===S.selectedBrand);
+  if(!b)return`<div class="empty">Not found. <button class="btn btn-ghost btn-sm" onclick="navigate('brands')">← Back</button></div>`;
+  const brandBriefs=S.briefs.filter(br=>br.brand_id===b.id);
+  const brandProjects=S.projects.filter(p=>p.brand_id===b.id);
+  const ac=avCol(b.name||'');
+  const sl=b.social_links||{};
+  return`<div style="max-width:900px">
+    <button class="btn btn-ghost btn-sm" onclick="navigate('brands')" style="margin-bottom:16px">← Back</button>
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px;padding:20px;background:var(--surface3);border:1px solid var(--border);border-radius:10px">
+      <div class="avatar" style="width:56px;height:56px;font-size:22px;font-weight:700;background:${b.color||ac.bg};color:#000;flex-shrink:0">${b.profile_image_url?`<img src="${b.profile_image_url}">`:(b.initial||(b.name||'?')[0].toUpperCase())}</div>
+      <div>
+        <div class="bb" style="font-size:28px;line-height:1">${b.name}</div>
+        ${b.tagline?`<div style="color:var(--muted);margin-top:4px">${b.tagline}</div>`:''}
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+          ${b.category?`<span class="tag">${b.category}</span>`:''}
+          ${b.website?`<a href="${b.website}" target="_blank" style="color:var(--cyan);font-size:12px">${b.website.replace(/^https?:\/\//,'')}</a>`:''}
         </div>
       </div>
-    </div>`;
+    </div>
+    <div class="form-grid form-grid-2" style="margin-bottom:20px">
+      <div class="panel">
+        <div class="section-label">Details</div>
+        ${[['Email',`<a href="mailto:${b.email}" style="color:var(--cyan)">${b.email}</a>`],['Category',b.category||'—'],['Joined',fDate(b.created_at)],['Briefs',brandBriefs.length],['Projects',brandProjects.length]].map(([k,v])=>`<div class="detail-row"><div class="detail-key">${k}</div><div class="detail-val">${v}</div></div>`).join('')}
+        ${Object.entries(sl).filter(([,v])=>v).length?`<div style="margin-top:12px;display:flex;gap:6px;flex-wrap:wrap">${Object.entries(sl).filter(([,v])=>v).map(([k,v])=>`<a href="${v}" target="_blank" class="tag" style="color:var(--cyan)">${k}</a>`).join('')}</div>`:''}
+      </div>
+      <div class="panel">
+        <div class="section-label">About</div>
+        <div style="font-size:13px;line-height:1.6;color:rgba(240,240,240,0.8)">${b.bio||'<span style="color:var(--muted)">No bio set.</span>'}</div>
+        ${b.looking_for?`<div style="margin-top:12px"><div class="section-label" style="margin-bottom:6px">Looking For</div><div style="font-size:12px;color:rgba(240,240,240,0.7)">${b.looking_for}</div></div>`:''}
+      </div>
+    </div>
+    <!-- Briefs -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-label" style="margin-bottom:0">Briefs (${brandBriefs.length})</div>
+      <button class="btn btn-primary btn-sm" onclick="openCreateBriefForBrand('${b.id}','${esc(b.name)}')">+ New Brief</button>
+    </div>
+    ${brandBriefs.length?`<div class="card" style="margin-bottom:20px"><table><thead><tr><th>Title</th><th>Goal</th><th>Type</th><th>Budget</th><th>Status</th><th>Created</th></tr></thead><tbody>${brandBriefs.map(br=>`<tr onclick="navigate('brief-detail',{selectedBrief:'${br.id}'})"><td style="font-weight:600">${br.title||'Untitled'}</td><td style="color:var(--muted);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${br.campaign_goal||br.goal||'—'}</td><td>${br.partnership_type||'—'}</td><td>${br.budget||'—'}</td><td><span class="badge ${br.status==='open'?'badge-lime':'badge-muted'}">${br.status}</span></td><td style="color:var(--muted)">${fDate(br.created_at)}</td></tr>`).join('')}</tbody></table></div>`:`<div class="panel" style="margin-bottom:20px"><div class="empty" style="padding:20px">No briefs yet.</div></div>`}
+    <!-- Projects -->
+    <div class="section-label">Projects (${brandProjects.length})</div>
+    ${brandProjects.length?`<div class="card"><table><thead><tr><th>Community</th><th>Status</th><th>Budget</th><th>Created</th></tr></thead><tbody>${brandProjects.map(p=>`<tr onclick="navigate('project-detail',{selectedProject:'${p.id}',projectTab:'overview'})"><td style="font-weight:600">${p.community_name||'—'}</td><td>${statusBadge(p.status)}</td><td>${fCur(p.budget)}</td><td style="color:var(--muted)">${fDate(p.created_at)}</td></tr>`).join('')}</tbody></table></div>`:`<div class="panel"><div class="empty" style="padding:20px">No projects yet.</div></div>`}
+  </div>`;
+}
+
+// ── COMMUNITY ACTIONS ─────────────────────────────────────────────────────────
+function esc(s){return(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+async function saveCommunityEdit(id){
+  const tags=document.getElementById('ce-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const data={
+    name:document.getElementById('ce-name').value,tagline:document.getElementById('ce-tagline').value,
+    location:document.getElementById('ce-location').value,leader_name:document.getElementById('ce-leader').value,
+    email:document.getElementById('ce-email').value,website:document.getElementById('ce-website').value,
+    active_members:parseInt(document.getElementById('ce-members').value)||null,
+    substack_url:document.getElementById('ce-substack').value,
+    description:document.getElementById('ce-desc').value,tags,
+    partnership_preferences:document.getElementById('ce-prefs').value,
+  };
+  const res=await api(`/api/community/${id}`,{method:'PUT',body:JSON.stringify(data)});
+  if(res.ok){
+    const i=S.communities.findIndex(x=>x.id===id);
+    if(i>=0)Object.assign(S.communities[i],data);
+    showToast('Saved');
+    S.communityTab='overview';render();
+  }else{const el=document.getElementById('ce-err');if(el){el.textContent=res.error||'Failed';el.style.display='';}}
+}
+
+async function stampCIS(id){
+  const val=parseInt(document.getElementById('cis-val').value);
+  if(isNaN(val))return;
+  const res=await api(`/api/community/${id}/apply-cis-stamp`,{method:'POST',body:JSON.stringify({stamped_score:val,stamped_by:'admin'})});
+  if(res.ok){const i=S.communities.findIndex(x=>x.id===id);if(i>=0)S.communities[i].cis_stamped=val;showToast('Stamped');render();}
+  else showToast('Error: '+(res.error||'Failed'));
+}
+async function clearCIStamp(id){
+  const res=await api(`/api/community/${id}/apply-cis-stamp`,{method:'POST',body:JSON.stringify({stamped_score:null})});
+  if(res.ok){const i=S.communities.findIndex(x=>x.id===id);if(i>=0)S.communities[i].cis_stamped=null;showToast('Stamp cleared');render();}
+}
+async function recalculate(id){
+  document.getElementById('recalc-out').textContent='Calculating…';
+  const res=await api(`/api/community/${id}/recalculate`,{method:'POST'});
+  if(res.network_multiplier!=null||res.cis_raw!=null){
+    const i=S.communities.findIndex(x=>x.id===id);
+    if(i>=0){S.communities[i].network_multiplier=res.network_multiplier;S.communities[i].cis_raw=res.cis_raw;}
+    document.getElementById('recalc-out').textContent=`NM: ${res.network_multiplier!=null?res.network_multiplier.toFixed(2):'—'} · CIS Raw: ${res.cis_raw!=null?res.cis_raw:'—'}`;
+  }else document.getElementById('recalc-out').textContent='Error: '+(res.error||'Failed');
+}
+async function suggestArchetype(id){
+  const out=document.getElementById('arch-out');out.textContent='Analysing with AI…';
+  const res=await api(`/api/community/${id}/suggest-archetype`,{method:'POST'});
+  if(res.archetype){
+    out.innerHTML=`Suggested: <strong style="color:${ARCH_COLORS[res.archetype]||'var(--white)'}">${ARCH_LABELS[res.archetype]}</strong> (${res.confidence}% confidence)<br><span style="color:rgba(240,240,240,0.6)">${res.reasoning||''}</span>`;
+    out.innerHTML+=`<br><button class="btn btn-primary btn-sm" style="margin-top:8px" onclick="applyArchetype('${id}','${res.archetype}','ai','${esc(res.reasoning||'')}',${res.confidence||0})">Apply This</button>`;
+  }else out.textContent='Error: '+(res.error||'Failed');
+}
+async function applyArchetype(id,arch,src,reasoning,confidence){
+  const res=await api(`/api/community/${id}`,{method:'PUT',body:JSON.stringify({archetype:arch,archetype_source:src,archetype_reasoning:reasoning,archetype_confidence:confidence})});
+  if(res.ok){const i=S.communities.findIndex(x=>x.id===id);if(i>=0){S.communities[i].archetype=arch;S.communities[i].archetype_source=src;S.communities[i].archetype_reasoning=reasoning;S.communities[i].archetype_confidence=confidence;}showToast('Archetype applied');render();}
+}
+async function overrideArchetype(id){
+  const arch=document.getElementById('arch-override').value;
+  if(!arch)return;
+  await applyArchetype(id,arch,'manual','',null);
+}
+async function analyseMIQ(id){
+  const out=document.getElementById('miq-out');out.textContent='Analysing…';
+  const res=await api(`/api/community/${id}/analyse-miq`,{method:'POST'});
+  if(res.miq_score!=null){
+    const i=S.communities.findIndex(x=>x.id===id);if(i>=0){S.communities[i].miq_score=res.miq_score;S.communities[i].miq_reasoning=res.reasoning;}
+    out.textContent=`MIQ: ${res.miq_score} — ${res.reasoning||''}`;
+    setTimeout(()=>render(),1500);
+  }else out.textContent='Error: '+(res.error||'Failed');
+}
+async function addMember(id){
+  const name=document.getElementById('nm-name').value.trim();
+  if(!name)return;
+  const res=await api(`/api/community/${id}/notable-member`,{method:'POST',body:JSON.stringify({name,ig_handle:document.getElementById('nm-ig').value.replace('@',''),role:document.getElementById('nm-role').value})});
+  if(res.ok){const fresh=await api(`/api/admin/communities`);S.communities=Array.isArray(fresh)?fresh:S.communities;render();}
+}
+async function verifyMember(id,idx){
+  await api(`/api/community/${id}/notable-member/${idx}/verify`,{method:'PUT',body:JSON.stringify({verified:true})});
+  const fresh=await api('/api/admin/communities');S.communities=Array.isArray(fresh)?fresh:S.communities;render();
+}
+async function removeMember(id,idx){
+  if(!confirm('Remove this member?'))return;
+  const c=S.communities.find(x=>x.id===id);
+  const members=(c.notable_members||[]).filter((_,i)=>i!==idx);
+  await api(`/api/community/${id}`,{method:'PUT',body:JSON.stringify({notable_members:members})});
+  if(c)c.notable_members=members;render();
+}
+async function refreshIG(id){
+  showToast('Refreshing Instagram data…');
+  const res=await api(`/api/community/${id}/refresh-instagram`,{method:'POST'});
+  if(res.ok||res.profile){
+    const fresh=await api('/api/admin/communities');S.communities=Array.isArray(fresh)?fresh:S.communities;
+    showToast('Instagram refreshed');render();
+  }else showToast('Refresh failed: '+(res.error||'Unknown'));
+}
+
+// ── PROJECT ACTIONS ───────────────────────────────────────────────────────────
+async function updateProjectStatus(id,status){
+  const res=await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({status})});
+  if(res.ok){const p=S.projects.find(x=>x.id===id);if(p)p.status=status;render();}
+}
+async function saveProjNotes(id){
+  const notes=document.getElementById('proj-notes').value;
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({notes})});
+  const p=S.projects.find(x=>x.id===id);if(p)p.notes=notes;showToast('Saved');
+}
+async function addMilestone(id){
+  const text=document.getElementById('ms-text').value.trim();const date=document.getElementById('ms-date').value;
+  if(!text)return;
+  const p=S.projects.find(x=>x.id===id);
+  const milestones=[...(p.milestones||[]),{text,date:date||null,done:false}];
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({milestones})});
+  p.milestones=milestones;document.getElementById('milestones-list').innerHTML=renderMilestones(milestones,id);
+  document.getElementById('ms-text').value='';document.getElementById('ms-date').value='';
+}
+async function toggleMS(id,idx,done){
+  const p=S.projects.find(x=>x.id===id);const ms=[...(p.milestones||[])];ms[idx]={...ms[idx],done};
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({milestones:ms})});p.milestones=ms;
+}
+async function uploadProjMedia(id,input){
+  const file=input.files[0];if(!file)return;
+  const fd=new FormData();fd.append('file',file);
+  const res=await apiForm(`/api/admin/projects/${id}/media`,fd);
+  if(res.ok){const fresh=await api('/api/admin/projects');S.projects=Array.isArray(fresh)?fresh:S.projects;switchProjTab('media');}
+  else alert('Upload failed: '+(res.error||'Unknown'));
+}
+async function addVideoLink(id){
+  const url=prompt('Video URL:');if(!url)return;
+  const caption=prompt('Caption (optional):')||'';
+  const p=S.projects.find(x=>x.id===id);
+  const items=[...(p.media_items||[]),{id:Math.random().toString(36).slice(2,10),type:'video',url,caption,uploaded_at:new Date().toISOString()}];
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({media_items:items})});
+  p.media_items=items;switchProjTab('media');
+}
+async function delMediaItem(id,itemId){
+  if(!confirm('Remove?'))return;
+  const p=S.projects.find(x=>x.id===id);
+  const items=(p.media_items||[]).filter(m=>m.id!==itemId);
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({media_items:items})});
+  p.media_items=items;switchProjTab('media');
+}
+function calcEMV(){const imp=parseInt(document.getElementById('r-imp')?.value||0),cpm=parseInt(document.getElementById('r-cpm')?.value||25);const el=document.getElementById('emv-out');if(el)el.textContent=imp&&cpm?'$'+Math.round(imp*cpm/1000).toLocaleString():'—';}
+async function saveMeasure(id,status){
+  const imp=parseInt(document.getElementById('r-imp').value||0),cpm=parseInt(document.getElementById('r-cpm').value||25);
+  const report={attendance:parseInt(document.getElementById('r-att').value||0),post_count:parseInt(document.getElementById('r-posts').value||0),impressions:imp,cpm_benchmark:cpm,emv:imp&&cpm?Math.round(imp*cpm/1000):0,engagement_summary:document.getElementById('r-sum').value,methodology:document.getElementById('r-meth').value,hashtag:document.getElementById('r-tag').value,status};
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({report})});
+  const p=S.projects.find(x=>x.id===id);if(p)p.report=report;showToast(status==='published'?'Published':'Saved');render();
+}
+async function saveRecap(id,status){
+  const quotes=[0,1,2].map(i=>({text:document.getElementById(`rc-q${i}`)?.value||'',author:document.getElementById(`rc-a${i}`)?.value||''})).filter(q=>q.text);
+  const recap={title:document.getElementById('rc-title').value,summary:document.getElementById('rc-sum').value,key_wins:document.getElementById('rc-wins').value,hashtag:document.getElementById('rc-tag').value,quotes,status};
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({recap})});
+  const p=S.projects.find(x=>x.id===id);if(p)p.recap=recap;showToast(status==='published'?'Case study published':'Saved');render();
+}
+async function addTeamMember(id){
+  const name=document.getElementById('tm-name').value.trim();if(!name)return;
+  const p=S.projects.find(x=>x.id===id);
+  const team=[...(p.team||[]),{name,role:document.getElementById('tm-role').value,email:document.getElementById('tm-email').value}];
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({team})});p.team=team;switchProjTab('team');
+}
+async function removeTeamMember(id,idx){
+  const p=S.projects.find(x=>x.id===id);
+  const team=(p.team||[]).filter((_,i)=>i!==idx);
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({team})});p.team=team;switchProjTab('team');
 }
 
 // ── SLIDE PANEL ───────────────────────────────────────────────────────────────
-function openPanel(html) {
-  const panel = document.getElementById('slide-panel');
-  const overlay = document.getElementById('panel-overlay');
-  panel.innerHTML = html;
-  panel.classList.add('open');
-  overlay.style.display = 'block';
-}
+function openPanel(html){document.getElementById('slide-panel').innerHTML=html;document.getElementById('slide-panel').classList.add('open');document.getElementById('panel-overlay').style.display='block';}
+function closePanel(){document.getElementById('slide-panel').classList.remove('open');document.getElementById('panel-overlay').style.display='none';}
 
-function closePanel() {
-  document.getElementById('slide-panel').classList.remove('open');
-  document.getElementById('panel-overlay').style.display = 'none';
-}
-
-function openCreateBrief() {
-  const brandOptions = S.brands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-  openPanel(`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div class="bb" style="font-size:24px">New Brief</div>
-      <button class="btn btn-ghost btn-sm" onclick="closePanel()">✕</button>
-    </div>
+function openCreateBrief(){
+  openPanel(`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px"><div class="bb" style="font-size:24px">New Brief</div><button class="btn btn-ghost btn-sm" onclick="closePanel()">✕</button></div>
     <div class="form-grid" style="gap:14px">
-      <div class="form-group">
-        <label class="form-label">Brand *</label>
-        <select class="form-select" id="brief-brand">
-          <option value="">Select brand…</option>
-          ${brandOptions}
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Title *</label>
-        <input class="form-input" id="brief-title" placeholder="e.g. Summer Activation Campaign">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Campaign Goal</label>
-        <input class="form-input" id="brief-goal" placeholder="e.g. Brand Awareness">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Partnership Type</label>
-        <select class="form-select" id="brief-type">
-          <option value="">Select…</option>
-          <option>Event Sponsorship</option>
-          <option>Content Partnership</option>
-          <option>Product Seeding</option>
-          <option>Ambassador Programme</option>
-          <option>Community Activation</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Budget Range</label>
-        <select class="form-select" id="brief-budget">
-          <option value="">Select…</option>
-          <option>Under $5K</option>
-          <option>$5K–$15K</option>
-          <option>$15K–$50K</option>
-          <option>$50K+</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Looking For</label>
-        <textarea class="form-textarea" id="brief-looking" placeholder="Describe the ideal community partner…"></textarea>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Tags (comma-separated)</label>
-        <input class="form-input" id="brief-tags" placeholder="fitness, outdoor, community">
-      </div>
-      <div id="brief-err" style="color:var(--red);font-size:12px;display:none"></div>
-      <button class="btn btn-primary" onclick="submitCreateBrief()">Create Brief</button>
-    </div>
-  `);
+      <div class="form-group"><label class="form-label">Brand *</label><select class="form-select" id="bf-brand"><option value="">Select brand…</option>${S.brands.map(b=>`<option value="${b.id}">${b.name}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Title *</label><input class="form-input" id="bf-title" placeholder="Brief title"></div>
+      <div class="form-group"><label class="form-label">Campaign Goal</label><input class="form-input" id="bf-goal"></div>
+      <div class="form-group"><label class="form-label">Partnership Type</label><select class="form-select" id="bf-type"><option value="">Select…</option><option>Event Sponsorship</option><option>Content Partnership</option><option>Product Seeding</option><option>Ambassador Programme</option><option>Community Activation</option></select></div>
+      <div class="form-group"><label class="form-label">Budget</label><select class="form-select" id="bf-budget"><option value="">Select…</option><option>Under $5K</option><option>$5K–$15K</option><option>$15K–$50K</option><option>$50K+</option></select></div>
+      <div class="form-group"><label class="form-label">Looking For</label><textarea class="form-textarea" id="bf-looking"></textarea></div>
+      <div class="form-group"><label class="form-label">Tags (comma-separated)</label><input class="form-input" id="bf-tags"></div>
+      <div id="bf-err" style="color:var(--red);font-size:12px;display:none"></div>
+      <button class="btn btn-primary" onclick="submitBrief()">Create Brief</button>
+    </div>`);
+}
+function openCreateBriefForBrand(brandId,brandName){
+  openCreateBrief();
+  setTimeout(()=>{const sel=document.getElementById('bf-brand');if(sel)sel.value=brandId;},50);
 }
 
-async function submitCreateBrief() {
-  const brand_id = document.getElementById('brief-brand').value;
-  const title = document.getElementById('brief-title').value.trim();
-  const err = document.getElementById('brief-err');
-  if (!brand_id || !title) { err.textContent = 'Brand and title are required.'; err.style.display=''; return; }
-  err.style.display = 'none';
-  const tags = document.getElementById('brief-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
-  const res = await api('/api/admin/briefs', {
-    method: 'POST',
-    body: JSON.stringify({
-      brand_id, title,
-      campaign_goal: document.getElementById('brief-goal').value,
-      partnership_type: document.getElementById('brief-type').value,
-      budget: document.getElementById('brief-budget').value,
-      looking_for: document.getElementById('brief-looking').value,
-      tags,
-    })
-  });
-  if (res.ok) {
-    const briefs = await api('/api/admin/briefs');
-    S.briefs = Array.isArray(briefs) ? briefs : S.briefs;
-    closePanel();
-    navigate('briefs');
-    showToast('Brief created');
-  } else {
-    err.textContent = res.error || 'Failed to create brief.';
-    err.style.display = '';
-  }
+async function submitBrief(){
+  const brand_id=document.getElementById('bf-brand').value,title=document.getElementById('bf-title').value.trim();
+  const err=document.getElementById('bf-err');
+  if(!brand_id||!title){err.textContent='Brand and title required.';err.style.display='';return;}
+  err.style.display='none';
+  const tags=document.getElementById('bf-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  const res=await api('/api/admin/briefs',{method:'POST',body:JSON.stringify({brand_id,title,campaign_goal:document.getElementById('bf-goal').value,partnership_type:document.getElementById('bf-type').value,budget:document.getElementById('bf-budget').value,looking_for:document.getElementById('bf-looking').value,tags})});
+  if(res.ok){const fresh=await api('/api/admin/briefs');S.briefs=Array.isArray(fresh)?fresh:S.briefs;closePanel();navigate('briefs');showToast('Brief created');}
+  else{err.textContent=res.error||'Failed';err.style.display='';}
 }
 
-function openCreateProject() {
-  const brandOptions = S.brands.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
-  const communityOptions = S.communities.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-  const briefOptions = S.briefs.map(b => `<option value="${b.id}">${b.title} (${b.brand_name||'?'})</option>`).join('');
-  openPanel(`
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div class="bb" style="font-size:24px">New Project</div>
-      <button class="btn btn-ghost btn-sm" onclick="closePanel()">✕</button>
-    </div>
+function openCreateProject(){
+  openPanel(`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px"><div class="bb" style="font-size:24px">New Project</div><button class="btn btn-ghost btn-sm" onclick="closePanel()">✕</button></div>
     <div class="form-grid" style="gap:14px">
-      <div class="form-group">
-        <label class="form-label">Community *</label>
-        <select class="form-select" id="proj-community">
-          <option value="">Select community…</option>
-          ${communityOptions}
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Brand *</label>
-        <select class="form-select" id="proj-brand">
-          <option value="">Select brand…</option>
-          ${brandOptions}
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Brief (optional)</label>
-        <select class="form-select" id="proj-brief">
-          <option value="">None / Ad hoc</option>
-          ${briefOptions}
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Project Title</label>
-        <input class="form-input" id="proj-title" placeholder="e.g. Southbound 400 × Hyperice">
-      </div>
-      <div class="form-group">
-        <label class="form-label">Partnership Type</label>
-        <select class="form-select" id="proj-type">
-          <option value="">Select…</option>
-          <option>Event Sponsorship</option>
-          <option>Content Partnership</option>
-          <option>Product Seeding</option>
-          <option>Ambassador Programme</option>
-          <option>Community Activation</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Budget ($)</label>
-        <input class="form-input" type="number" id="proj-budget" placeholder="0">
-      </div>
-      <div class="form-grid form-grid-2">
-        <div class="form-group">
-          <label class="form-label">Start Date</label>
-          <input class="form-input" type="date" id="proj-start">
-        </div>
-        <div class="form-group">
-          <label class="form-label">End Date</label>
-          <input class="form-input" type="date" id="proj-end">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Initial Status</label>
-        <select class="form-select" id="proj-status">
-          <option value="scoping">Scoping</option>
-          <option value="contracted">Contracted</option>
-          <option value="active">Active</option>
-        </select>
-      </div>
-      <div id="proj-err" style="color:var(--red);font-size:12px;display:none"></div>
-      <button class="btn btn-primary" onclick="submitCreateProject()">Create Project</button>
-    </div>
-  `);
+      <div class="form-group"><label class="form-label">Community *</label><select class="form-select" id="pj-comm"><option value="">Select…</option>${S.communities.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Brand *</label><select class="form-select" id="pj-brand"><option value="">Select…</option>${S.brands.map(b=>`<option value="${b.id}">${b.name}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Brief (optional)</label><select class="form-select" id="pj-brief"><option value="">None</option>${S.briefs.map(b=>`<option value="${b.id}">${b.title} (${b.brand_name||'?'})</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Project Title</label><input class="form-input" id="pj-title"></div>
+      <div class="form-group"><label class="form-label">Type</label><select class="form-select" id="pj-type"><option value="">Select…</option><option>Event Sponsorship</option><option>Content Partnership</option><option>Product Seeding</option><option>Ambassador Programme</option><option>Community Activation</option></select></div>
+      <div class="form-group"><label class="form-label">Budget ($)</label><input class="form-input" type="number" id="pj-budget"></div>
+      <div class="form-grid form-grid-2"><div class="form-group"><label class="form-label">Start</label><input class="form-input" type="date" id="pj-start"></div><div class="form-group"><label class="form-label">End</label><input class="form-input" type="date" id="pj-end"></div></div>
+      <div class="form-group"><label class="form-label">Initial Status</label><select class="form-select" id="pj-status"><option value="scoping">Scoping</option><option value="contracted">Contracted</option><option value="active">Active</option></select></div>
+      <div id="pj-err" style="color:var(--red);font-size:12px;display:none"></div>
+      <button class="btn btn-primary" onclick="submitProject()">Create Project</button>
+    </div>`);
 }
 
-async function submitCreateProject() {
-  const community_id = document.getElementById('proj-community').value;
-  const brand_id = document.getElementById('proj-brand').value;
-  const err = document.getElementById('proj-err');
-  if (!community_id || !brand_id) { err.textContent = 'Community and brand are required.'; err.style.display=''; return; }
-  err.style.display = 'none';
-  const res = await api('/api/admin/projects', {
-    method: 'POST',
-    body: JSON.stringify({
-      community_id, brand_id,
-      brief_id: document.getElementById('proj-brief').value || null,
-      title: document.getElementById('proj-title').value,
-      type: document.getElementById('proj-type').value,
-      budget: parseFloat(document.getElementById('proj-budget').value)||null,
-      start_date: document.getElementById('proj-start').value||null,
-      end_date: document.getElementById('proj-end').value||null,
-      status: document.getElementById('proj-status').value,
-    })
-  });
-  if (res.ok) {
-    const projects = await api('/api/admin/projects');
-    S.projects = Array.isArray(projects) ? projects : S.projects;
-    closePanel();
-    navigate('projects');
-    showToast('Project created');
-  } else {
-    err.textContent = res.error || 'Failed to create project.';
-    err.style.display = '';
-  }
+async function submitProject(){
+  const community_id=document.getElementById('pj-comm').value,brand_id=document.getElementById('pj-brand').value;
+  const err=document.getElementById('pj-err');
+  if(!community_id||!brand_id){err.textContent='Community and brand required.';err.style.display='';return;}
+  err.style.display='none';
+  const res=await api('/api/admin/projects',{method:'POST',body:JSON.stringify({community_id,brand_id,brief_id:document.getElementById('pj-brief').value||null,title:document.getElementById('pj-title').value,type:document.getElementById('pj-type').value,budget:parseFloat(document.getElementById('pj-budget').value)||null,start_date:document.getElementById('pj-start').value||null,end_date:document.getElementById('pj-end').value||null,status:document.getElementById('pj-status').value})});
+  if(res.ok){const fresh=await api('/api/admin/projects');S.projects=Array.isArray(fresh)?fresh:S.projects;closePanel();navigate('projects');showToast('Project created');}
+  else{err.textContent=res.error||'Failed';err.style.display='';}
 }
 
-// ── COMMUNITY MODAL ───────────────────────────────────────────────────────────
-function openCommunityModal(id) {
-  const c = S.communities.find(x => x.id === id);
-  if (!c) return;
-  const igData = c.instagram_data || {};
-  const igProfile = igData.profile || {};
-  const tier = getTier(c);
-  const er = getER(c);
-  const followers = getFollowers(c);
-  const coverObj = COVER_OPTIONS.find(o => o.id === (c.cover_option||1)) || COVER_OPTIONS[0];
-  const coverBg = c.cover_image_url ? `url(${c.cover_image_url}) center/cover no-repeat` : coverObj.gradient;
-  const cis = c.cis_stamped!=null ? c.cis_stamped : (c.cis_raw!=null ? c.cis_raw : null);
-  const media = igData.media || [];
-
-  document.getElementById('comm-modal-inner').innerHTML = `
-    <div style="position:relative;background:${coverBg};min-height:200px;display:flex;flex-direction:column;justify-content:flex-end;">
-      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.2) 50%,transparent 100%);pointer-events:none"></div>
-      <div style="position:absolute;top:20px;left:24px;z-index:1">
-        <button class="back-btn" onclick="closeCommunityModal()">← Back</button>
-      </div>
-      <div style="position:absolute;top:20px;right:24px;z-index:1">
-        <a href="/profile/${c.id}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);color:#fff;font-family:'Barlow Condensed';font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:7px 14px;border-radius:5px;text-decoration:none">↗ Public Profile</a>
-      </div>
-      <div style="position:relative;z-index:1;padding:24px 28px">
-        <div class="bb" style="font-size:44px;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,0.6)">${c.name}</div>
-        ${c.tagline||c.location ? `<div style="font-size:14px;color:rgba(255,255,255,0.7);margin-top:5px">${[c.tagline,c.location].filter(Boolean).join(' · ')}</div>` : ''}
-        ${(c.tags||[]).length ? `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">${(c.tags||[]).map(t=>`<span style="padding:3px 10px;border-radius:4px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.18);font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase">${t}</span>`).join('')}</div>` : ''}
-        <div style="margin-top:12px">${tierBadge(tier)}</div>
-      </div>
-    </div>
-
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:20px 28px 0">
-      <div class="metric-card">
-        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Engagement Rate</div>
-        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${er!==null?er+'%':'—'}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:4px">${er!==null?(igProfile.username?'@'+igProfile.username:'Instagram'):'No IG data'}</div>
-      </div>
-      <div class="metric-card">
-        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Active Members</div>
-        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${c.active_members?Number(c.active_members).toLocaleString():'—'}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:4px">Community-reported</div>
-      </div>
-      <div class="metric-card">
-        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Total Reach</div>
-        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${followers!==null?followers.toLocaleString():'—'}</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:4px">${followers!==null?'Instagram':'Not connected'}</div>
-      </div>
-      <div class="metric-card">
-        <div style="font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">CIS</div>
-        <div style="font-family:'Bebas Neue';font-size:30px;line-height:1">${cis!==null?Math.round(cis)+'/100':'—'}</div>
-        <div style="font-size:10px;color:${c.cis_stamped!=null?'var(--lime)':'var(--muted)'};margin-top:4px">${c.cis_stamped!=null?'★ Stamped':'Not scored'}</div>
-      </div>
-    </div>
-
-    ${c.description ? `<div style="padding:20px 28px 0"><div class="section-label">About</div><div style="font-size:13px;color:rgba(240,240,240,0.8);line-height:1.6">${c.description}</div></div>` : ''}
-
-    ${media.length ? `
-    <div style="padding:20px 28px 0">
-      <div class="section-label">Recent Instagram Posts (${media.length})</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px">
-        ${media.slice(0,12).map(post => post.media_url ? `<a href="${post.permalink||'#'}" target="_blank"><img src="${post.media_url}" style="width:100%;height:100px;object-fit:cover;border-radius:6px;display:block" loading="lazy"></a>` : '').join('')}
-      </div>
-    </div>` : ''}
-
-    <div style="height:60px"></div>
-  `;
-  document.getElementById('comm-modal').style.display = 'block';
-  document.getElementById('comm-modal').scrollTop = 0;
-}
-
-function closeCommunityModal() {
-  document.getElementById('comm-modal').style.display = 'none';
+async function deleteBrief(id){
+  if(!confirm('Delete this brief?'))return;
+  await api(`/api/admin/briefs/${id}`,{method:'DELETE'});
+  S.briefs=S.briefs.filter(b=>b.id!==id);render();
 }
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────
-let toastTimer;
-function showToast(msg) {
-  let t = document.getElementById('toast');
-  if (!t) {
-    t = document.createElement('div');
-    t.id = 'toast';
-    t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--lime);color:#000;font-family:\'Barlow Condensed\';font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:10px 18px;border-radius:6px;z-index:999;transition:opacity 0.3s';
-    document.body.appendChild(t);
-  }
-  t.textContent = msg;
-  t.style.opacity = '1';
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
+let _tt;
+function showToast(msg){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.style.cssText='position:fixed;bottom:24px;right:24px;background:var(--lime);color:#000;font-family:\'Barlow Condensed\';font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:10px 18px;border-radius:6px;z-index:999;transition:opacity 0.3s';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';clearTimeout(_tt);_tt=setTimeout(()=>t.style.opacity='0',2500);
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
-(async () => {
+(async()=>{
   document.getElementById('nav-dashboard').classList.add('active');
   await loadAll();
   render();
