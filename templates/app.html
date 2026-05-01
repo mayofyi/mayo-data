@@ -1802,7 +1802,7 @@ function BriefCreation({ onPublish, onCancel, user }) {
       <div className="brief-creation-body">
         <div style={{ marginBottom: 32 }}>
           <div style={{ fontFamily: 'Bebas Neue', fontSize: 42, letterSpacing: '0.03em', marginBottom: 8 }}>What's the goal?</div>
-          <div style={{ fontSize: 14, color: 'var(--muted)', maxWidth: 520 }}>This shapes which communities get matched to your brief and how we weight their data. Choose the outcome that matters most.</div>
+          <div style={{ fontSize: 14, color: 'var(--muted)', maxWidth: 520 }}>This shapes which communities get matched to your brief and how we weight their data. Choose the outcome that matters most. <span style={{ color: 'rgba(255,100,100,0.7)' }}>*&nbsp;Required</span></div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 32 }}>
@@ -2472,6 +2472,26 @@ function DiscoverPage({ role, communities: COMMUNITIES = [], briefs: BRIEFS = []
           <button key={f} className={`filter-chip ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>{f}</button>
         ))}
       </div>
+
+      {/* Active brief filter pill */}
+      {isBrand && activeBriefFilter && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(210,255,1,0.08)', border: '1px solid rgba(210,255,1,0.3)', borderRadius: 6, padding: '5px 10px 5px 12px', fontFamily: 'Barlow Condensed', fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--lime)' }}>
+            Matching to: {activeBriefFilter.title || activeBriefFilter.partnershipType}
+            <button onClick={onClearBriefFilter} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(210,255,1,0.5)', fontSize: 16, lineHeight: 1, padding: 0 }}>×</button>
+          </div>
+          <span style={{ fontSize: 11, color: 'var(--muted)' }}>Sorted by match score</span>
+        </div>
+      )}
+
+      {/* Match score legend — shown when community users have scored briefs */}
+      {!isBrand && scoredBriefs.some(b => b._matchScore != null && b._matchScore >= 50) && (
+        <div style={{ marginBottom: 14, fontSize: 11, color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--lime)', display: 'inline-block' }} /> Strong fit (70+)</span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--cyan)', display: 'inline-block' }} /> Good match (50–70)</span>
+          <span style={{ color: 'rgba(255,255,255,0.3)' }}>Card glow indicates match strength to your profile</span>
+        </div>
+      )}
 
       {isBrand ? (
         sorted.length > 0
@@ -3567,7 +3587,7 @@ function ProjectPage({ project: p }) {
                   <div style={{ fontSize: 13, fontWeight: 600 }}>{m.name}</div>
                   <div className="text-muted text-xs">{m.role}</div>
                 </div>
-                <button className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto', fontSize: 11 }}>Contact</button>
+                {m.email && <a href={`mailto:${m.email}`} className="btn btn-ghost btn-sm" style={{ marginLeft: 'auto', fontSize: 11, textDecoration: 'none' }}>Contact</a>}
               </div>
             ))}
           </div>
@@ -3730,17 +3750,30 @@ function ProjectPage({ project: p }) {
             </div>
 
             {/* Publish */}
-            <div style={{ background: 'rgba(210,255,1,0.04)', border: '1px solid rgba(210,255,1,0.15)', borderRadius: 8, padding: '14px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
-              <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>
-                Publishing adds this case study to Southbound 400's profile with a <strong style={{ color: 'var(--lime)' }}>★ Mayo Verified</strong> stamp. Attendance, post rate, impressions, and EMV will display. Auditor notes are internal only.
+            <div style={{ background: 'rgba(210,255,1,0.04)', border: '1px solid rgba(210,255,1,0.15)', borderRadius: 8, padding: '14px 16px' }}>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 10 }}>
+                {[
+                  { label: 'Attendance', done: !!attendance },
+                  { label: 'Post Rate', done: !!postRate },
+                  { label: 'Impressions', done: !!impressions },
+                ].map(item => (
+                  <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, fontFamily: 'Barlow Condensed', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: item.done ? 'var(--lime)' : 'var(--muted)' }}>
+                    <span>{item.done ? '✓' : '○'}</span> {item.label} {!item.done && <span style={{ color: 'rgba(255,100,100,0.6)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>required</span>}
+                  </div>
+                ))}
               </div>
-              <button
-                className="btn btn-lime"
-                style={{ flexShrink: 0, opacity: attendance && impressions && postRate ? 1 : 0.4, pointerEvents: attendance && impressions && postRate ? 'all' : 'none' }}
-                onClick={() => { setPublished(true); setShowPublisher(false); }}
-              >
-                Publish Case Study →
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+                <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.5 }}>
+                  Publishing adds this case study to Southbound 400's profile with a <strong style={{ color: 'var(--lime)' }}>★ Mayo Verified</strong> stamp.
+                </div>
+                <button
+                  className="btn btn-lime"
+                  style={{ flexShrink: 0, opacity: attendance && impressions && postRate ? 1 : 0.4, pointerEvents: attendance && impressions && postRate ? 'all' : 'none' }}
+                  onClick={() => { setPublished(true); setShowPublisher(false); }}
+                >
+                  Publish Case Study →
+                </button>
+              </div>
             </div>
 
           </div>
