@@ -373,8 +373,8 @@ function renderProjects(){
 function renderProjectDetail(){
   const p=S.projects.find(x=>x.id===S.selectedProject);
   if(!p)return`<div class="empty">Not found. <button class="btn btn-ghost btn-sm" onclick="navigate('projects')">← Back</button></div>`;
-  const tabs=['overview','media','measurement','recap','team'];
-  const tl={overview:'Overview',media:'Media Library',measurement:'Measurement',recap:'Recap Report',team:'Team'};
+  const tabs=['overview','media','measurement','recap','team','timeline'];
+  const tl={overview:'Overview',media:'Media Library',measurement:'Measurement',recap:'Recap Report',team:'Team',timeline:'Timeline'};
   return`<div style="max-width:1000px">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
       <div>
@@ -394,8 +394,8 @@ function renderProjectDetail(){
     <div id="proj-tab">${renderProjTab(p)}</div>
   </div>`;
 }
-function switchProjTab(t){S.projectTab=t;const p=S.projects.find(x=>x.id===S.selectedProject);if(p)document.getElementById('proj-tab').innerHTML=renderProjTab(p);document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['overview','media','measurement','recap','team'][i]===t));}
-function renderProjTab(p){switch(S.projectTab){case'overview':return renderProjOverview(p);case'media':return renderProjMedia(p);case'measurement':return renderProjMeasure(p);case'recap':return renderProjRecap(p);case'team':return renderProjTeam(p);}return'';}
+function switchProjTab(t){S.projectTab=t;const p=S.projects.find(x=>x.id===S.selectedProject);if(p)document.getElementById('proj-tab').innerHTML=renderProjTab(p);document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['overview','media','measurement','recap','team','timeline'][i]===t));}
+function renderProjTab(p){switch(S.projectTab){case'overview':return renderProjOverview(p);case'media':return renderProjMedia(p);case'measurement':return renderProjMeasure(p);case'recap':return renderProjRecap(p);case'team':return renderProjTeam(p);case'timeline':return renderProjTimeline(p);}return'';}
 
 function renderProjOverview(p){
   return`<div class="form-grid form-grid-2" style="margin-bottom:20px">
@@ -482,6 +482,142 @@ function renderProjTeam(p){
     ${team.length?`<div class="card" style="margin-bottom:16px"><table><thead><tr><th>Name</th><th>Role</th><th>Email</th><th></th></tr></thead><tbody>${team.map((m,i)=>`<tr><td style="font-weight:600">${m.name||'—'}</td><td style="color:var(--muted)">${m.role||'—'}</td><td>${m.email?`<a href="mailto:${m.email}" style="color:var(--cyan)">${m.email}</a>`:'—'}</td><td><button class="btn btn-danger btn-sm" onclick="removeTeamMember('${p.id}',${i})">Remove</button></td></tr>`).join('')}</tbody></table></div>`:`<div class="panel" style="margin-bottom:16px"><div class="empty" style="padding:20px">No team members.</div></div>`}
     <div class="panel"><div class="section-label">Add Member</div><div class="form-grid form-grid-2" style="margin-bottom:12px"><div class="form-group"><label class="form-label">Name</label><input class="form-input" id="tm-name"></div><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="tm-role"></div><div class="form-group"><label class="form-label">Email</label><input class="form-input" id="tm-email"></div></div><button class="btn btn-ghost btn-sm" onclick="addTeamMember('${p.id}')">Add</button></div>
   </div>`;
+}
+
+// ── PROJECT TIMELINE ──────────────────────────────────────────────────────────
+const TL_ST={
+  not_started:{label:'Not Started',color:'var(--orange)',tc:'#000'},
+  in_progress:{label:'In Progress',color:'var(--cyan)',tc:'#000'},
+  complete:{label:'Complete',color:'var(--lime)',tc:'#000'},
+  shipped:{label:'Shipped',color:'#a78bfa',tc:'#000'},
+  delayed:{label:'Delayed',color:'var(--red)',tc:'#fff'},
+};
+
+function renderProjTimeline(p){
+  const tl=p.timeline||{};
+  const stages=tl.stages||[];
+  const today=new Date();
+
+  // Date range
+  let minD,maxD;
+  if(stages.length&&stages.some(s=>s.start_date)){
+    const starts=stages.filter(s=>s.start_date).map(s=>new Date(s.start_date));
+    const ends=stages.filter(s=>s.end_date).map(s=>new Date(s.end_date));
+    minD=new Date(Math.min(...starts));maxD=new Date(Math.max(...ends));
+  }else if(p.start_date&&p.end_date){
+    minD=new Date(p.start_date);maxD=new Date(p.end_date);
+  }else{
+    minD=new Date(today);maxD=new Date(today.getTime()+90*86400000);
+  }
+  minD=new Date(minD.getTime()-7*86400000);
+  maxD=new Date(maxD.getTime()+14*86400000);
+  const totalMs=maxD-minD;
+
+  function pct(d){return Math.max(0,Math.min(100,(new Date(d)-minD)/totalMs*100)).toFixed(2);}
+  function wPct(s,e){return Math.max(1.5,(new Date(e)-new Date(s))/totalMs*100).toFixed(2);}
+
+  // Month header segments
+  const months=[];
+  let cur=new Date(minD.getFullYear(),minD.getMonth(),1);
+  while(cur<=maxD){
+    const next=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+    const left=Math.max(0,(cur-minD)/totalMs*100);
+    const right=Math.min(100,(next-minD)/totalMs*100);
+    months.push({label:cur.toLocaleDateString('en-US',{month:'short',year:'2-digit'}),left:left.toFixed(2),width:(right-left).toFixed(2)});
+    cur=next;
+  }
+
+  const todayPct=pct(today);
+  const hasDelayed=stages.some(s=>s.status==='delayed'||(s.end_date&&new Date(s.end_date)<today&&s.status!=='complete'&&s.status!=='shipped'));
+  const ganttH=Math.max(60,stages.length*38+8);
+
+  const gantt=`
+    <div style="position:relative;overflow-x:auto">
+      <div style="position:relative;height:30px;border-bottom:1px solid var(--border2)">
+        ${months.map(m=>`<div style="position:absolute;left:${m.left}%;width:${m.width}%;border-left:1px solid var(--border2);padding:0 8px;font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);height:30px;display:flex;align-items:center;overflow:hidden">${m.label}</div>`).join('')}
+      </div>
+      <div style="position:relative;height:${ganttH}px">
+        ${months.map(m=>`<div style="position:absolute;top:0;bottom:0;left:${m.left}%;width:1px;background:var(--border)"></div>`).join('')}
+        <div style="position:absolute;top:0;bottom:0;left:${todayPct}%;width:1px;background:rgba(210,255,1,0.4);z-index:2"></div>
+        ${stages.map((s,i)=>{
+          if(!s.start_date||!s.end_date)return'';
+          const cfg=TL_ST[s.status]||TL_ST.not_started;
+          return`<div style="position:absolute;top:${i*38+7}px;height:24px;left:${pct(s.start_date)}%;width:${wPct(s.start_date,s.end_date)}%;background:${cfg.color};border-radius:12px;display:flex;align-items:center;padding:0 10px;z-index:1;min-width:60px" title="${s.name}: ${s.start_date} → ${s.end_date}">
+            <span style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  const tracker=stages.length?`<table style="width:100%">
+    <thead><tr><th>Stage</th><th>Status</th><th>Due</th><th></th></tr></thead>
+    <tbody>${stages.map((s,i)=>{
+      const cfg=TL_ST[s.status]||TL_ST.not_started;
+      return`<tr>
+        <td style="font-weight:600;font-size:13px">${s.name}</td>
+        <td><select class="form-select" style="padding:3px 8px;font-size:11px;height:28px" onchange="updateStageStatus('${p.id}',${i},this.value)">
+          ${Object.entries(TL_ST).map(([k,v])=>`<option value="${k}"${s.status===k?' selected':''}>${v.label}</option>`).join('')}
+        </select></td>
+        <td style="font-size:12px;color:var(--muted);white-space:nowrap">${s.end_date?fDate(s.end_date):'—'}</td>
+        <td><button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:10px" onclick="removeStage('${p.id}',${i})">✕</button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`:`<div class="empty" style="padding:20px 0">No stages yet.</div>`;
+
+  return`<div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--muted)">Lime line = today</div>
+      <span class="badge ${hasDelayed?'badge-red':'badge-lime'}">${hasDelayed?'⚠ Behind Schedule':'✓ On Schedule'}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 360px;gap:16px;margin-bottom:16px">
+      <div class="panel" style="padding:16px 20px;min-width:0">
+        <div class="section-label" style="margin-bottom:12px">Gantt</div>
+        ${stages.some(s=>s.start_date)?gantt:`<div class="empty">Add stages with dates to see the Gantt chart.</div>`}
+      </div>
+      <div class="panel">
+        <div class="section-label" style="margin-bottom:12px">Stage Tracker</div>
+        ${tracker}
+      </div>
+    </div>
+    <div class="panel">
+      <div class="section-label" style="margin-bottom:12px">Add Stage</div>
+      <div class="form-grid form-grid-2" style="margin-bottom:12px">
+        <div class="form-group"><label class="form-label">Stage Name</label><input class="form-input" id="tl-name" placeholder="e.g. Contracting"></div>
+        <div class="form-group"><label class="form-label">Status</label>
+          <select class="form-select" id="tl-status">${Object.entries(TL_ST).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('')}</select>
+        </div>
+        <div class="form-group"><label class="form-label">Start Date</label><input class="form-input" type="date" id="tl-start"></div>
+        <div class="form-group"><label class="form-label">End / Due Date</label><input class="form-input" type="date" id="tl-end"></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="addStage('${p.id}')">Add Stage</button>
+    </div>
+  </div>`;
+}
+
+async function addStage(id){
+  const name=document.getElementById('tl-name').value.trim();if(!name)return;
+  const p=S.projects.find(x=>x.id===id);
+  const stages=[...(p.timeline?.stages||[]),{id:Math.random().toString(36).slice(2,10),name,status:document.getElementById('tl-status').value,start_date:document.getElementById('tl-start').value||null,end_date:document.getElementById('tl-end').value||null}];
+  const timeline={...(p.timeline||{}),stages};
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({timeline})});
+  p.timeline=timeline;switchProjTab('timeline');
+}
+
+async function updateStageStatus(id,idx,status){
+  const p=S.projects.find(x=>x.id===id);
+  const stages=[...(p.timeline?.stages||[])];stages[idx]={...stages[idx],status};
+  const timeline={...(p.timeline||{}),stages};
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({timeline})});
+  p.timeline=timeline;switchProjTab('timeline');
+}
+
+async function removeStage(id,idx){
+  if(!confirm('Remove this stage?'))return;
+  const p=S.projects.find(x=>x.id===id);
+  const stages=(p.timeline?.stages||[]).filter((_,i)=>i!==idx);
+  const timeline={...(p.timeline||{}),stages};
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({timeline})});
+  p.timeline=timeline;switchProjTab('timeline');
 }
 
 // ── COMMUNITY LIST ────────────────────────────────────────────────────────────
