@@ -373,8 +373,8 @@ function renderProjects(){
 function renderProjectDetail(){
   const p=S.projects.find(x=>x.id===S.selectedProject);
   if(!p)return`<div class="empty">Not found. <button class="btn btn-ghost btn-sm" onclick="navigate('projects')">← Back</button></div>`;
-  const tabs=['overview','media','measurement','recap','team','timeline'];
-  const tl={overview:'Overview',media:'Media Library',measurement:'Measurement',recap:'Recap Report',team:'Team',timeline:'Timeline'};
+  const tabs=['overview','proposal','media','measurement','recap','team','timeline'];
+  const tl={overview:'Overview',proposal:'Proposal',media:'Media Library',measurement:'Measurement',recap:'Recap Report',team:'Team',timeline:'Timeline'};
   return`<div style="max-width:1000px">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
       <div>
@@ -394,19 +394,36 @@ function renderProjectDetail(){
     <div id="proj-tab">${renderProjTab(p)}</div>
   </div>`;
 }
-function switchProjTab(t){S.projectTab=t;const p=S.projects.find(x=>x.id===S.selectedProject);if(p)document.getElementById('proj-tab').innerHTML=renderProjTab(p);document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['overview','media','measurement','recap','team','timeline'][i]===t));}
-function renderProjTab(p){switch(S.projectTab){case'overview':return renderProjOverview(p);case'media':return renderProjMedia(p);case'measurement':return renderProjMeasure(p);case'recap':return renderProjRecap(p);case'team':return renderProjTeam(p);case'timeline':return renderProjTimeline(p);}return'';}
+function switchProjTab(t){S.projectTab=t;const p=S.projects.find(x=>x.id===S.selectedProject);if(p)document.getElementById('proj-tab').innerHTML=renderProjTab(p);document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',['overview','proposal','media','measurement','recap','team','timeline'][i]===t));}
+function renderProjTab(p){switch(S.projectTab){case'overview':return renderProjOverview(p);case'media':return renderProjMedia(p);case'measurement':return renderProjMeasure(p);case'recap':return renderProjRecap(p);case'team':return renderProjTeam(p);case'timeline':return renderProjTimeline(p);case'proposal':return renderProjProposal(p);}return'';}
 
 function renderProjOverview(p){
+  const comm=S.communities.find(x=>x.id===p.community_id);
+  const brand=S.brands.find(x=>x.id===p.brand_id);
+  const commLeader=comm?.leader_name||'—';
+  const commEmail=comm?.email||'';
+  const brandContact=brand?.leader_name||'—';
+  const brandEmail=brand?.email||'';
+  const casePublished=(p.recap||{}).status==='published';
+  function navBtn(label,fn){return`<button onclick="${fn}" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-family:'Barlow',sans-serif;font-size:13px;padding:0;text-align:right;text-decoration:underline">${label} ↗</button>`;}
   return`<div class="form-grid form-grid-2" style="margin-bottom:20px">
     <div class="panel">
-      <div class="section-label">Details</div>
-      ${[['Community',p.community_name||'—'],['Brand',p.brand_name||'—'],['Brief',p.brief_title||'—'],['Type',p.type||'—'],['Budget',fCur(p.budget)],['Start',fDate(p.start_date)],['End',fDate(p.end_date)],['Created',fDate(p.created_at)]].map(([k,v])=>`<div class="detail-row"><div class="detail-key">${k}</div><div class="detail-val">${v}</div></div>`).join('')}
+      <div class="section-label">Project Details</div>
+      <div class="detail-row"><div class="detail-key">Community</div><div class="detail-val">${p.community_id?navBtn(esc(p.community_name||'View'),`navigate('community-detail',{selectedCommunity:'${p.community_id}',communityTab:'overview'})`):'—'}</div></div>
+      <div class="detail-row"><div class="detail-key">Brand</div><div class="detail-val">${p.brand_id?navBtn(esc(p.brand_name||'View'),`navigate('brand-detail',{selectedBrand:'${p.brand_id}'})`): '—'}</div></div>
+      <div class="detail-row"><div class="detail-key">Brief</div><div class="detail-val">${p.brief_id?navBtn(esc(p.brief_title||'View Brief'),`navigate('brief-detail',{selectedBrief:'${p.brief_id'})`): '—'}</div></div>
+      ${[['Type',p.type||'—'],['Budget',fCur(p.budget)],['Start',fDate(p.start_date)],['End',fDate(p.end_date)],['Created',fDate(p.created_at)]].map(([k,v])=>`<div class="detail-row"><div class="detail-key">${k}</div><div class="detail-val">${v}</div></div>`).join('')}
+      ${casePublished?`<div class="detail-row"><div class="detail-key">Case Study</div><div class="detail-val"><a href="/profile/${p.community_id}" target="_blank" style="color:var(--lime);font-size:13px;text-decoration:underline">★ View Published ↗</a></div></div>`:''}
     </div>
     <div class="panel">
-      <div class="section-label">Notes</div>
-      <textarea class="form-textarea" id="proj-notes" style="min-height:120px" placeholder="Internal notes…">${p.notes||''}</textarea>
-      <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="saveProjNotes('${p.id}')">Save</button>
+      <div class="section-label">Contacts</div>
+      <div class="detail-row"><div class="detail-key">Community Lead</div><div class="detail-val" style="text-align:right"><div style="font-weight:600">${commLeader}</div>${commEmail?`<a href="mailto:${commEmail}" style="color:var(--cyan);font-size:11px">${commEmail}</a>`:''}</div></div>
+      <div class="detail-row"><div class="detail-key">Brand Contact</div><div class="detail-val" style="text-align:right"><div style="font-weight:600">${brandContact}</div>${brandEmail?`<a href="mailto:${brandEmail}" style="color:var(--cyan);font-size:11px">${brandEmail}</a>`:''}</div></div>
+      <div style="margin-top:16px">
+        <div class="section-label">Internal Notes</div>
+        <textarea class="form-textarea" id="proj-notes" style="min-height:100px" placeholder="Internal notes…">${p.notes||''}</textarea>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="saveProjNotes('${p.id}')">Save</button>
+      </div>
     </div>
   </div>
   <div class="panel">
@@ -485,20 +502,15 @@ function renderProjTeam(p){
 }
 
 // ── PROJECT TIMELINE ──────────────────────────────────────────────────────────
-const TL_ST={
-  not_started:{label:'Not Started',color:'var(--orange)',tc:'#000'},
-  in_progress:{label:'In Progress',color:'var(--cyan)',tc:'#000'},
-  complete:{label:'Complete',color:'var(--lime)',tc:'#000'},
-  shipped:{label:'Shipped',color:'#a78bfa',tc:'#000'},
-  delayed:{label:'Delayed',color:'var(--red)',tc:'#fff'},
-};
+const STAGE_NAMES=['Briefing','Discovery','Proposals','Contracting','Activation Prep','Activation','Reporting'];
+const STAGE_COLORS={'Briefing':'var(--cyan)','Discovery':'#a78bfa','Proposals':'var(--yellow)','Contracting':'var(--lime)','Activation Prep':'var(--orange)','Activation':'var(--pink)','Reporting':'var(--green)'};
+const TL_ST={not_started:{label:'Not Started',badge:'badge-muted'},in_progress:{label:'In Progress',badge:'badge-cyan'},complete:{label:'Complete',badge:'badge-lime'},delayed:{label:'Delayed',badge:'badge-red'}};
 
 function renderProjTimeline(p){
   const tl=p.timeline||{};
   const stages=tl.stages||[];
   const today=new Date();
 
-  // Date range
   let minD,maxD;
   if(stages.length&&stages.some(s=>s.start_date)){
     const starts=stages.filter(s=>s.start_date).map(s=>new Date(s.start_date));
@@ -516,7 +528,6 @@ function renderProjTimeline(p){
   function pct(d){return Math.max(0,Math.min(100,(new Date(d)-minD)/totalMs*100)).toFixed(2);}
   function wPct(s,e){return Math.max(1.5,(new Date(e)-new Date(s))/totalMs*100).toFixed(2);}
 
-  // Month header segments
   const months=[];
   let cur=new Date(minD.getFullYear(),minD.getMonth(),1);
   while(cur<=maxD){
@@ -528,7 +539,7 @@ function renderProjTimeline(p){
   }
 
   const todayPct=pct(today);
-  const hasDelayed=stages.some(s=>s.status==='delayed'||(s.end_date&&new Date(s.end_date)<today&&s.status!=='complete'&&s.status!=='shipped'));
+  const hasDelayed=stages.some(s=>s.status==='delayed'||(s.end_date&&new Date(s.end_date)<today&&s.status!=='complete'));
   const ganttH=Math.max(60,stages.length*38+8);
 
   const gantt=`
@@ -541,32 +552,38 @@ function renderProjTimeline(p){
         <div style="position:absolute;top:0;bottom:0;left:${todayPct}%;width:1px;background:rgba(210,255,1,0.4);z-index:2"></div>
         ${stages.map((s,i)=>{
           if(!s.start_date||!s.end_date)return'';
-          const cfg=TL_ST[s.status]||TL_ST.not_started;
-          return`<div style="position:absolute;top:${i*38+7}px;height:24px;left:${pct(s.start_date)}%;width:${wPct(s.start_date,s.end_date)}%;background:${cfg.color};border-radius:12px;display:flex;align-items:center;padding:0 10px;z-index:1;min-width:60px" title="${s.name}: ${s.start_date} → ${s.end_date}">
-            <span style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.name}</span>
+          const col=STAGE_COLORS[s.name]||'var(--muted)';
+          return`<div style="position:absolute;top:${i*38+7}px;height:24px;left:${pct(s.start_date)}%;width:${wPct(s.start_date,s.end_date)}%;background:${col};border-radius:12px;display:flex;align-items:center;padding:0 10px;z-index:1;min-width:60px" title="${esc(s.name)}: ${s.start_date} → ${s.end_date}">
+            <span style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;color:#000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(s.name)}</span>
           </div>`;
         }).join('')}
       </div>
     </div>`;
 
-  const tracker=stages.length?`<table style="width:100%">
-    <thead><tr><th>Stage</th><th>Status</th><th>Due</th><th></th></tr></thead>
-    <tbody>${stages.map((s,i)=>{
-      const cfg=TL_ST[s.status]||TL_ST.not_started;
-      return`<tr>
-        <td style="font-weight:600;font-size:13px">${s.name}</td>
-        <td><select class="form-select" style="padding:3px 8px;font-size:11px;height:28px" onchange="updateStageStatus('${p.id}',${i},this.value)">
-          ${Object.entries(TL_ST).map(([k,v])=>`<option value="${k}"${s.status===k?' selected':''}>${v.label}</option>`).join('')}
-        </select></td>
-        <td style="font-size:12px;color:var(--muted);white-space:nowrap">${s.end_date?fDate(s.end_date):'—'}</td>
-        <td><button class="btn btn-danger btn-sm" style="padding:2px 8px;font-size:10px" onclick="removeStage('${p.id}',${i})">✕</button></td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table>`:`<div class="empty" style="padding:20px 0">No stages yet.</div>`;
+  const tracker=stages.length?`<div>${stages.map((s,i)=>{
+    const st=TL_ST[s.status||'not_started']||TL_ST.not_started;
+    const col=STAGE_COLORS[s.name]||'var(--muted)';
+    return`<div style="border-bottom:1px solid var(--border);padding:10px 0">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0"></div>
+        <div style="font-weight:600;font-size:13px;flex:1">${esc(s.name)}</div>
+        <select class="form-select" style="padding:2px 6px;font-size:11px;height:26px;width:auto" onchange="updateStageStatus('${p.id}',${i},this.value)">
+          ${Object.entries(TL_ST).map(([k,v])=>`<option value="${k}"${(s.status||'not_started')===k?' selected':''}>${v.label}</option>`).join('')}
+        </select>
+        <div style="font-size:11px;color:var(--muted);white-space:nowrap;min-width:70px;text-align:right">${s.end_date?fDate(s.end_date):'No date'}</div>
+        <button class="btn btn-danger btn-sm" style="padding:1px 7px;font-size:10px" onclick="removeStage('${p.id}',${i})">✕</button>
+      </div>
+      <details style="margin-left:18px">
+        <summary style="font-family:'Barlow Condensed';font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;list-style:none;user-select:none">▸ Updates${s.updates?` (${s.updates.split('\n').filter(Boolean).length})`:''}</summary>
+        <textarea class="form-textarea" style="min-height:70px;margin-top:8px;font-size:12px" id="stage-upd-${i}" placeholder="Add updates, notes, or blockers for this stage…">${esc(s.updates||'')}</textarea>
+        <button class="btn btn-ghost btn-sm" style="margin-top:6px" onclick="saveStageUpdate('${p.id}',${i})">Save Updates</button>
+      </details>
+    </div>`;
+  }).join('')}</div>`:`<div class="empty" style="padding:20px 0">No stages yet.</div>`;
 
   return`<div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div style="font-size:12px;color:var(--muted)">Lime line = today</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${STAGE_NAMES.map(n=>`<span style="display:inline-flex;align-items:center;gap:4px;font-family:'Barlow Condensed';font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted)"><span style="width:8px;height:8px;border-radius:50%;background:${STAGE_COLORS[n]};display:inline-block"></span>${n}</span>`).join('')}</div>
       <span class="badge ${hasDelayed?'badge-red':'badge-lime'}">${hasDelayed?'⚠ Behind Schedule':'✓ On Schedule'}</span>
     </div>
     <div style="display:grid;grid-template-columns:1fr 360px;gap:16px;margin-bottom:16px">
@@ -574,15 +591,19 @@ function renderProjTimeline(p){
         <div class="section-label" style="margin-bottom:12px">Gantt</div>
         ${stages.some(s=>s.start_date)?gantt:`<div class="empty">Add stages with dates to see the Gantt chart.</div>`}
       </div>
-      <div class="panel">
-        <div class="section-label" style="margin-bottom:12px">Stage Tracker</div>
+      <div class="panel" style="overflow-y:auto;max-height:500px">
+        <div class="section-label" style="margin-bottom:4px">Stage Tracker</div>
         ${tracker}
       </div>
     </div>
     <div class="panel">
       <div class="section-label" style="margin-bottom:12px">Add Stage</div>
       <div class="form-grid form-grid-2" style="margin-bottom:12px">
-        <div class="form-group"><label class="form-label">Stage Name</label><input class="form-input" id="tl-name" placeholder="e.g. Contracting"></div>
+        <div class="form-group"><label class="form-label">Stage</label>
+          <select class="form-select" id="tl-name">
+            ${STAGE_NAMES.map(n=>`<option value="${n}">${n}</option>`).join('')}
+          </select>
+        </div>
         <div class="form-group"><label class="form-label">Status</label>
           <select class="form-select" id="tl-status">${Object.entries(TL_ST).map(([k,v])=>`<option value="${k}">${v.label}</option>`).join('')}</select>
         </div>
@@ -595,9 +616,9 @@ function renderProjTimeline(p){
 }
 
 async function addStage(id){
-  const name=document.getElementById('tl-name').value.trim();if(!name)return;
+  const name=document.getElementById('tl-name').value;if(!name)return;
   const p=S.projects.find(x=>x.id===id);
-  const stages=[...(p.timeline?.stages||[]),{id:Math.random().toString(36).slice(2,10),name,status:document.getElementById('tl-status').value,start_date:document.getElementById('tl-start').value||null,end_date:document.getElementById('tl-end').value||null}];
+  const stages=[...(p.timeline?.stages||[]),{id:Math.random().toString(36).slice(2,10),name,status:document.getElementById('tl-status').value,start_date:document.getElementById('tl-start').value||null,end_date:document.getElementById('tl-end').value||null,updates:''}];
   const timeline={...(p.timeline||{}),stages};
   await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({timeline})});
   p.timeline=timeline;switchProjTab('timeline');
@@ -611,6 +632,15 @@ async function updateStageStatus(id,idx,status){
   p.timeline=timeline;switchProjTab('timeline');
 }
 
+async function saveStageUpdate(id,idx){
+  const val=document.getElementById(`stage-upd-${idx}`)?.value||'';
+  const p=S.projects.find(x=>x.id===id);
+  const stages=[...(p.timeline?.stages||[])];stages[idx]={...stages[idx],updates:val};
+  const timeline={...(p.timeline||{}),stages};
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({timeline})});
+  p.timeline=timeline;showToast('Updates saved');
+}
+
 async function removeStage(id,idx){
   if(!confirm('Remove this stage?'))return;
   const p=S.projects.find(x=>x.id===id);
@@ -620,6 +650,49 @@ async function removeStage(id,idx){
   p.timeline=timeline;switchProjTab('timeline');
 }
 
+// ── PROPOSAL TAB ──────────────────────────────────────────────────────────────
+function renderProjProposal(p){
+  const prop=p.proposal||{};
+  const accepted=prop.status==='accepted';
+  return`<div>
+    ${accepted?`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:14px 16px;background:rgba(210,255,1,0.08);border:1px solid rgba(210,255,1,0.2);border-radius:8px"><span class="badge badge-lime">✓ Accepted</span><div style="font-size:13px;color:rgba(240,240,240,0.7)">This proposal has been accepted as the basis for this project.</div></div>`:''}
+    <div class="form-grid form-grid-2" style="margin-bottom:14px">
+      <div class="form-group"><label class="form-label">Submitted By</label><input class="form-input" id="pr-by" value="${esc(prop.submitted_by||p.community_name||'')}"></div>
+      <div class="form-group"><label class="form-label">Date Submitted</label><input class="form-input" type="date" id="pr-date" value="${prop.date||''}"></div>
+      <div class="form-group"><label class="form-label">Budget Requested</label><input class="form-input" id="pr-budget" placeholder="e.g. $2,500" value="${esc(prop.budget_requested||'')}"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select class="form-select" id="pr-status">
+          <option value="pending"${(prop.status||'pending')==='pending'?' selected':''}>Pending</option>
+          <option value="accepted"${prop.status==='accepted'?' selected':''}>Accepted</option>
+          <option value="rejected"${prop.status==='rejected'?' selected':''}>Rejected</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:14px"><label class="form-label">Proposal / Pitch</label><textarea class="form-textarea" id="pr-pitch" style="min-height:140px">${esc(prop.pitch||'')}</textarea></div>
+    <div class="form-group" style="margin-bottom:14px"><label class="form-label">Deliverables Offered</label><textarea class="form-textarea" id="pr-del">${esc(prop.deliverables||'')}</textarea></div>
+    <div class="form-group" style="margin-bottom:14px"><label class="form-label">Attachment / Deck URL</label><input class="form-input" id="pr-url" placeholder="https://…" value="${esc(prop.attachment_url||'')}"></div>
+    <div class="form-group" style="margin-bottom:20px"><label class="form-label">Internal Notes</label><textarea class="form-textarea" id="pr-notes">${esc(prop.notes||'')}</textarea></div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <button class="btn btn-ghost" onclick="saveProposal('${p.id}')">Save</button>
+      ${!accepted?`<button class="btn btn-primary" onclick="acceptProposal('${p.id}')">✓ Accept Proposal</button>`:''}
+    </div>
+  </div>`;
+}
+
+async function saveProposal(id){
+  const proposal={submitted_by:document.getElementById('pr-by').value,date:document.getElementById('pr-date').value||null,budget_requested:document.getElementById('pr-budget').value,status:document.getElementById('pr-status').value,pitch:document.getElementById('pr-pitch').value,deliverables:document.getElementById('pr-del').value,attachment_url:document.getElementById('pr-url').value,notes:document.getElementById('pr-notes').value};
+  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({proposal})});
+  const p=S.projects.find(x=>x.id===id);if(p)p.proposal=proposal;showToast('Proposal saved');
+}
+
+async function acceptProposal(id){
+  document.getElementById('pr-status').value='accepted';
+  await saveProposal(id);
+  const p=S.projects.find(x=>x.id===id);if(p&&p.proposal)p.proposal.status='accepted';
+  switchProjTab('proposal');
+}
+
+// ── COMMUNITY LIST ────────────────────────────────────────────────────────────
 // ── COMMUNITY LIST ────────────────────────────────────────────────────────────
 function renderCommunities(){
   const igC=S.communities.filter(c=>c.instagram_token).length;

@@ -1722,7 +1722,7 @@ def admin_update_project(project_id):
         return jsonify({"error": "Unauthorized"}), 403
     data = request.json or {}
     allowed = ["title", "status", "budget", "start_date", "end_date",
-               "team", "media_items", "report", "recap", "notes", "milestones", "timeline"]
+               "team", "media_items", "report", "recap", "notes", "milestones", "timeline", "proposal"]
     fields, values = [], []
     for field in allowed:
         if field in data:
