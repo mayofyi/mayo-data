@@ -594,6 +594,9 @@ def add_case_study(community_id):
 
 @app.route("/api/community/<community_id>/notable-member/<int:idx>/verify", methods=["PUT"])
 def verify_notable_member(community_id, idx):
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
     verified = (request.json or {}).get("verified", True)
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -637,6 +640,9 @@ def verify_case_study(community_id, idx):
 
 @app.route("/api/community/<community_id>/suggest-archetype", methods=["POST"])
 def suggest_archetype(community_id):
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
     import json as _json
     import anthropic
 
@@ -751,6 +757,9 @@ def add_notable_member(community_id):
 
 @app.route("/api/community/<community_id>/notable-member/<int:idx>/tier", methods=["PUT"])
 def set_member_tier(community_id, idx):
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
     tier = (request.json or {}).get("follower_tier")
     if tier not in ("micro", "mid", "macro", None):
         return jsonify({"error": "Invalid tier"}), 400
@@ -779,6 +788,9 @@ def set_member_tier(community_id, idx):
 @app.route("/api/community/<community_id>/notable-member/<int:idx>/followers", methods=["PUT"])
 def set_member_followers(community_id, idx):
     """Save actual follower count (and optional ER) for a verified member. Recalculates NM."""
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
     data = request.json or {}
     ig_followers = data.get("ig_followers")
     ig_er = data.get("ig_er")
@@ -820,6 +832,9 @@ def set_member_followers(community_id, idx):
 
 @app.route("/api/community/<community_id>/fetch-press", methods=["POST"])
 def fetch_press(community_id):
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
     import xml.etree.ElementTree as ET
     import urllib.parse
     import json as _json
@@ -931,6 +946,9 @@ Respond with a JSON array, one entry per article in the same order. No preamble:
 
 @app.route("/api/community/<community_id>/press-mention/<int:idx>/confirm", methods=["PUT"])
 def confirm_press_mention(community_id, idx):
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
     confirmed = (request.json or {}).get("confirmed")  # True, False, or None (reset to pending)
     with get_db() as conn:
         with conn.cursor() as cur:
@@ -956,6 +974,9 @@ def confirm_press_mention(community_id, idx):
 
 @app.route("/api/community/<community_id>/analyse-miq", methods=["POST"])
 def analyse_miq(community_id):
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
     import json as _json
     import anthropic
 
@@ -1028,6 +1049,9 @@ Respond with JSON only. No preamble:
 
 @app.route("/api/community/<community_id>/apply-cis-stamp", methods=["POST"])
 def apply_cis_stamp(community_id):
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
     data = request.json or {}
     stamped_score = data.get("stamped_score")
     stamped_by    = data.get("stamped_by", "admin")
@@ -1065,6 +1089,9 @@ def apply_cis_stamp(community_id):
 
 @app.route("/api/community/<community_id>/recalculate", methods=["POST"])
 def recalculate_metrics(community_id):
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
     with get_db() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM communities WHERE id = %s", (community_id,))
