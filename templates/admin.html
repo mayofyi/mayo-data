@@ -411,7 +411,7 @@ function renderProjOverview(p){
       <div class="section-label">Project Details</div>
       <div class="detail-row"><div class="detail-key">Community</div><div class="detail-val">${p.community_id?navBtn(esc(p.community_name||'View'),`navigate('community-detail',{selectedCommunity:'${p.community_id}',communityTab:'overview'})`):'—'}</div></div>
       <div class="detail-row"><div class="detail-key">Brand</div><div class="detail-val">${p.brand_id?navBtn(esc(p.brand_name||'View'),`navigate('brand-detail',{selectedBrand:'${p.brand_id}'})`): '—'}</div></div>
-      <div class="detail-row"><div class="detail-key">Brief</div><div class="detail-val">${p.brief_id?navBtn(esc(p.brief_title||'View Brief'),`navigate('brief-detail',{selectedBrief:'${p.brief_id'})`): '—'}</div></div>
+      <div class="detail-row"><div class="detail-key">Brief</div><div class="detail-val">${p.brief_id?navBtn(esc(p.brief_title||'View Brief'),`navigate('brief-detail',{selectedBrief:'${p.brief_id}'})`): '—'}</div></div>
       ${[['Type',p.type||'—'],['Budget',fCur(p.budget)],['Start',fDate(p.start_date)],['End',fDate(p.end_date)],['Created',fDate(p.created_at)]].map(([k,v])=>`<div class="detail-row"><div class="detail-key">${k}</div><div class="detail-val">${v}</div></div>`).join('')}
       ${casePublished?`<div class="detail-row"><div class="detail-key">Case Study</div><div class="detail-val"><a href="/profile/${p.community_id}" target="_blank" style="color:var(--lime);font-size:13px;text-decoration:underline">★ View Published ↗</a></div></div>`:''}
     </div>

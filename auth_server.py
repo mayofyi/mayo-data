@@ -323,6 +323,7 @@ def init_db():
                 """)
             # Brands table migrations
             cur.execute("ALTER TABLE brands ADD COLUMN IF NOT EXISTS verified BOOLEAN DEFAULT FALSE")
+            cur.execute("ALTER TABLE brands ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW()")
             for col, typedef in [
                 ("leader_name", "TEXT"),
                 ("leader_role", "TEXT"),
@@ -344,6 +345,10 @@ def init_db():
                 ("recap", "JSONB DEFAULT '{}'"),
                 ("title", "TEXT"),
                 ("notes", "TEXT"),
+                ("proposal", "JSONB DEFAULT '{}'"),
+                ("timeline", "JSONB DEFAULT '[]'"),
+                ("milestones", "JSONB DEFAULT '[]'"),
+                ("team", "JSONB DEFAULT '[]'"),
             ]:
                 cur.execute(f"ALTER TABLE projects ADD COLUMN IF NOT EXISTS {col} {typedef}")
         conn.commit()
@@ -474,7 +479,8 @@ def update_community(community_id):
     allowed = ["name", "tagline", "location", "description", "tags",
                "active_members", "website", "cover_option", "substack_url",
                "leader_name", "email", "partnership_preferences", "capabilities",
-               "archetype", "archetype_source", "archetype_reasoning", "archetype_confidence"]
+               "archetype", "archetype_source", "archetype_reasoning", "archetype_confidence",
+               "notable_members"]
     fields, values = [], []
     for field in allowed:
         if field in data:
