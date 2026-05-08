@@ -1784,6 +1784,271 @@ def public_profile(community_id):
     return render_template("profile.html", community_id=community_id)
 
 
+@app.route("/api/admin/projects/<project_id>/pull-hashtag", methods=["POST"])
+def pull_hashtag_data(project_id):
+    """Pull Instagram hashtag data, calculate metrics, run Claude sentiment."""
+    import datetime as _dt
+    import anthropic as _anthropic
+
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    data = request.json or {}
+    hashtag = (data.get("hashtag", "") or "").lstrip("#").strip()
+    if not hashtag:
+        return jsonify({"error": "hashtag required"}), 400
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT p.report, c.instagram_token, c.instagram_user_id AS ig_user_id
+                FROM projects p
+                LEFT JOIN communities c ON p.community_id = c.id
+                WHERE p.id = %s
+            """, (project_id,))
+            row = cur.fetchone()
+
+    if not row:
+        return jsonify({"error": "Project not found"}), 404
+
+    ig_token = row.get("instagram_token")
+    ig_user_id = row.get("ig_user_id")
+    existing_report = dict(row.get("report") or {})
+
+    posts = []
+    pull_method = "api"
+    error_note = None
+
+    if ig_token and ig_user_id:
+        try:
+            hs_resp = requests.get(
+                "https://graph.instagram.com/v21.0/ig_hashtag_search",
+                params={"user_id": ig_user_id, "q": hashtag, "access_token": ig_token},
+                timeout=15,
+            )
+            if hs_resp.ok and hs_resp.json().get("data"):
+                hashtag_id = hs_resp.json()["data"][0]["id"]
+                media_resp = requests.get(
+                    f"https://graph.instagram.com/v21.0/{hashtag_id}/recent_media",
+                    params={
+                        "user_id": ig_user_id,
+                        "access_token": ig_token,
+                        "fields": "id,caption,like_count,comments_count,timestamp,media_type,permalink",
+                    },
+                    timeout=15,
+                )
+                if media_resp.ok:
+                    posts = media_resp.json().get("data", [])
+                else:
+                    error_note = f"recent_media failed: {media_resp.status_code} — {media_resp.text[:120]}"
+                    pull_method = "failed"
+            else:
+                error_note = f"hashtag search failed: {hs_resp.status_code} — {hs_resp.text[:120]}"
+                pull_method = "failed"
+        except Exception as e:
+            error_note = str(e)
+            pull_method = "failed"
+    else:
+        error_note = "No Instagram token connected for this community"
+        pull_method = "no_token"
+
+    total_likes = sum(p.get("like_count", 0) for p in posts)
+    total_comments = sum(p.get("comments_count", 0) for p in posts)
+    total_engagement = total_likes + total_comments
+    post_count = len(posts)
+
+    content_mix = {}
+    for p in posts:
+        mt = p.get("media_type", "IMAGE")
+        content_mix[mt] = content_mix.get(mt, 0) + 1
+
+    velocity_by_day = {}
+    for p in posts:
+        ts = p.get("timestamp", "")
+        if ts:
+            day = ts[:10]
+            velocity_by_day[day] = velocity_by_day.get(day, 0) + 1
+
+    estimated_impressions = post_count * 500
+    emv = round(estimated_impressions * 0.030, 2)
+
+    sentiment = None
+    captions = [p.get("caption", "") for p in posts if p.get("caption")]
+    if captions and os.getenv("ANTHROPIC_API_KEY"):
+        try:
+            client = _anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+            caption_text = "\n---\n".join(captions[:50])
+            message = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=500,
+                messages=[{
+                    "role": "user",
+                    "content": (
+                        "Analyse the sentiment of these Instagram captions from a brand activation campaign. "
+                        "Return JSON only, no markdown:\n"
+                        "{\"positive\": <0-100>, \"neutral\": <0-100>, \"negative\": <0-100>, "
+                        "\"summary\": \"<2-3 sentence summary>\", \"themes\": [\"t1\",\"t2\",\"t3\"]}\n\n"
+                        f"Captions:\n{caption_text}"
+                    ),
+                }],
+            )
+            sentiment = parse_claude_json(message.content[0].text)
+        except Exception as e:
+            if error_note:
+                error_note += f" | Sentiment error: {e}"
+            else:
+                error_note = f"Sentiment error: {e}"
+
+    existing_report.update({
+        "hashtag": hashtag,
+        "pull_timestamp": _dt.datetime.utcnow().isoformat() + "Z",
+        "pull_method": pull_method,
+        "error_note": error_note,
+        "post_count": post_count,
+        "total_likes": total_likes,
+        "total_comments": total_comments,
+        "total_engagement": total_engagement,
+        "content_mix": content_mix,
+        "velocity_by_day": velocity_by_day,
+        "estimated_impressions": estimated_impressions,
+        "emv": emv,
+        "posts_sample": posts[:20],
+    })
+    if sentiment is not None:
+        existing_report["sentiment"] = sentiment
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE projects SET report = %s WHERE id = %s",
+                (_json_stdlib.dumps(existing_report), project_id),
+            )
+        conn.commit()
+
+    return jsonify({"ok": True, "report": existing_report, "error_note": error_note})
+
+
+@app.route("/api/admin/projects/<project_id>/analyse-sentiment", methods=["POST"])
+def analyse_sentiment(project_id):
+    """Run Claude sentiment analysis on manually-provided captions."""
+    import anthropic as _anthropic
+
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    data = request.json or {}
+    captions = data.get("captions", [])
+    if not captions:
+        return jsonify({"error": "captions array required"}), 400
+
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        return jsonify({"error": "ANTHROPIC_API_KEY not set"}), 500
+
+    try:
+        client = _anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+        caption_text = "\n---\n".join(captions[:100])
+        message = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=500,
+            messages=[{
+                "role": "user",
+                "content": (
+                    "Analyse the sentiment of these Instagram captions from a brand activation campaign. "
+                    "Return JSON only, no markdown:\n"
+                    "{\"positive\": <0-100>, \"neutral\": <0-100>, \"negative\": <0-100>, "
+                    "\"summary\": \"<2-3 sentence summary>\", \"themes\": [\"t1\",\"t2\",\"t3\"]}\n\n"
+                    f"Captions:\n{caption_text}"
+                ),
+            }],
+        )
+        sentiment = parse_claude_json(message.content[0].text)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT report FROM projects WHERE id = %s", (project_id,))
+            row = cur.fetchone()
+            existing_report = dict(row["report"] or {}) if row else {}
+            existing_report["sentiment"] = sentiment
+            existing_report["sentiment_source"] = "manual"
+            cur.execute(
+                "UPDATE projects SET report = %s WHERE id = %s",
+                (_json_stdlib.dumps(existing_report), project_id),
+            )
+        conn.commit()
+
+    return jsonify({"ok": True, "sentiment": sentiment})
+
+
+@app.route("/api/admin/projects/<project_id>/save-report", methods=["POST"])
+def save_report_fields(project_id):
+    """Save manual metric overrides, notable posters, publish state to project report."""
+    token = request.args.get("token", "") or request.headers.get("X-Admin-Token", "")
+    if token != ADMIN_TOKEN:
+        return jsonify({"error": "Unauthorized"}), 403
+
+    data = request.json or {}
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT report FROM projects WHERE id = %s", (project_id,))
+            row = cur.fetchone()
+            existing_report = dict(row["report"] or {}) if row else {}
+            for key in ["manual_metrics", "notable_posters", "sentiment", "published",
+                        "published_at", "hashtag", "emv_cpm_override"]:
+                if key in data:
+                    existing_report[key] = data[key]
+            cur.execute(
+                "UPDATE projects SET report = %s WHERE id = %s",
+                (_json_stdlib.dumps(existing_report), project_id),
+            )
+        conn.commit()
+
+    return jsonify({"ok": True, "report": existing_report})
+
+
+@app.route("/report/<project_id>")
+def brand_report(project_id):
+    """Brand-facing campaign report page."""
+    with get_db() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT p.*,
+                    c.name AS community_name, c.tagline AS community_tagline,
+                    c.location AS community_location, c.active_members,
+                    c.tags AS community_tags, c.description AS community_description,
+                    b.name AS brand_name, b.color AS brand_color, b.initial AS brand_initial,
+                    b.tagline AS brand_tagline,
+                    br.title AS brief_title, br.campaign_goal, br.partnership_type,
+                    br.tags AS brief_tags
+                FROM projects p
+                LEFT JOIN communities c ON p.community_id = c.id
+                LEFT JOIN brands b ON p.brand_id = b.id
+                LEFT JOIN briefs br ON p.brief_id = br.id
+                WHERE p.id = %s
+            """, (project_id,))
+            row = cur.fetchone()
+
+    if not row:
+        return "<html><body style='background:#080808;color:#fff;font-family:sans-serif;padding:40px'><h2>Report not found.</h2></body></html>", 404
+
+    d = dict(row)
+    for k, v in d.items():
+        if hasattr(v, "isoformat"):
+            d[k] = v.isoformat()
+
+    report = d.get("report") or {}
+    recap = d.get("recap") or {}
+
+    preview = request.args.get("preview") == ADMIN_TOKEN
+    if not report.get("published") and not preview:
+        return "<html><body style='background:#080808;color:#fff;font-family:sans-serif;padding:40px'><h2>This report isn't available yet.</h2></body></html>", 404
+
+    return render_template("report.html", project=d, report=report, recap=recap)
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)

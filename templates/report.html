@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ project.title }} — Campaign Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@400;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --lime: #d2ff01;
+    --cyan: #b1ecf0;
+    --pink: #ff6ef2;
+    --orange: #ffab40;
+    --green: #b3ff9e;
+    --muted: #666;
+    --surface: #080808;
+    --surface2: #111;
+    --surface3: #1a1a1a;
+    --border: #222;
+    --border2: #2a2a2a;
+  }
+  body { background: var(--surface); color: #fff; font-family: 'Barlow', sans-serif; font-size: 14px; line-height: 1.5; }
+  .page { max-width: 900px; margin: 0 auto; padding: 48px 32px; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 48px; padding-bottom: 32px; border-bottom: 1px solid var(--border2); }
+  .logo { font-family: 'Bebas Neue'; font-size: 28px; color: var(--lime); letter-spacing: 0.05em; }
+  .brand-pill { display: flex; align-items: center; gap: 10px; }
+  .brand-dot { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Bebas Neue'; font-size: 16px; color: #000; }
+  .section { margin-bottom: 40px; }
+  .section-title { font-family: 'Barlow Condensed'; font-size: 11px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 16px; }
+  .campaign-title { font-family: 'Bebas Neue'; font-size: 48px; color: #fff; line-height: 1; margin-bottom: 8px; }
+  .campaign-meta { display: flex; gap: 20px; flex-wrap: wrap; font-size: 13px; color: var(--muted); align-items: center; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; }
+  .metric-card { background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; padding: 20px 18px; }
+  .metric-label { font-family: 'Barlow Condensed'; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .metric-value { font-family: 'Bebas Neue'; font-size: 38px; line-height: 1; color: var(--lime); }
+  .metric-value.cyan { color: var(--cyan); }
+  .metric-value.green { color: var(--green); }
+  .metric-value.white { color: #fff; }
+  .metric-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .panel { background: var(--surface2); border: 1px solid var(--border2); border-radius: 12px; padding: 20px; }
+  .sentiment-bar { margin-bottom: 10px; }
+  .sentiment-bar-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  .bar-track { height: 8px; background: var(--border2); border-radius: 4px; }
+  .bar-fill { height: 8px; border-radius: 4px; }
+  .notable-post { border: 1px solid var(--border2); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+  .notable-meta { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .notable-caption { font-size: 13px; line-height: 1.5; margin-bottom: 8px; color: #eee; }
+  .notable-stats { display: flex; gap: 16px; font-size: 11px; color: var(--muted); }
+  .quote-block { border-left: 3px solid var(--lime); padding: 12px 16px; margin-bottom: 12px; }
+  .quote-text { font-size: 15px; font-style: italic; color: #eee; margin-bottom: 4px; }
+  .quote-author { font-size: 12px; color: var(--muted); }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .mix-bar { margin-bottom: 8px; }
+  .mix-bar-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; }
+  .footer { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 16px; }
+  .stamp { display: inline-flex; align-items: center; gap: 6px; background: rgba(210,255,1,0.1); border: 1px solid rgba(210,255,1,0.3); border-radius: 20px; padding: 4px 12px; font-size: 11px; color: var(--lime); font-family: 'Barlow Condensed'; font-weight: 700; letter-spacing: 0.05em; }
+  @media print {
+    body { background: #fff !important; color: #000 !important; }
+    :root { --surface: #fff; --surface2: #f5f5f5; --surface3: #eee; --border: #ddd; --border2: #ccc; --muted: #555; }
+    .metric-card, .panel, .notable-post { background: #f5f5f5 !important; border-color: #ddd !important; }
+    .metric-value { color: #1a1a1a !important; }
+    .logo { color: #1a1a1a !important; }
+    .stamp { background: #eee !important; border-color: #ccc !important; color: #333 !important; }
+    a { color: inherit !important; text-decoration: none !important; }
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">mayo</div>
+    <div class="brand-pill">
+      {% if project.brand_color %}
+      <div class="brand-dot" style="background: {{ project.brand_color }}">{{ (project.brand_initial or project.brand_name or 'B')[0] }}</div>
+      {% endif %}
+      <div>
+        <div style="font-weight:500">{{ project.brand_name or '' }}</div>
+        {% if project.brand_tagline %}<div style="font-size:11px;color:var(--muted)">{{ project.brand_tagline }}</div>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Campaign Title -->
+  <div class="section">
+    <div class="section-title">Campaign Report</div>
+    <div class="campaign-title">{{ project.title }}</div>
+    <div class="campaign-meta">
+      {% if project.partnership_type or project.type %}<span>{{ project.partnership_type or project.type }}</span>{% endif %}
+      {% if project.start_date %}<span>{{ project.start_date[:10] }}{% if project.end_date %} → {{ project.end_date[:10] }}{% endif %}</span>{% endif %}
+      {% if project.budget %}<span>Budget: ${{ "{:,}".format(project.budget|int) }}</span>{% endif %}
+      {% if project.community_name %}<span>with {{ project.community_name }}</span>{% endif %}
+      <span class="stamp">&#9733; Mayo Report</span>
+    </div>
+  </div>
+
+  <!-- Core Metrics -->
+  {% set mm = report.get('manual_metrics') or {} %}
+  {% set impressions = (mm.get('impressions') or report.get('estimated_impressions') or 0)|int %}
+  {% set post_count = (mm.get('post_count') or report.get('post_count') or 0)|int %}
+  {% set total_eng = (report.get('total_engagement') or 0)|int %}
+  {% set cpm = (mm.get('cpm') or report.get('emv_cpm_override') or 30)|int %}
+  {% set emv = (mm.get('emv') or (impressions * cpm / 1000))|round|int %}
+  {% set attendance = (mm.get('attendance') or 0)|int %}
+
+  {% if post_count or impressions or emv or attendance or total_eng or project.active_members %}
+  <div class="section">
+    <div class="section-title">Campaign Metrics</div>
+    <div class="metrics-grid">
+      {% if post_count %}
+      <div class="metric-card">
+        <div class="metric-label">Posts</div>
+        <div class="metric-value">{{ "{:,}".format(post_count) }}</div>
+        <div class="metric-sub">{% if report.get('hashtag') %}#{{ report.hashtag }}{% endif %}</div>
+      </div>
+      {% endif %}
+      {% if impressions %}
+      <div class="metric-card">
+        <div class="metric-label">Est. Impressions</div>
+        <div class="metric-value cyan">{{ "{:,}".format(impressions) }}</div>
+        <div class="metric-sub">${{ cpm }} CPM benchmark</div>
+      </div>
+      {% endif %}
+      {% if emv %}
+      <div class="metric-card">
+        <div class="metric-label">Est. Media Value</div>
+        <div class="metric-value" style="color:var(--lime)">${{ "{:,}".format(emv) }}</div>
+        <div class="metric-sub">Impressions × CPM</div>
+      </div>
+      {% endif %}
+      {% if attendance %}
+      <div class="metric-card">
+        <div class="metric-label">Attendance</div>
+        <div class="metric-value green">{{ "{:,}".format(attendance) }}</div>
+        <div class="metric-sub">Verified in-person</div>
+      </div>
+      {% endif %}
+      {% if total_eng %}
+      <div class="metric-card">
+        <div class="metric-label">Total Engagement</div>
+        <div class="metric-value white">{{ "{:,}".format(total_eng) }}</div>
+        <div class="metric-sub">Likes + comments</div>
+      </div>
+      {% endif %}
+      {% if project.active_members %}
+      <div class="metric-card">
+        <div class="metric-label">Community Size</div>
+        <div class="metric-value white">{{ "{:,}".format(project.active_members|int) }}</div>
+        <div class="metric-sub">Active members</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Velocity + Content Mix -->
+  {% set vel = report.get('velocity_by_day') or {} %}
+  {% set mix = report.get('content_mix') or {} %}
+  {% if vel or mix %}
+  <div class="section two-col">
+    {% if vel %}
+    {% set vel_days = vel.keys()|list|sort %}
+    {% set vel_max = [vel.values()|max, 1]|max %}
+    <div>
+      <div class="section-title">Post Velocity</div>
+      <div class="panel">
+        <svg width="100%" height="80" viewBox="0 0 {{ [vel_days|length * 28, 100]|max }} 80" preserveAspectRatio="none" style="width:100%;display:block">
+          {% for day in vel_days %}
+          {% set i = loop.index0 %}
+          {% set h = ((vel[day] / vel_max) * 65)|round|int %}
+          <rect x="{{ i * 28 + 2 }}" y="{{ 70 - h }}" width="24" height="{{ h }}" rx="3" fill="#d2ff01" opacity="0.7"/>
+          <text x="{{ i * 28 + 14 }}" y="78" text-anchor="middle" font-size="7" fill="#666">{{ day[5:] }}</text>
+          {% endfor %}
+        </svg>
+      </div>
+    </div>
+    {% endif %}
+    {% if mix %}
+    {% set mix_total = [mix.values()|sum, 1]|max %}
+    <div>
+      <div class="section-title">Content Mix</div>
+      <div class="panel">
+        {% set mix_colors = {'IMAGE': '#d2ff01', 'VIDEO': '#b1ecf0', 'CAROUSEL_ALBUM': '#ff6ef2'} %}
+        {% set mix_labels = {'IMAGE': 'Photos', 'VIDEO': 'Videos', 'CAROUSEL_ALBUM': 'Carousels'} %}
+        {% for k, v in mix.items() %}
+        <div class="mix-bar">
+          <div class="mix-bar-label"><span>{{ mix_labels.get(k, k) }}</span><span>{{ v }} ({{ ((v / mix_total) * 100)|round|int }}%)</span></div>
+          <div class="bar-track"><div class="bar-fill" style="background:{{ mix_colors.get(k, '#666') }};width:{{ ((v / mix_total) * 100)|round|int }}%"></div></div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Sentiment -->
+  {% set sent = report.get('sentiment') or {} %}
+  {% if sent and sent.get('positive') is not none %}
+  <div class="section">
+    <div class="section-title">Campaign Sentiment</div>
+    <div class="panel">
+      <div class="sentiment-bar">
+        <div class="sentiment-bar-label"><span style="color:var(--green)">Positive</span><span>{{ sent.positive }}%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="background:var(--green);width:{{ sent.positive }}%"></div></div>
+      </div>
+      <div class="sentiment-bar">
+        <div class="sentiment-bar-label"><span style="color:var(--muted)">Neutral</span><span>{{ sent.neutral }}%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="background:var(--muted);width:{{ sent.neutral }}%"></div></div>
+      </div>
+      <div class="sentiment-bar" style="margin-bottom:16px">
+        <div class="sentiment-bar-label"><span style="color:var(--pink)">Negative</span><span>{{ sent.negative }}%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="background:var(--pink);width:{{ sent.negative }}%"></div></div>
+      </div>
+      {% if sent.themes %}
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+        {% for theme in sent.themes %}<span style="background:var(--border2);border-radius:12px;padding:2px 10px;font-size:11px">{{ theme }}</span>{% endfor %}
+      </div>
+      {% endif %}
+      {% if sent.summary %}<div style="font-size:13px;color:#ccc;line-height:1.6">{{ sent.summary }}</div>{% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Notable Posts -->
+  {% set notable = report.get('notable_posters') or [] %}
+  {% if notable %}
+  <div class="section">
+    <div class="section-title">Notable Posts</div>
+    {% for post in notable %}
+    <div class="notable-post">
+      <div class="notable-meta">{{ post.get('media_type', 'POST') }} · {{ (post.get('timestamp') or '')[:10] }}</div>
+      {% if post.get('caption') %}<div class="notable-caption">{{ post.caption[:300] }}{% if post.caption|length > 300 %}…{% endif %}</div>{% endif %}
+      <div class="notable-stats">
+        <span>&#9825; {{ (post.get('like_count') or 0)|int }}</span>
+        <span>&#128172; {{ (post.get('comments_count') or 0)|int }}</span>
+        {% if post.get('permalink') %}<a href="{{ post.permalink }}" style="color:var(--cyan)">View on Instagram &#8594;</a>{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Quotes -->
+  {% if recap %}
+  {% set quotes = recap.get('quotes') or [] %}
+  {% set live_quotes = [] %}
+  {% for q in quotes %}{% if q.get('text') %}{% set _ = live_quotes.append(q) %}{% endif %}{% endfor %}
+  {% if live_quotes %}
+  <div class="section">
+    <div class="section-title">Community Voice</div>
+    {% for q in live_quotes %}
+    <div class="quote-block">
+      <div class="quote-text">"{{ q.text }}"</div>
+      {% if q.author %}<div class="quote-author">— {{ q.author }}</div>{% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endif %}
+
+  <!-- Community -->
+  <div class="section">
+    <div class="section-title">About the Community</div>
+    <div class="panel">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;flex-wrap:wrap;gap:12px">
+        <div>
+          <div style="font-size:18px;font-weight:600;margin-bottom:4px">{{ project.community_name or '' }}</div>
+          {% if project.community_tagline %}<div style="font-size:13px;color:var(--muted)">{{ project.community_tagline }}</div>{% endif %}
+        </div>
+        {% if project.community_location %}<div style="font-size:12px;color:var(--muted)">{{ project.community_location }}</div>{% endif %}
+      </div>
+      {% if project.community_description %}<div style="font-size:13px;color:#ccc;line-height:1.6;margin-bottom:12px">{{ project.community_description }}</div>{% endif %}
+      {% if project.community_tags %}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        {% for tag in project.community_tags %}<span style="background:var(--border2);border-radius:12px;padding:2px 10px;font-size:11px">{{ tag }}</span>{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div>
+      <div style="font-family:'Bebas Neue';font-size:16px;color:var(--lime);margin-bottom:4px">mayo</div>
+      <div>Community Partnership Platform</div>
+      {% if report.get('published_at') %}<div>{{ report.published_at[:10] }}</div>{% endif %}
+    </div>
+    <div style="max-width:400px;font-size:11px;color:var(--muted);line-height:1.6">
+      <strong>Methodology:</strong> Impressions estimated at 500 per post (flat benchmark). EMV = Impressions × ${{ cpm }} CPM. Post data via Instagram hashtag search API. Sentiment via AI analysis of post captions. All figures are estimates and should be considered directional.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

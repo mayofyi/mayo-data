@@ -450,27 +450,82 @@ function renderProjMedia(p){
 }
 
 function renderProjMeasure(p){
-  const r=p.report||{};const emv=r.impressions&&r.cpm_benchmark?Math.round(r.impressions*(r.cpm_benchmark||25)/1000):0;
+  const r=p.report||{};
+  const mm=r.manual_metrics||{};
+  const sent=r.sentiment||{};
+  const posts=r.posts_sample||[];
+  const notable=r.notable_posters||[];
+  const notableIds=new Set(notable.map(x=>x.id));
+  const cpm=mm.cpm||r.emv_cpm_override||30;
+  const impressions=mm.impressions!=null?mm.impressions:r.estimated_impressions||0;
+  const emv=mm.emv!=null?mm.emv:Math.round(impressions*(cpm/1000));
+  const postCount=mm.post_count!=null?mm.post_count:r.post_count||0;
+  const totalEng=r.total_engagement||0;
+  const hashtag=r.hashtag||(p.tags&&p.tags[0]?p.tags[0]:'');
+  const pullTs=r.pull_timestamp?new Date(r.pull_timestamp).toLocaleString():'Never';
+  const pullOk=r.pull_method==='api';
+  const pullFailed=r.pull_method==='failed'||r.pull_method==='no_token';
+  const mix=r.content_mix||{};
+  const vel=r.velocity_by_day||{};
+  const velDays=Object.keys(vel).sort();
+  const velMax=velDays.length?Math.max(...velDays.map(d=>vel[d])):1;
+  const velSvg=velDays.length?`<svg width="100%" height="60" viewBox="0 0 ${velDays.length*28||100} 60" preserveAspectRatio="none">${velDays.map((d,i)=>{const h=Math.round((vel[d]/velMax)*50);return`<rect x="${i*28+2}" y="${55-h}" width="24" height="${h}" rx="3" fill="var(--lime)" opacity="0.7"/><text x="${i*28+14}" y="58" text-anchor="middle" font-size="8" fill="var(--muted)">${d.slice(5)}</text>`;}).join('')}</svg>`:'<div style="color:var(--muted);font-size:12px">No velocity data</div>';
+  const mixTotal=Object.values(mix).reduce((a,b)=>a+b,0)||1;
+  const mixColors={IMAGE:'var(--lime)',VIDEO:'var(--cyan)',CAROUSEL_ALBUM:'var(--pink)'};
+  const mixLabels={IMAGE:'Photos',VIDEO:'Videos',CAROUSEL_ALBUM:'Carousels'};
+  const mixBars=Object.entries(mix).map(([k,v])=>`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px"><span>${mixLabels[k]||k}</span><span>${v} (${Math.round(v/mixTotal*100)}%)</span></div><div style="height:6px;background:var(--border2);border-radius:3px"><div style="height:6px;border-radius:3px;background:${mixColors[k]||'var(--muted)'};width:${Math.round(v/mixTotal*100)}%"></div></div></div>`).join('');
+  const sentBars=sent.positive!=null?`<div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span style="color:var(--green)">Positive</span><span>${sent.positive}%</span></div><div style="height:8px;background:var(--border2);border-radius:4px"><div style="height:8px;border-radius:4px;background:var(--green);width:${sent.positive}%"></div></div></div><div style="margin-bottom:6px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span style="color:var(--muted)">Neutral</span><span>${sent.neutral}%</span></div><div style="height:8px;background:var(--border2);border-radius:4px"><div style="height:8px;border-radius:4px;background:var(--muted);width:${sent.neutral}%"></div></div></div><div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px"><span style="color:var(--pink)">Negative</span><span>${sent.negative}%</span></div><div style="height:8px;background:var(--border2);border-radius:4px"><div style="height:8px;border-radius:4px;background:var(--pink);width:${sent.negative}%"></div></div></div>${sent.themes&&sent.themes.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">${sent.themes.map(t=>`<span style="background:var(--border2);border-radius:12px;padding:2px 10px;font-size:11px">${t}</span>`).join('')}</div>`:''}<div style="font-size:12px;color:var(--muted);line-height:1.5">${sent.summary||''}</div>`:'<div style="color:var(--muted);font-size:12px">No sentiment data yet. Pull hashtag data or paste captions below.</div>';
+  const postCards=posts.map((post,i)=>{const isN=notableIds.has(post.id);return`<div style="background:var(--border);border-radius:8px;padding:10px;margin-bottom:8px;display:flex;gap:10px;align-items:flex-start"><div style="flex:1;min-width:0"><div style="font-size:11px;color:var(--muted);margin-bottom:3px">${post.media_type||'POST'} · ${post.timestamp?post.timestamp.slice(0,10):''}</div><div style="font-size:12px;line-height:1.4;margin-bottom:5px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${(post.caption||'').replace(/</g,'&lt;')}</div><div style="display:flex;gap:12px;font-size:11px;color:var(--muted)"><span>&#9825; ${post.like_count||0}</span><span>&#128172; ${post.comments_count||0}</span><a href="${post.permalink||'#'}" target="_blank" style="color:var(--cyan)">View</a></div></div><button onclick="toggleNotable('${p.id}',${i})" style="flex-shrink:0;padding:4px 10px;border-radius:6px;border:1px solid ${isN?'var(--lime)':'var(--border2)'};background:${isN?'rgba(210,255,1,0.1)':'transparent'};color:${isN?'var(--lime)':'var(--muted)'};font-size:11px;cursor:pointer">${isN?'&#9733; Notable':'+ Notable'}</button></div>`;}).join('');
   return`<div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="section-label" style="margin-bottom:12px">Hashtag Data Pull</div>
+      <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:10px">
+        <div class="form-group" style="flex:1;margin:0"><label class="form-label">Campaign Hashtag</label><input class="form-input" id="r-tag" value="${hashtag}" placeholder="#campaignname"></div>
+        <button class="btn btn-primary" onclick="pullHashtag('${p.id}')" id="pull-btn">Pull Live Data</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted)">Last pull: <span style="color:${pullOk?'var(--green)':pullFailed?'var(--pink)':'var(--muted)'}">${pullTs}</span>${r.pull_method?' ('+r.pull_method+')':''}</div>
+      ${r.error_note?`<div style="font-size:11px;color:var(--pink);margin-top:4px">${r.error_note}</div>`:''}
+    </div>
+    <div class="section-label" style="margin-bottom:10px">Core Metrics <span style="font-weight:400;color:var(--muted)">(pulled values; override if needed)</span></div>
     <div class="form-grid form-grid-2" style="margin-bottom:16px">
-      <div class="form-group"><label class="form-label">Attendance</label><input class="form-input" type="number" id="r-att" value="${r.attendance||''}"></div>
-      <div class="form-group"><label class="form-label">Post Count</label><input class="form-input" type="number" id="r-posts" value="${r.post_count||''}"></div>
-      <div class="form-group"><label class="form-label">Impressions</label><input class="form-input" type="number" id="r-imp" value="${r.impressions||''}" oninput="calcEMV()"></div>
-      <div class="form-group"><label class="form-label">CPM Benchmark ($)</label><input class="form-input" type="number" id="r-cpm" value="${r.cpm_benchmark||25}" oninput="calcEMV()"></div>
+      <div class="form-group"><label class="form-label">Post Count</label><input class="form-input" type="number" id="r-posts" value="${postCount}" placeholder="${r.post_count||'—'}"></div>
+      <div class="form-group"><label class="form-label">Attendance (events)</label><input class="form-input" type="number" id="r-att" value="${mm.attendance||''}"></div>
+      <div class="form-group"><label class="form-label">Impressions (estimated)</label><input class="form-input" type="number" id="r-imp" value="${impressions||''}" oninput="calcEMVMeasure()" placeholder="${r.estimated_impressions||''}"></div>
+      <div class="form-group"><label class="form-label">CPM Benchmark ($)</label><input class="form-input" type="number" id="r-cpm" value="${cpm}" oninput="calcEMVMeasure()"></div>
     </div>
     <div class="panel" style="margin-bottom:16px;background:rgba(210,255,1,0.05);border-color:rgba(210,255,1,0.2)">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><div class="section-label" style="margin-bottom:2px">Estimated Media Value</div><div style="font-size:11px;color:var(--muted)">Impressions × CPM ÷ 1000</div></div>
+        <div><div class="section-label" style="margin-bottom:2px">Estimated Media Value</div><div style="font-size:11px;color:var(--muted)">Impressions × CPM ÷ 1000 · $${cpm} CPM</div></div>
         <div class="bb" style="font-size:36px;color:var(--lime)" id="emv-out">${emv?'$'+emv.toLocaleString():'—'}</div>
       </div>
     </div>
-    <div class="form-group" style="margin-bottom:12px"><label class="form-label">Campaign Hashtag</label><input class="form-input" id="r-tag" value="${r.hashtag||''}"></div>
-    <div class="form-group" style="margin-bottom:12px"><label class="form-label">Engagement Summary</label><textarea class="form-textarea" id="r-sum">${r.engagement_summary||''}</textarea></div>
-    <div class="form-group" style="margin-bottom:20px"><label class="form-label">Methodology Note</label><textarea class="form-textarea" id="r-meth">${r.methodology||''}</textarea></div>
-    <div style="display:flex;gap:10px;align-items:center">
-      <button class="btn btn-ghost" onclick="saveMeasure('${p.id}','draft')">Save Draft</button>
-      <button class="btn btn-primary" onclick="saveMeasure('${p.id}','published')">Publish</button>
-      ${r.status==='published'?'<span class="badge badge-lime">Published</span>':''}
+    ${velDays.length||Object.keys(mix).length?`<div class="form-grid form-grid-2" style="margin-bottom:16px">${velDays.length?`<div class="panel"><div class="section-label" style="margin-bottom:10px">Post Velocity</div>${velSvg}</div>`:''}${Object.keys(mix).length?`<div class="panel"><div class="section-label" style="margin-bottom:10px">Content Mix</div>${mixBars}</div>`:''}</div>`:''}
+    <div class="panel" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="section-label">Sentiment Analysis</div>
+        <button class="btn btn-ghost" onclick="showManualSentiment('${p.id}')" style="font-size:12px;padding:4px 10px">Paste Captions</button>
+      </div>
+      ${sentBars}
+      <div id="manual-sent-panel" style="display:none;margin-top:12px;border-top:1px solid var(--border2);padding-top:12px">
+        <div class="form-group"><label class="form-label">Paste captions (one per line)</label><textarea class="form-textarea" id="manual-captions" rows="6" placeholder="Paste Instagram captions here, one per line..."></textarea></div>
+        <button class="btn btn-ghost" onclick="runManualSentiment('${p.id}')">Analyse</button>
+      </div>
+    </div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="section-label" style="margin-bottom:4px">Notable Posts Curation</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Flag posts from users with strong reach to feature in the brand report.</div>
+      ${posts.length?postCards:`<div style="color:var(--muted);font-size:12px">No posts pulled yet. Pull hashtag data to populate this list.</div>`}
+      ${notable.length?`<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border2)"><div class="section-label" style="margin-bottom:8px;font-size:11px">CURATED NOTABLE (${notable.length})</div>${notable.map(n=>`<div style="font-size:11px;margin-bottom:4px;display:flex;gap:8px;align-items:center"><span style="color:var(--lime)">&#9733;</span><a href="${n.permalink||'#'}" target="_blank" style="color:var(--cyan)">${n.permalink||n.id}</a><span style="color:var(--muted)">${n.like_count||0} likes</span></div>`).join('')}</div>`:''}
+    </div>
+    <div class="panel" style="background:rgba(210,255,1,0.04);border-color:rgba(210,255,1,0.2)">
+      <div class="section-label" style="margin-bottom:12px">Report Publishing</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="saveReportFields('${p.id}')">Save Draft</button>
+        <button class="btn btn-primary" onclick="publishReport('${p.id}')">${r.published?'Update Published Report':'Publish Report'}</button>
+        ${r.published?`<button class="btn btn-ghost" onclick="copyReportLink('${p.id}')" style="border-color:var(--cyan);color:var(--cyan)">Copy Link</button>`:''}
+        ${r.published?`<span class="badge badge-lime">Published</span>`:''}
+      </div>
+      ${r.published?`<div style="margin-top:10px;font-size:11px;color:var(--muted)">Report URL: <span style="color:var(--cyan)">/report/${p.id}</span></div>`:''}
     </div>
   </div>`;
 }
@@ -1211,12 +1266,84 @@ async function delMediaItem(id,itemId){
   await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({media_items:items})});
   p.media_items=items;switchProjTab('media');
 }
-function calcEMV(){const imp=parseInt(document.getElementById('r-imp')?.value||0),cpm=parseInt(document.getElementById('r-cpm')?.value||25);const el=document.getElementById('emv-out');if(el)el.textContent=imp&&cpm?'$'+Math.round(imp*cpm/1000).toLocaleString():'—';}
-async function saveMeasure(id,status){
-  const imp=parseInt(document.getElementById('r-imp').value||0),cpm=parseInt(document.getElementById('r-cpm').value||25);
-  const report={attendance:parseInt(document.getElementById('r-att').value||0),post_count:parseInt(document.getElementById('r-posts').value||0),impressions:imp,cpm_benchmark:cpm,emv:imp&&cpm?Math.round(imp*cpm/1000):0,engagement_summary:document.getElementById('r-sum').value,methodology:document.getElementById('r-meth').value,hashtag:document.getElementById('r-tag').value,status};
-  await api(`/api/admin/projects/${id}`,{method:'PUT',body:JSON.stringify({report})});
-  const p=S.projects.find(x=>x.id===id);if(p)p.report=report;showToast(status==='published'?'Published':'Saved');render();
+function calcEMVMeasure(){
+  const imp=parseFloat(document.getElementById('r-imp')?.value||'0');
+  const cpm=parseFloat(document.getElementById('r-cpm')?.value||'30');
+  const emv=Math.round(imp*(cpm/1000));
+  const el=document.getElementById('emv-out');
+  if(el)el.textContent=emv?'$'+emv.toLocaleString():'—';
+}
+async function pullHashtag(id){
+  const tag=(document.getElementById('r-tag')?.value||'').trim().replace(/^#/,'');
+  if(!tag){alert('Enter a hashtag first');return;}
+  const btn=document.getElementById('pull-btn');
+  if(btn){btn.textContent='Pulling...';btn.disabled=true;}
+  const res=await api(`/api/admin/projects/${id}/pull-hashtag`,{method:'POST',body:JSON.stringify({hashtag:tag})});
+  if(btn){btn.textContent='Pull Live Data';btn.disabled=false;}
+  if(res&&res.ok){
+    const fresh=await api('/api/admin/projects');
+    S.projects=Array.isArray(fresh)?fresh:S.projects;
+    switchProjTab('measurement');
+    if(res.error_note)alert('Pull note: '+res.error_note);
+  } else {
+    alert('Pull failed: '+((res&&res.error)||'Unknown error'));
+  }
+}
+function showManualSentiment(id){
+  const panel=document.getElementById('manual-sent-panel');
+  if(panel)panel.style.display=panel.style.display==='none'?'block':'none';
+}
+async function runManualSentiment(id){
+  const raw=document.getElementById('manual-captions')?.value||'';
+  const captions=raw.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(!captions.length){alert('Paste at least one caption');return;}
+  const res=await api(`/api/admin/projects/${id}/analyse-sentiment`,{method:'POST',body:JSON.stringify({captions})});
+  if(res&&res.ok){
+    const fresh=await api('/api/admin/projects');
+    S.projects=Array.isArray(fresh)?fresh:S.projects;
+    switchProjTab('measurement');
+  } else {
+    alert('Sentiment failed: '+((res&&res.error)||'Unknown error'));
+  }
+}
+async function toggleNotable(projectId,postIndex){
+  const p=S.projects.find(x=>x.id===projectId);
+  if(!p)return;
+  const r=p.report||{};
+  const posts=r.posts_sample||[];
+  const post=posts[postIndex];
+  if(!post)return;
+  let notable=Array.isArray(r.notable_posters)?[...r.notable_posters]:[];
+  const exists=notable.findIndex(x=>x.id===post.id);
+  if(exists>=0){notable.splice(exists,1);}else{notable.push(post);}
+  const res=await api(`/api/admin/projects/${projectId}/save-report`,{method:'POST',body:JSON.stringify({notable_posters:notable})});
+  if(res&&res.ok){p.report=res.report;switchProjTab('measurement');}
+}
+async function saveReportFields(id){
+  const p=S.projects.find(x=>x.id===id);if(!p)return;
+  const imp=parseFloat(document.getElementById('r-imp')?.value||'');
+  const att=parseFloat(document.getElementById('r-att')?.value||'');
+  const pc=parseFloat(document.getElementById('r-posts')?.value||'');
+  const cpm=parseFloat(document.getElementById('r-cpm')?.value||'30');
+  const manual_metrics={};
+  if(!isNaN(imp))manual_metrics.impressions=imp;
+  if(!isNaN(att))manual_metrics.attendance=att;
+  if(!isNaN(pc))manual_metrics.post_count=pc;
+  manual_metrics.cpm=cpm;
+  const hashtag=(document.getElementById('r-tag')?.value||'').trim();
+  const res=await api(`/api/admin/projects/${id}/save-report`,{method:'POST',body:JSON.stringify({manual_metrics,hashtag})});
+  if(res&&res.ok){p.report=res.report;}
+}
+async function publishReport(id){
+  await saveReportFields(id);
+  const p=S.projects.find(x=>x.id===id);if(!p)return;
+  const published_at=new Date().toISOString();
+  const res=await api(`/api/admin/projects/${id}/save-report`,{method:'POST',body:JSON.stringify({published:true,published_at})});
+  if(res&&res.ok){p.report=res.report;switchProjTab('measurement');}
+}
+function copyReportLink(id){
+  const url=window.location.origin+'/report/'+id;
+  navigator.clipboard.writeText(url).then(()=>alert('Copied: '+url)).catch(()=>alert(url));
 }
 async function saveRecap(id,status){
   const quotes=[0,1,2].map(i=>({text:document.getElementById(`rc-q${i}`)?.value||'',author:document.getElementById(`rc-a${i}`)?.value||''})).filter(q=>q.text);
